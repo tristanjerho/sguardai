@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Primary Mint/Teal Palette (RGB) */
+  --color-primary-50: 240 253 250;
+  --color-primary-100: 204 251 241;
+  --color-primary-200: 153 246 228;
+  --color-primary-300: 94 234 212;
+  --color-primary-400: 45 212 191;
+  --color-primary-500: 20 184 166;
+  --color-primary-600: 13 148 136;
+  --color-primary-700: 15 118 110;
+  --color-primary-800: 17 94 89;
+  --color-primary-900: 19 78 74;
+
+  /* Accent Coral/Amber Palette */
+  --color-accent-50: 255 247 237;
+  --color-accent-100: 255 237 213;
+  --color-accent-200: 254 215 170;
+  --color-accent-300: 253 186 116;
+  --color-accent-400: 251 146 60;
+  --color-accent-500: 249 115 22;
+  --color-accent-600: 234 88 12;
+
+  /* Surfaces (Light) */
+  --color-surface-50: 248 250 252;
+  --color-surface-100: 241 245 249;
+  --color-surface-200: 226 232 240;
+  --color-surface-300: 203 213 225;
+  --color-surface-base: 248 250 252;
+  --color-surface-card: 255 255 255;
+  --color-surface-border: 226 232 240;
+
+  /* Typography / Ink (Light) */
+  --color-ink-primary: 15 23 42;
+  --color-ink-secondary: 71 85 105;
+  --color-ink-muted: 148 163 184;
+  --color-ink-inverse: 255 255 255;
+}
+
+.dark {
+  /* Primary Mint/Teal Palette (Adjusted for dark mode glow) */
+  --color-primary-50: 19 78 74;
+  --color-primary-100: 17 94 89;
+  --color-primary-200: 15 118 110;
+  --color-primary-300: 13 148 136;
+  --color-primary-400: 20 184 166;
+  --color-primary-500: 45 212 191;
+  --color-primary-600: 94 234 212;
+  --color-primary-700: 153 246 228;
+  --color-primary-800: 204 251 241;
+  --color-primary-900: 240 253 250;
+
+  /* Surfaces (Dark Mode) */
+  --color-surface-50: 30 41 59;
+  --color-surface-100: 24 33 47;
+  --color-surface-200: 30 41 59;
+  --color-surface-300: 51 65 85;
+  --color-surface-base: 11 15 25;
+  --color-surface-card: 19 26 42;
+  --color-surface-border: 30 41 59;
+
+  /* Typography / Ink (Dark Mode) */
+  --color-ink-primary: 248 250 252;
+  --color-ink-secondary: 203 213 225;
+  --color-ink-muted: 148 163 184;
+  --color-ink-inverse: 15 23 42;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+}
+
+/* Glassmorphic utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass-panel {
+  background: rgba(19, 26, 42, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Focus styles for keyboard accessibility */
+:focus-visible {
+  outline: 2px solid rgb(var(--color-primary-500));
+  outline-offset: 2px;
+}
