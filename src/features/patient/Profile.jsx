@@ -17,6 +17,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
 import { useMascot } from '../../context/MascotContext';
 import { useToast } from '../../hooks/useToast';
+import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { auth } from '../../config/firebase';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -36,7 +38,7 @@ export function PatientProfile() {
 
   const [isSaving, setIsSaving] = useState(false);
 
-  // Password mock state
+  // Password form state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -72,13 +74,24 @@ export function PatientProfile() {
     }
 
     setIsChangingPass(true);
-    setTimeout(() => {
-      setIsChangingPass(false);
+    try {
+      if (!auth?.currentUser) throw new Error('No authenticated user session.');
+      const cred = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(auth.currentUser, cred);
+      await updatePassword(auth.currentUser, newPassword);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      toast.success('Password changed successfully (Mock).');
-    }, 400);
+      toast.success('Password updated successfully.');
+    } catch (err) {
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        toast.error('Current password is incorrect.');
+      } else {
+        toast.error(err.message || 'Failed to update password.');
+      }
+    } finally {
+      setIsChangingPass(false);
+    }
   };
 
   return (

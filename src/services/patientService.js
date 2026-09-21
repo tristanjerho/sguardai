@@ -1,131 +1,193 @@
-import { getStorageItem, setStorageItem, STORAGE_KEYS, delay } from './mock/storage';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  query,
+  where,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { db } from '../config/firebase';
 import { ROLES } from '../lib/roles';
-import { notificationService } from './notificationService';
+import { imageService } from './imageService';
+import { activityLogService } from './activityLogService';
 
 /**
- * Service for patient profiles, records, and brushing streaks
+ * Service for patient clinical profiles, diagnostic records, and brushing habit tracker
  */
 export const patientService = {
   /**
-   * Retrieves all registered patients (for clinic directory)
+   * Retrieves all registered patients from Firestore for the clinic directory
    * @returns {Promise<Array<Object>>}
    */
   async listPatients() {
-    await delay(250);
-    const users = getStorageItem(STORAGE_KEYS.USERS, []);
-    return users.filter((u) => u.role === ROLES.PATIENT);
+    if (!db) return [];
+    try {
+      const q = query(collection(db, 'users'), where('role', '==', ROLES.PATIENT));
+      const snapshot = await getDocs(q);
+      const patients = [];
+      snapshot.forEach((docSnap) => {
+        patients.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      return patients;
+    } catch (err) {
+      console.error('Error fetching patients from Firestore:', err);
+      throw err;
+    }
   },
 
   /**
-   * Retrieves patient by user ID
+   * Retrieves patient document by ID
    * @param {string} patientId
    * @returns {Promise<Object>}
    */
   async getById(patientId) {
-    await delay(200);
-    const users = getStorageItem(STORAGE_KEYS.USERS, []);
-    const patient = users.find((u) => u.id === patientId && u.role === ROLES.PATIENT);
-    if (!patient) throw new Error('Patient not found');
-    return patient;
+    if (!db || !patientId) throw new Error('Patient ID is required');
+    const docRef = doc(db, 'users', patientId);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) throw new Error('Patient not found');
+    return { id: snap.id, ...snap.data() };
   },
 
   /**
-   * Retrieves imaging and dental records for a patient
+   * Retrieves dental radiographs and photographic records via imageService
    * @param {string} patientId
    * @returns {Promise<Array<Object>>}
    */
   async getRecords(patientId) {
-    await delay(250);
-    const records = getStorageItem(STORAGE_KEYS.RECORDS, []);
-    return records.filter((r) => r.patientId === patientId);
+    return imageService.getPatientImages(patientId);
   },
 
   /**
-   * Retrieves brush streak data for a patient
+   * Retrieves brushing habit streak for a patient from Firestore
    * @param {string} patientId
    * @returns {Promise<Object>}
    */
   async getBrushStreak(patientId) {
-    await delay(150);
-    const streaks = getStorageItem(STORAGE_KEYS.BRUSH_STREAK, {});
-    return (
-      streaks[patientId] || {
+    if (!db || !patientId) {
+      return {
         currentStreak: 0,
         longestStreak: 0,
         totalPoints: 0,
         lastCheckInDate: null,
         history: {},
         unlockedBadges: [],
+      };
+    }
+
+    try {
+      const docRef = doc(db, 'brushStreaks', patientId);
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) {
+        return {
+          currentStreak: 0,
+          longestStreak: 0,
+          totalPoints: 0,
+          lastCheckInDate: null,
+          history: {},
+          unlockedBadges: [],
+        };
       }
-    );
+      return snap.data();
+    } catch (err) {
+      console.error('Error fetching brush streak:', err);
+      return {
+        currentStreak: 0,
+        longestStreak: 0,
+        totalPoints: 0,
+        lastCheckInDate: null,
+        history: {},
+        unlockedBadges: [],
+      };
+    }
   },
 
   /**
-   * Records a daily morning or night brush check-in
+   * Logs a real brushing session (morning/night) for a patient in Firestore
    * @param {string} patientId
-   * @param {'morning'|'night'} period
+   * @param {'morning'|'night'} sessionType
    * @returns {Promise<Object>}
    */
-  async recordBrushCheckIn(patientId, period = 'morning') {
-    await delay(250);
-    const streaks = getStorageItem(STORAGE_KEYS.BRUSH_STREAK, {});
+  async recordBrush(patientId, sessionType) {
+    if (!db || !patientId) throw new Error('Firestore is not initialized.');
+
+    const docRef = doc(db, 'brushStreaks', patientId);
+    const streak = await this.getBrushStreak(patientId);
     const today = new Date().toISOString().split('T')[0];
 
-    const currentData = streaks[patientId] || {
-      currentStreak: 0,
-      longestStreak: 0,
-      totalPoints: 0,
-      lastCheckInDate: null,
-      history: {},
-      unlockedBadges: [],
-    };
-
-    const todayHistory = currentData.history[today] || { morning: false, night: false };
-
-    if (todayHistory[period]) {
-      return { ...currentData, alreadyChecked: true };
+    const todayHistory = streak.history?.[today] || { morning: false, night: false };
+    if (todayHistory[sessionType]) {
+      throw new Error(`You have already logged your ${sessionType} brushing session today!`);
     }
 
-    todayHistory[period] = true;
-    currentData.history[today] = todayHistory;
-    currentData.totalPoints += 25; // 25 Smile Points per check-in
+    todayHistory[sessionType] = true;
+    const updatedHistory = { ...(streak.history || {}), [today]: todayHistory };
 
-    // Update streak if both morning and night or initial day check
-    if (currentData.lastCheckInDate !== today) {
-      currentData.currentStreak += 1;
-      currentData.lastCheckInDate = today;
-      if (currentData.currentStreak > currentData.longestStreak) {
-        currentData.longestStreak = currentData.currentStreak;
+    let currentStreak = streak.currentStreak || 0;
+    const isFirstSessionToday = !todayHistory.morning || !todayHistory.night;
+
+    if (isFirstSessionToday) {
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      if (streak.lastCheckInDate === yesterday || !streak.lastCheckInDate) {
+        currentStreak += 1;
+      } else if (streak.lastCheckInDate !== today) {
+        currentStreak = 1;
       }
     }
 
-    // Check badges
-    const newBadges = [];
-    if (currentData.currentStreak >= 3 && !currentData.unlockedBadges.includes('badge-3-days')) {
-      currentData.unlockedBadges.push('badge-3-days');
-      newBadges.push('3-Day Sparkle Streak');
-    }
-    if (currentData.currentStreak >= 7 && !currentData.unlockedBadges.includes('badge-7-days')) {
-      currentData.unlockedBadges.push('badge-7-days');
-      newBadges.push('7-Day Diamond Brushing');
-    }
-    if (currentData.currentStreak >= 30 && !currentData.unlockedBadges.includes('badge-30-days')) {
-      currentData.unlockedBadges.push('badge-30-days');
-      newBadges.push('30-Day Master of Oral Hygiene');
-    }
+    const longestStreak = Math.max(streak.longestStreak || 0, currentStreak);
+    const pointsGained = sessionType === 'night' ? 15 : 10;
+    const totalPoints = (streak.totalPoints || 0) + pointsGained;
 
-    streaks[patientId] = currentData;
-    setStorageItem(STORAGE_KEYS.BRUSH_STREAK, streaks);
+    const updatedStreak = {
+      patientId,
+      currentStreak,
+      longestStreak,
+      totalPoints,
+      lastCheckInDate: today,
+      history: updatedHistory,
+      updatedAt: serverTimestamp(),
+    };
 
-    if (newBadges.length > 0) {
-      await notificationService.create({
-        userId: patientId,
-        title: 'New Sparky Badge Unlocked!',
-        message: `You just unlocked the "${newBadges.join(', ')}" badge! Keep up the brilliant smile routines.`,
-        type: 'STREAK',
-      });
-    }
+    await setDoc(docRef, updatedStreak, { merge: true });
 
-    return { ...currentData, newBadges };
+    await activityLogService.log({
+      userId: patientId,
+      action: 'BRUSH_SESSION_LOGGED',
+      resourceType: 'BRUSH_STREAK',
+      resourceId: patientId,
+      entity: `Logged ${sessionType} brushing (+${pointsGained} pts, streak: ${currentStreak} days)`,
+    });
+
+    return updatedStreak;
+  },
+
+  /**
+   * Updates clinical details of a patient
+   * @param {string} patientId
+   * @param {Object} updates
+   * @param {string} [dentistId]
+   * @returns {Promise<Object>}
+   */
+  async updatePatient(patientId, updates, dentistId = 'system') {
+    if (!db || !patientId) throw new Error('Firestore is not initialized.');
+
+    const docRef = doc(db, 'users', patientId);
+    await updateDoc(docRef, {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+
+    await activityLogService.log({
+      userId: dentistId,
+      action: 'PATIENT_UPDATED',
+      resourceType: 'USER',
+      resourceId: patientId,
+      entity: `Updated patient chart/profile for ${patientId}`,
+    });
+
+    return this.getById(patientId);
   },
 };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, Sparkles, User, Stethoscope, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Sparkles, ArrowRight, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { Input } from '../../components/ui/Input';
@@ -18,6 +18,33 @@ export function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const handleSuccessfulAuth = (user) => {
+    toast.success(`Welcome back, ${user.fullName || user.email}!`);
+
+    const redirectPath = location.state?.from?.pathname;
+    if (redirectPath) {
+      navigate(redirectPath, { replace: true });
+      return;
+    }
+
+    // Role-based destination strictly driven by verified Firestore user profile
+    if (user.role === ROLES.PATIENT) {
+      if (!user.isOnboarded) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate('/patient', { replace: true });
+      }
+    } else if (user.role === ROLES.DENTIST) {
+      navigate('/clinic', { replace: true });
+    } else if (user.role === ROLES.LAB_TECH) {
+      navigate('/lab', { replace: true });
+    } else if (user.role === ROLES.ADMIN || user.role === ROLES.SUPERADMIN) {
+      navigate('/admin', { replace: true });
+    } else {
+      navigate('/', { replace: true });
+    }
+  };
+
   const handleLogin = async (e) => {
     e?.preventDefault();
     setError('');
@@ -30,42 +57,30 @@ export function Login() {
     setIsLoading(true);
     try {
       const user = await login(email, password);
-      toast.success(`Welcome back, ${user.fullName || user.email}!`);
-
-      if (user.role === ROLES.PATIENT) {
-        if (!user.isOnboarded) {
-          navigate('/onboarding');
-        } else {
-          navigate('/patient');
-        }
-      } else if (user.role === ROLES.DENTIST) {
-        navigate('/clinic');
-      } else if (user.role === ROLES.ADMIN) {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
+      handleSuccessfulAuth(user);
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      let friendlyMsg = err.message || 'Login failed. Please check your credentials.';
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        friendlyMsg = 'Invalid email address or password. Please verify your credentials.';
+      } else if (err.code === 'auth/too-many-requests') {
+        friendlyMsg = 'Too many unsuccessful attempts. Please try again later or reset your password.';
+      } else if (err.code === 'auth/network-request-failed') {
+        friendlyMsg = 'Network connectivity error. Please check your internet connection.';
+      }
+      setError(friendlyMsg);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fillDemoAccount = (demoEmail, demoPassword) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setError('');
-  };
-
   const handleGoogleLogin = async () => {
+    setError('');
     setIsLoading(true);
     try {
       const user = await loginWithGoogle();
-      toast.success(`Signed in via Google as ${user.fullName}`);
-      navigate('/patient');
+      handleSuccessfulAuth(user);
     } catch (err) {
-      setError(err.message || 'Google sign-in failed');
+      setError(err.message || 'Google sign-in was cancelled or failed.');
     } finally {
       setIsLoading(false);
     }
@@ -85,113 +100,25 @@ export function Login() {
             Welcome to SmileGuard<span className="text-orange-500">.AI</span>
           </h1>
           <p className="text-sm text-ink-secondary">
-            Sign in to access your dental records or clinical workspace
+            Sign in to access your clinical workspace or patient portal
           </p>
         </div>
 
-        {/* Demo Accounts Quick-Fill Box */}
-        <div className="p-4 rounded-2xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 shadow-soft-sm space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-heading font-bold text-teal-900 dark:text-teal-200 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-              1-Click Demo Accounts (Password: Demo1234)
-            </span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => fillDemoAccount('patient@demo.com', 'Demo1234')}
-              className="px-2.5 py-2 rounded-xl text-xs font-semibold bg-surface-card border border-teal-200 dark:border-teal-800 hover:border-teal-400 text-teal-800 dark:text-teal-300 flex flex-col items-center gap-1 transition-all shadow-soft-sm"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>Patient</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => fillDemoAccount('dentist@demo.com', 'Demo1234')}
-              className="px-2.5 py-2 rounded-xl text-xs font-semibold bg-surface-card border border-teal-200 dark:border-teal-800 hover:border-teal-400 text-teal-800 dark:text-teal-300 flex flex-col items-center gap-1 transition-all shadow-soft-sm"
-            >
-              <Stethoscope className="w-3.5 h-3.5" />
-              <span>Dentist</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => fillDemoAccount('admin@demo.com', 'Demo1234')}
-              className="px-2.5 py-2 rounded-xl text-xs font-semibold bg-surface-card border border-teal-200 dark:border-teal-800 hover:border-teal-400 text-teal-800 dark:text-teal-300 flex flex-col items-center gap-1 transition-all shadow-soft-sm"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Admin</span>
-            </button>
-          </div>
-        </div>
-
         {/* Login Card */}
-        <Card className="p-6 sm:p-8 space-y-6 shadow-soft-lg">
+        <Card className="p-6 sm:p-8 space-y-5 shadow-soft-lg">
           {error && (
-            <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-medium">
-              {error}
+            <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-medium flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <Input
-              label="Email Address"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              leftIcon={Mail}
-              required
-            />
-
-            <div className="space-y-1">
-              <Input
-                label="Password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                leftIcon={Lock}
-                required
-              />
-              <div className="flex justify-end pt-1">
-                <Link
-                  to="/forgot-password"
-                  className="text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              isLoading={isLoading}
-              className="w-full"
-              rightIcon={ArrowRight}
-            >
-              Sign In
-            </Button>
-          </form>
-
-          <div className="relative flex items-center justify-center my-4">
-            <div className="border-t border-surface-border w-full" />
-            <span className="bg-surface-card px-3 text-xs uppercase tracking-wider text-ink-muted">
-              Or continue with
-            </span>
-            <div className="border-t border-surface-border w-full" />
-          </div>
-
+          {/* Google Sign-in Button */}
           <button
             type="button"
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-50 dark:hover:bg-surface-100 text-ink-primary text-sm font-semibold transition-all shadow-soft-sm"
+            className="w-full py-2.5 px-4 rounded-xl border border-surface-border bg-surface-card hover:bg-surface-subtle text-ink-primary text-xs font-heading font-bold flex items-center justify-center gap-3 transition-all shadow-soft-sm hover:border-surface-border-strong disabled:opacity-50"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
@@ -211,20 +138,72 @@ export function Login() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
               />
             </svg>
-            <span>Google Account (Demo SSO)</span>
+            <span>Continue with Google</span>
           </button>
-        </Card>
 
-        {/* Signup callout */}
-        <p className="text-center text-xs text-ink-secondary">
-          Don&apos;t have a patient account?{' '}
-          <Link
-            to="/signup"
-            className="font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400 underline underline-offset-2"
-          >
-            Create Patient Account
-          </Link>
-        </p>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-surface-border" />
+            <span className="text-[11px] uppercase tracking-wider text-ink-muted font-bold">
+              or with email
+            </span>
+            <div className="flex-1 h-px bg-surface-border" />
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <Input
+              label="Email Address"
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              leftIcon={Mail}
+              required
+              autoComplete="email"
+            />
+
+            <div className="space-y-1">
+              <Input
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                leftIcon={Lock}
+                required
+                autoComplete="current-password"
+              />
+              <div className="flex justify-end pt-1">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              isLoading={isLoading}
+              className="w-full"
+              rightIcon={ArrowRight}
+            >
+              Sign In
+            </Button>
+          </form>
+
+          <div className="pt-4 border-t border-surface-border text-center text-xs text-ink-secondary">
+            Don't have an account?{' '}
+            <Link
+              to="/signup"
+              className="font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400 hover:underline"
+            >
+              Create Patient Account
+            </Link>
+          </div>
+        </Card>
       </div>
     </div>
   );

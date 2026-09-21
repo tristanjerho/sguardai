@@ -308,36 +308,42 @@ export function BookAppointment() {
               2. Select Attending Dentist
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {dentists.map((d) => {
-                const isSelected = selectedDentistId === d.id;
-                return (
-                  <div
-                    key={d.id}
-                    onClick={() => setSelectedDentistId(d.id)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-3.5 ${
-                      isSelected
-                        ? 'border-teal-500 bg-teal-50/70 dark:bg-teal-950/40 ring-2 ring-teal-500/20 shadow-soft-sm'
-                        : 'border-surface-border bg-surface-card hover:border-surface-300'
-                    }`}
-                  >
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-teal-100 flex-shrink-0 border border-teal-200">
-                      {d.avatar ? (
-                        <img src={d.avatar} alt={d.fullName} className="w-full h-full object-cover" />
-                      ) : (
-                        <Stethoscope className="w-6 h-6 text-teal-600 m-auto mt-3" />
-                      )}
+              {dentists.length === 0 ? (
+                <div className="col-span-2 p-6 rounded-2xl bg-surface-subtle border border-surface-border text-center text-xs text-ink-muted">
+                  No clinic dentists registered yet. A staff member must register a Dentist account before appointments can be assigned.
+                </div>
+              ) : (
+                dentists.map((d) => {
+                  const isSelected = selectedDentistId === d.id;
+                  return (
+                    <div
+                      key={d.id}
+                      onClick={() => setSelectedDentistId(d.id)}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-3.5 ${
+                        isSelected
+                          ? 'border-teal-500 bg-teal-50/70 dark:bg-teal-950/40 ring-2 ring-teal-500/20 shadow-soft-sm'
+                          : 'border-surface-border bg-surface-card hover:border-surface-300'
+                      }`}
+                    >
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-teal-100 flex-shrink-0 border border-teal-200">
+                        {d.avatar ? (
+                          <img src={d.avatar} alt={d.fullName} className="w-full h-full object-cover" />
+                        ) : (
+                          <Stethoscope className="w-6 h-6 text-teal-600 m-auto mt-3" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-heading font-bold text-sm text-ink-primary">
+                          {d.fullName}
+                        </p>
+                        <p className="text-xs text-teal-700 dark:text-teal-300 font-medium">
+                          {d.specialty || 'General Dentist'}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-heading font-bold text-sm text-ink-primary">
-                        {d.fullName}
-                      </p>
-                      <p className="text-xs text-teal-700 dark:text-teal-300 font-medium">
-                        {d.specialty}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 
