@@ -35,7 +35,15 @@
 - **Lucide React** (Icons)
 - **Recharts** (Clinical charts)
 - **Canvas Confetti** (Milestone celebrations)
-- **Mock Service Layer** (Async Promises with simulated latency, localStorage persistence)
+- **Firebase Authentication** (Email/Password & Google Sign-In)
+- **Cloud Firestore** (Server-authoritative role-based access & real-time sync)
+- **Cloudinary** (Direct unsigned clinical radiograph & photo uploads)
+- **Vite PWA** (`vite-plugin-pwa` with zero clinical caching)
+- **TailwindCSS** (Custom clinical tokens with Light and Dark theme modes)
+- **Framer Motion** (Accessible animations respecting `prefers-reduced-motion`)
+- **Lucide React** (Icons)
+- **Recharts** (Clinical charts & volume tracking)
+- **Canvas Confetti** (Milestone celebrations)
 
 ---
 
@@ -48,15 +56,17 @@ npm install
 # Start development server
 npm run dev
 
-# Build for production
+# Build for production with PWA service worker
 npm run build
 ```
 
 ---
 
-## 🔑 Demo Credentials
+## 📋 Next Steps & Deployment
 
-- **Patient**: `patient@demo.com` / `Demo1234`
-- **Dentist**: `dentist@demo.com` / `Demo1234`
-- **Admin**: `admin@demo.com` / `Demo1234`
-- **Unonboarded Patient**: `ana@demo.com` / `Demo1234`
+Refer to the [Next Steps Action Plan & Operator Guide](file:///c:/Users/My%20Computer/Desktop/sguardai/NEXT_STEPS_ACTION_PLAN.md) for step-by-step instructions on:
+1. Deploying Firestore security rules and composite indexes to `sguardai-7d893`
+2. Setting up Cloudinary upload presets
+3. Bootstrapping the first Superadmin account and provisioning clinical staff
+4. Testing PWA standalone installation on Android and iOS devices
+5. Configuring the trusted AI backend service boundary

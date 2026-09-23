@@ -11,16 +11,19 @@ export function ForgotPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  const [error, setError] = useState('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email) return;
+    setError('');
 
     setIsLoading(true);
     try {
       await authService.requestPasswordReset(email);
       setIsSubmitted(true);
     } catch (err) {
-      console.error(err);
+      setError(err.message || 'Failed to send password reset email. Please verify the address.');
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +56,7 @@ export function ForgotPassword() {
                 Recovery Link Sent!
               </h3>
               <p className="text-xs text-ink-secondary">
-                We sent password reset steps to <strong className="text-ink-primary">{email}</strong>. (In mock mode, you can sign in directly with Demo1234).
+                We sent password reset steps to <strong className="text-ink-primary">{email}</strong>. Please check your inbox and spam folder.
               </p>
               <Link to="/login" className="block pt-2">
                 <Button variant="primary" size="md" className="w-full">

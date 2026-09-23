@@ -2,11 +2,17 @@ import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ROLES } from '../lib/roles';
+import { isFirebaseConfigured } from '../config/firebase';
+
+// Setup & Security
+import { FirebaseSetupScreen } from '../components/common/FirebaseSetupScreen';
+import { Unauthorized } from '../components/common/Unauthorized';
 
 // Layouts
 import { PatientShell } from '../components/layout/PatientShell';
 import { ClinicShell } from '../components/layout/ClinicShell';
 import { AdminShell } from '../components/layout/AdminShell';
+import { LabTechShell } from '../components/layout/LabTechShell';
 
 // Auth Pages
 import { Login } from '../features/auth/Login';
@@ -32,6 +38,9 @@ import { PatientDetail } from '../features/clinic/PatientDetail';
 import { TreatmentsManager } from '../features/clinic/Treatments';
 import { LabOrdersManager } from '../features/clinic/LabOrders';
 import { AiWorkstation } from '../features/clinic/AiWorkstation';
+
+// Lab Pages
+import { LabOrdersQueue } from '../features/lab/LabOrdersQueue';
 
 // Admin Pages
 import { UserManagement } from '../features/admin/UserManagement';
@@ -69,12 +78,9 @@ export function ProtectedRoute({ allowedRoles = [], children }) {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // Role authorization check
+  // Role authorization check - redirects to /unauthorized if role is not permitted
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    if (user.role === ROLES.PATIENT) return <Navigate to="/patient" replace />;
-    if (user.role === ROLES.DENTIST) return <Navigate to="/clinic" replace />;
-    if (user.role === ROLES.ADMIN) return <Navigate to="/admin" replace />;
-    return <Navigate to="/" replace />;
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return children;
@@ -90,13 +96,18 @@ export function PublicAuthRoute({ children }) {
       return <Navigate to={user.isOnboarded ? '/patient' : '/onboarding'} replace />;
     }
     if (user.role === ROLES.DENTIST) return <Navigate to="/clinic" replace />;
-    if (user.role === ROLES.ADMIN) return <Navigate to="/admin" replace />;
+    if (user.role === ROLES.LAB_TECH) return <Navigate to="/lab" replace />;
+    if (user.role === ROLES.ADMIN || user.role === ROLES.SUPERADMIN) return <Navigate to="/admin" replace />;
   }
 
   return children;
 }
 
 export function AppRoutes() {
+  if (!isFirebaseConfigured) {
+    return <FirebaseSetupScreen />;
+  }
+
   return (
     <Routes>
       {/* Public Landing Page */}
@@ -120,6 +131,9 @@ export function AppRoutes() {
         }
       />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+
+      {/* Security Boundaries */}
+      <Route path="/unauthorized" element={<Unauthorized />} />
 
       {/* Patient Onboarding Route */}
       <Route
@@ -150,11 +164,11 @@ export function AppRoutes() {
         <Route path="profile" element={<PatientProfile />} />
       </Route>
 
-      {/* Clinic Portal Routes (DENTIST and ADMIN) */}
+      {/* Clinic Portal Routes (DENTIST, ADMIN, SUPERADMIN) */}
       <Route
         path="/clinic"
         element={
-          <ProtectedRoute allowedRoles={[ROLES.DENTIST, ROLES.ADMIN]}>
+          <ProtectedRoute allowedRoles={[ROLES.DENTIST, ROLES.ADMIN, ROLES.SUPERADMIN]}>
             <ClinicShell />
           </ProtectedRoute>
         }
@@ -168,11 +182,24 @@ export function AppRoutes() {
         <Route path="ai-workstation" element={<AiWorkstation />} />
       </Route>
 
-      {/* Admin Portal Routes (ADMIN only) */}
+      {/* Lab Technician Portal Routes (LAB_TECH, SUPERADMIN) */}
+      <Route
+        path="/lab"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.LAB_TECH, ROLES.SUPERADMIN]}>
+            <LabTechShell />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<LabOrdersQueue />} />
+        <Route path="orders" element={<LabOrdersQueue />} />
+      </Route>
+
+      {/* Admin Portal Routes (ADMIN, SUPERADMIN) */}
       <Route
         path="/admin"
         element={
-          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.SUPERADMIN]}>
             <AdminShell />
           </ProtectedRoute>
         }

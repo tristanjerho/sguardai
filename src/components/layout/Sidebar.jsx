@@ -31,7 +31,12 @@ export function Sidebar({ role, isOpen = true, onClose }) {
       { to: '/patient/brush-streak', label: 'Brush Streak', icon: Flame, highlight: true },
       { to: '/patient/profile', label: 'Profile & Settings', icon: User },
     ];
-  } else if (role === ROLES.DENTIST || role === ROLES.ADMIN) {
+  } else if (role === ROLES.LAB_TECH) {
+    navItems = [
+      { to: '/lab', label: 'Lab Production Board', icon: FlaskConical, end: true },
+      { to: '/lab/orders', label: 'All Lab Orders', icon: ClipboardList },
+    ];
+  } else if (role === ROLES.DENTIST || role === ROLES.ADMIN || role === ROLES.SUPERADMIN) {
     const clinicItems = [
       { to: '/clinic', label: 'Dashboard', icon: LayoutDashboard, end: true },
       { to: '/clinic/queue', label: 'Appointments Queue', icon: Clock },
@@ -41,12 +46,13 @@ export function Sidebar({ role, isOpen = true, onClose }) {
       { to: '/clinic/ai-workstation', label: 'AI Workstation', icon: BrainCircuit, badge: 'AI' },
     ];
 
-    if (role === ROLES.ADMIN) {
+    if (role === ROLES.ADMIN || role === ROLES.SUPERADMIN) {
       navItems = [
         ...clinicItems,
         { type: 'divider', label: 'Administration' },
         { to: '/admin/users', label: 'User Management', icon: Users },
         { to: '/admin/logs', label: 'Activity Logs', icon: ShieldAlert },
+        { to: '/lab', label: 'Laboratory Pipeline', icon: FlaskConical },
       ];
     } else {
       navItems = clinicItems;

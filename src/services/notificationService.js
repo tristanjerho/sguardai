@@ -1,20 +1,43 @@
-import { getStorageItem, setStorageItem, STORAGE_KEYS, delay } from './mock/storage';
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
+  query,
+  where,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 /**
- * Service for patient and staff notifications
+ * Service for patient and staff notifications in Cloud Firestore
  */
 export const notificationService = {
   /**
-   * Retrieves all notifications for a specific user
+   * Retrieves all notifications for a specific user from Firestore
    * @param {string} userId
    * @returns {Promise<Array<Object>>}
    */
   async listForUser(userId) {
-    await delay(200);
-    const notifs = getStorageItem(STORAGE_KEYS.NOTIFICATIONS, []);
-    return notifs
-      .filter((n) => n.userId === userId)
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (!db || !userId) return [];
+    try {
+      const q = query(collection(db, 'notifications'), where('userId', '==', userId));
+      const snapshot = await getDocs(q);
+      const list = [];
+      snapshot.forEach((d) => {
+        const data = d.data();
+        list.push({
+          id: d.id,
+          ...data,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt,
+        });
+      });
+      return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } catch (err) {
+      console.error('Error fetching notifications from Firestore:', err);
+      return [];
+    }
   },
 
   /**
@@ -23,25 +46,19 @@ export const notificationService = {
    * @returns {Promise<number>}
    */
   async getUnreadCount(userId) {
-    const notifs = getStorageItem(STORAGE_KEYS.NOTIFICATIONS, []);
-    return notifs.filter((n) => n.userId === userId && !n.read).length;
+    const notifs = await this.listForUser(userId);
+    return notifs.filter((n) => !n.read).length;
   },
 
   /**
    * Marks a single notification as read
    * @param {string} notifId
-   * @returns {Promise<Object>}
+   * @returns {Promise<void>}
    */
   async markAsRead(notifId) {
-    await delay(150);
-    const notifs = getStorageItem(STORAGE_KEYS.NOTIFICATIONS, []);
-    const index = notifs.findIndex((n) => n.id === notifId);
-    if (index !== -1) {
-      notifs[index].read = true;
-      setStorageItem(STORAGE_KEYS.NOTIFICATIONS, notifs);
-      return notifs[index];
-    }
-    throw new Error('Notification not found');
+    if (!db || !notifId) return;
+    const docRef = doc(db, 'notifications', notifId);
+    await updateDoc(docRef, { read: true, updatedAt: serverTimestamp() });
   },
 
   /**
@@ -50,31 +67,31 @@ export const notificationService = {
    * @returns {Promise<boolean>}
    */
   async markAllAsRead(userId) {
-    await delay(200);
-    const notifs = getStorageItem(STORAGE_KEYS.NOTIFICATIONS, []);
-    const updated = notifs.map((n) => (n.userId === userId ? { ...n, read: true } : n));
-    setStorageItem(STORAGE_KEYS.NOTIFICATIONS, updated);
+    if (!db || !userId) return true;
+    const notifs = await this.listForUser(userId);
+    const unread = notifs.filter((n) => !n.read);
+    await Promise.all(
+      unread.map((n) => updateDoc(doc(db, 'notifications', n.id), { read: true, updatedAt: serverTimestamp() }))
+    );
     return true;
   },
 
   /**
-   * Creates a notification for a user
+   * Creates a notification for a user in Firestore
    * @param {Object} data
    * @returns {Promise<Object>}
    */
   async create({ userId, title, message, type = 'GENERAL' }) {
-    const notifs = getStorageItem(STORAGE_KEYS.NOTIFICATIONS, []);
+    if (!db || !userId) return null;
     const newNotif = {
-      id: `notif-${Date.now()}`,
       userId,
       title,
       message,
       type,
       read: false,
-      createdAt: new Date().toISOString(),
+      createdAt: serverTimestamp(),
     };
-    notifs.unshift(newNotif);
-    setStorageItem(STORAGE_KEYS.NOTIFICATIONS, notifs);
-    return newNotif;
+    const docRef = await addDoc(collection(db, 'notifications'), newNotif);
+    return { id: docRef.id, ...newNotif, createdAt: new Date().toISOString() };
   },
 };

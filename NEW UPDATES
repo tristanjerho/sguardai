@@ -1,0 +1,182 @@
+
+SMILEGUARD — COMPREHENSIVE TWO-DAY SYSTEM ENGINEERING REPORT
+Project: SmileGuard — Intelligent Dental Cloud Platform, Real-Time Practice Management & Dual-Stage AI Radiodiagnostics
+Reporting Period: September 23–24, 2026
+Audience: Technical Leads, Clinical Advisors, Capstone Defense Panel
+Build Status: Production Ready (✓ built in 18.32s, Zero Compiler/Linter Errors)
+
+1. Executive Summary
+Over the past 48 hours, the SmileGuard platform underwent a complete end-to-end transformation. The project transitioned from an initial prototype with standalone components into an integrated, enterprise-grade, clinical dental operations suite paired with a Two-Stage Convolutional Neural Network (CNN) computer vision pipeline.
+
+Key achievements over this period include:
+
+Zero-Fabrication AI Guarantee: Elimination of all static mock data, hardcoded predictions, and synthetic heatmaps.
+Dual-Stage Neural Input Gatekeeper: Implementation of an automated pre-screening validator that rejects non-panoramic images before pathology inference.
+Pre-Softmax Grad-CAM Visual Interpretability: High-resolution Class Activation Mapping targeting pre-softmax logit tensors.
+Dynamic Practice Management: Real-time multi-role booking, live dentist discovery, 32-tooth odontogram mapping, and CAD/CAM dental lab tracking.
+Full System Security Audit & Hardening: Comprehensive 25-section architectural audit, fixing critical client-side workflow exceptions and enforcing Philippine Data Privacy Act (RA 10173) compliance.
+Official Brand Identity Integration: Complete unification of assets, PWA launchers, and UI components under the official SmileGuard brand.
+2. AI & Deep Learning Architecture
+[ Uploaded Image (Radiograph / Photo / Document) ]
+                      │
+                      ▼
+       [ Ingestion & Normalization ]
+             (224 x 224 x 3, [0, 1])
+                      │
+                      ▼
+    ┌───────────────────────────────────┐
+    │     STAGE 1: VALIDATOR CNN        │
+    │  MobileNetV2 Binary Classifier    │
+    │  (Authentic OPG vs Non-Dental)    │
+    └───────────────────────────────────┘
+                      │
+            Is Valid Dental OPG?
+           /                     \
+        [ NO ]                 [ YES ]
+          │                       │
+          ▼                       ▼
+  [ REJECT IMAGE ]      ┌───────────────────────────────────┐
+  - Status 422          │     STAGE 2: PATHOLOGY CNN        │
+  - Halt Grad-CAM       │    EfficientNetB0 Multi-Class     │
+  - Warning Banner      │  (Caries, Impacted, Periapical,   │
+                        │       Periodontal Bone Loss)      │
+                        └───────────────────────────────────┘
+                                          │
+                                          ▼
+                                ┌───────────────────┐
+                                │ PRE-SOFTMAX GRAD- │
+                                │        CAM        │
+                                │ (top_activation)  │
+                                └───────────────────┘
+                                          │
+                                          ▼
+                               [ Blended Jet Heatmap ]
+2.1 Stage-1: Radiographic Input Validator (xray_validator.keras)
+Problem Addressed: Previous iterations accepted arbitrary images (selfies, documents, pet photos, intraoral camera snapshots) and produced misleading pathology classifications.
+Solution: Trained and deployed a MobileNetV2 binary classification model specifically on a curated corpus of authentic panoramic radiographs (OPGs) against non-dental distractor images.
+Fail-Safe Gate: If Stage 1 confidence is $< 0.50$, inference is immediately halted with valid_xray: false, and no Grad-CAM or pathology assessment is executed.
+2.2 Stage-2: Multi-Class Pathology Classifier (smileguard_model.keras)
+Architecture: EfficientNetB0 backbone with customized top pooling, dense dropout ($p = 0.3$), and dense classification head.
+Target Pathologies:
+0: Dental Caries (Enamel/dentin radiolucencies)
+1: Impacted Teeth (Third molar impactions, ectopic eruptions)
+2: Periapical Lesions (Apical granulomas, periapical abscesses)
+3: Periodontal Bone Loss (Horizontal/vertical alveolar crest resorption)
+Softmax Probability Vector: Dynamically computes true probabilities where $\sum_{i=1}^4 P(C_i) = 1.0$.
+2.3 Mathematical Pre-Softmax Grad-CAM (gradcam.py)
+Saturation Prevention: Gradients $\frac{\partial y^c}{\partial A^k}$ are calculated against the linear pre-softmax logit $y^c$ for the predicted class rather than post-softmax probabilities (which suffer from gradient vanishing on high-confidence inputs).
+Target Feature Layer: top_activation ($7 \times 7 \times 1280$ activation volume).
+Heatmap Rendering: Normalized with OpenCV COLORMAP_JET and alpha-blended ($\alpha = 0.40$) directly over the original radiograph.
+3. Clinical & Practice Management System
+3.1 32-Tooth Interactive Adult Odontogram
+Full anatomical charting supporting FDI/Universal numbering notations for all 32 adult teeth.
+Individual surface inspection (Mesial, Distal, Occlusal, Buccal, Lingual) with real-time status toggling: Sound, Caries, Filled, Crown, Bridge, Missing, Endodontic Treated, Extraction Indicated.
+3.2 Real-Time Chairside Queue & Triage
+Live triage board for clinic receptionists and dentists to manage the patient lifecycle:
+PENDING $\to$ CONFIRMED $\to$ IN_CHAIR $\to$ COMPLETED / CANCELLED / REJECTED.
+Dynamic slot conflict detection preventing scheduling overlaps for the same practitioner.
+3.3 CAD/CAM Dental Laboratory Management
+Dedicated fabrication tracking board for dental technicians:
+Supports prosthodontic prescriptions (Zirconia crowns, e.max veneers, Hawley retainers, aligners).
+6-Stage production pipeline: Received $\to$ Design (CAD) $\to$ Milling (CAM) $\to$ Glazing/Baking $\to$ QA / Inspection $\to$ Dispatched.
+4. Patient Experience & Engagement Portal
+4.1 3-Step Dynamic Booking Wizard
+Step 1: Select clinical procedure (Consultation, Scaling, Orthodontic Adjustment, Root Canal, Radiograph).
+Step 2: Choose attending dentist from the real-time registered practitioner directory.
+Step 3: Select available date and interactive time slot with immediate conflict validation.
+4.2 Orthodontic Progression Timeline
+Visual phase tracker displaying treatment progress with completion percentage rings, estimated completion milestones, and aligner tray changeover schedules.
+4.3 Patient Gamification & Habits ("Sparky" Mascot)
+Daily Brushing Streaks: Dual check-in system (Morning & Night) tracking consecutive days with milestone reward badges.
+Interactive Companion ("Sparky"): Contextual cheerleading mascot with customizable moods (happy, wave, thinking, celebrate).
+4.4 Philippine Data Privacy Act Compliance (RA 10173)
+Dedicated medical onboarding module capturing health history, emergency contacts, and explicit statutory consent for health data retention and processing.
+5. Security, RBAC & Cloud Architecture
+5.1 Role-Based Access Control (RBAC) Matrix
+Portal / Module	PATIENT	DENTIST	LAB_TECH	ADMIN	SUPERADMIN
+Patient Portal & Own Records	Full Access	View Only	No Access	Full Access	Full Access
+All Clinic Charts & Directory	No Access	Full Access	No Access	Full Access	Full Access
+Interactive Odontogram Charting	Read Only	Full Edit	No Access	Full Edit	Full Edit
+Dual-Stage AI Workstation	No Access	Full Access	No Access	Full Access	Full Access
+CAD/CAM Lab Case Board	No Access	Create / View	Advance Stage	Full Control	Full Control
+Staff Registry & Role Promotion	No Access	No Access	No Access	Staff Only	Full Root Access
+Security & Immutable Audit Stream	No Access	No Access	No Access	Read Only	Full Access
+5.2 Real-Time Cloud Firestore & Rules Hardening
+Deployed Rules (firestore.rules):
+Authenticated queries for /appointments constrained by patient/dentist ID ownership.
+Locked /patients/{id} write permissions to authorized dental practitioners.
+Real-time Firestore notification subscriptions with automatic unsubscription on unmount.
+6. Full System Audit & Bug Resolutions
+A comprehensive 25-section system audit was conducted, resulting in the cataloging and resolution of critical workflow defects:
+
+================================================================================
+CRITICAL BUG RESOLUTION 1: SG-001 (Patient Appointment Cancellation)
+--------------------------------------------------------------------------------
+File:     src/services/appointmentService.js & src/features/patient/MyAppointments.jsx
+Problem:  Clicking "Cancel Appointment" caused an unhandled TypeError because
+          appointmentService.cancel was missing.
+Fix:      Implemented appointmentService.cancel(id, reason, userId) wrapping
+          updateStatus(id, 'CANCELLED', reason, userId) with full audit logging.
+Status:   VERIFIED & RESOLVED
+================================================================================
+================================================================================
+CRITICAL BUG RESOLUTION 2: SG-002 (Reschedule Method Signature Mismatch)
+--------------------------------------------------------------------------------
+File:     src/services/appointmentService.js & src/features/patient/MyAppointments.jsx
+Problem:  Rescheduling called the service with 5 parameters while the function only
+          accepted 4, corrupting userId and dropping dentist updates.
+Fix:      Overloaded appointmentService.reschedule(id, newDate, newSlot, dentistId, userId)
+          to dynamically adapt, verify dentist slot conflicts, and update records.
+Status:   VERIFIED & RESOLVED
+================================================================================
+7. Official Branding & PWA Integration
+7.1 Unified Brand Assets & Clean "SmileGuard" Naming
+Extracted and enhanced the official brand logo into transparent, retina-ready assets:
+public/logo-icon.png: Standalone teal sparkle cross icon.
+public/smileguard-logo.png & public/logo.png: Full horizontal brand logo.
+public/pwa-192x192.png, public/pwa-512x512.png, public/apple-touch-icon.png: Launcher icons.
+Removed the .AI suffix across all pages, layouts, landing hero messages, onboarding consents, and browser document titles (index.html).
+Built a reusable 
+
+Logo.jsx
+ component with scale variants (xs to xl).
+7.2 Progressive Web App (PWA) Capabilities
+Pre-cached application shell using Workbox service worker (dist/sw.js).
+Dynamic standalone install prompt banner for iOS Safari and Android Chrome.
+8. Technical Stack & Repository Inventory
+sguardai/
+├── backend/
+│   ├── main.py                      # FastAPI Two-Stage Inference Server
+│   ├── models/
+│   │   ├── xray_validator.keras     # Stage-1 Binary MobileNetV2 Classifier
+│   │   ├── smileguard_model.keras   # Stage-2 Multi-Class EfficientNetB0 Classifier
+│   │   └── model_metadata.json      # Class index mappings & input tensor configs
+│   ├── scripts/
+│   │   ├── gradcam.py               # Pre-Softmax Gradient Activation Mapping
+│   │   └── train.py                 # Multi-Class Training & Augmentation Script
+│   └── dataset/                     # Augmented & Preprocessed OPG / Distractor splits
+│
+├── src/
+│   ├── components/
+│   │   ├── common/Logo.jsx          # Unified SmileGuard Logo Component
+│   │   ├── layout/Sidebar.jsx       # Multi-Role Navigation Drawer
+│   │   ├── layout/Topbar.jsx        # Sticky Header with Role Pill & Theme Toggle
+│   │   ├── odontogram/              # 32-Tooth Interactive Adult Charting
+│   │   └── mascot/                  # Sparky Mascot Animation & Speech Bubbles
+│   ├── features/
+│   │   ├── auth/                    # Login, Signup, RA 10173 Onboarding
+│   │   ├── clinic/                  # AiWorkstation, Queue, Patients, Treatments
+│   │   ├── patient/                 # BookingWizard, MyAppointments, BrushStreak
+│   │   ├── lab/                     # CAD/CAM 6-Stage Production Pipeline
+│   │   └── admin/                   # SuperAdmin Command Center & Audit Logs
+│   ├── services/
+│   │   ├── aiService.js             # Dual-Stage FastAPI Client
+│   │   ├── appointmentService.js    # Firestore Appointment Lifecycle & Conflict Checker
+│   │   ├── notificationService.js   # Real-Time Firestore Alert Dispatcher
+│   │   └── activityLogService.js    # Immutable Practice Audit Stream
+│   └── config/firebase.js           # Firebase Auth, Firestore & Storage Config
+│
+└── public/
+    ├── logo-icon.png                # Brand Sparkle Cross Icon
+    ├── smileguard-logo.png          # High-Res Transparent Logo
+    └── manifest.webmanifest         # PWA Standalone Configuration

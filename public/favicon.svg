@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d9488"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+    <linearGradient id="toothGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f0fdfa"/>
+    </linearGradient>
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  
+  <!-- Background rounded rectangle -->
+  <rect width="512" height="512" rx="112" fill="#0f172a"/>
+  
+  <!-- Shield outline with gradient -->
+  <path d="M 256 64 C 336 64 416 92 416 192 C 416 332 288 424 256 448 C 224 424 96 332 96 192 C 96 92 176 64 256 64 Z" 
+        fill="url(#shieldGrad)" 
+        filter="url(#dropShadow)"/>
+
+  <!-- Inner stylized tooth outline -->
+  <path d="M 256 140 C 290 140 328 152 334 186 C 342 226 330 274 316 322 C 304 362 278 368 266 330 C 260 312 252 312 246 330 C 234 368 208 362 196 322 C 182 274 170 226 178 186 C 184 152 222 140 256 140 Z" 
+        fill="url(#toothGrad)"/>
+
+  <!-- Clinical cross in center of tooth -->
+  <rect x="244" y="196" width="24" height="64" rx="6" fill="#0d9488"/>
+  <rect x="224" y="216" width="64" height="24" rx="6" fill="#0d9488"/>
+
+  <!-- Sparkle stars -->
+  <path d="M 360 110 L 366 126 L 382 132 L 366 138 L 360 154 L 354 138 L 338 132 L 354 126 Z" fill="#f59e0b"/>
+  <path d="M 140 280 L 144 290 L 154 294 L 144 298 L 140 308 L 136 298 L 126 294 L 136 290 Z" fill="#38bdf8"/>
+</svg>

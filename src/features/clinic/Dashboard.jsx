@@ -57,17 +57,23 @@ export function ClinicDashboard() {
   const pendingCount = appointments.filter((a) => a.status === 'PENDING').length;
   const confirmedCount = appointments.filter((a) => a.status === 'CONFIRMED').length;
   const activeTreatmentsCount = treatments.length;
-  const labsDueSoon = labOrders.filter((l) => l.status === 'IN_PROGRESS' || l.status === 'READY');
+  const labsDueSoon = labOrders.filter((l) => l.status !== 'DISPATCHED');
 
-  // Chart data: Distribution of appointments by day of current week
-  const weeklyChartData = [
-    { day: 'Mon', count: 4 },
-    { day: 'Tue', count: 7 },
-    { day: 'Wed', count: 5 },
-    { day: 'Thu', count: 8 },
-    { day: 'Fri', count: 6 },
-    { day: 'Sat', count: 9 },
-  ];
+  // Dynamically compute appointment distribution by day from real Firestore data
+  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayCounts = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0 };
+
+  appointments.forEach((appt) => {
+    if (appt.date) {
+      const d = new Date(appt.date);
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      if (dayCounts[dayName] !== undefined) {
+        dayCounts[dayName] += 1;
+      }
+    }
+  });
+
+  const weeklyChartData = daysOfWeek.map((day) => ({ day, count: dayCounts[day] }));
 
   const pendingAppointments = appointments.filter((a) => a.status === 'PENDING').slice(0, 4);
 
@@ -125,8 +131,6 @@ export function ClinicDashboard() {
           subtitle="On-schedule bookings"
           icon={Calendar}
           color="teal"
-          trend="+12% this week"
-          trendDirection="up"
         />
         <StatCard
           title="Active Ortho Plans"

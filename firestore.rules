@@ -1,0 +1,169 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Authentication and Identity Helpers
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    function isSuperAdmin() {
+      return hasRole('SUPERADMIN');
+    }
+
+    function isAdmin() {
+      return hasRole('ADMIN') || isSuperAdmin();
+    }
+
+    function isDentist() {
+      return hasRole('DENTIST');
+    }
+
+    function isLabTech() {
+      return hasRole('LAB_TECH');
+    }
+
+    function isPatient() {
+      return hasRole('PATIENT');
+    }
+
+    // =========================================================================
+    // USERS COLLECTION: Server-Authoritative Role Provisioning
+    // - Self-registration (Email or Google) can ONLY create a PATIENT role.
+    // - Users CANNOT modify or escalate their own role.
+    // - Only ADMIN or SUPERADMIN can update roles or provision staff.
+    // =========================================================================
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      
+      // On creation: User can only create their own profile and role MUST be PATIENT
+      allow create: if isOwner(userId) && request.resource.data.role == 'PATIENT';
+      
+      // On update: Self-update allowed only if role is NOT modified; Admins can modify any field including role
+      allow update: if (
+        isOwner(userId) && request.resource.data.role == resource.data.role
+      ) || isAdmin();
+      
+      allow delete: if isSuperAdmin();
+    }
+
+    // =========================================================================
+    // APPOINTMENTS COLLECTION
+    // =========================================================================
+    match /appointments/{appointmentId} {
+      allow read: if isAuthenticated() && (
+        resource.data.patientId == request.auth.uid ||
+        resource.data.dentistId == request.auth.uid ||
+        isDentist() ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated() && (
+        request.resource.data.patientId == request.auth.uid ||
+        isDentist() ||
+        isAdmin()
+      );
+      allow update: if isAuthenticated() && (
+        resource.data.patientId == request.auth.uid ||
+        isDentist() ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // ODONTOGRAMS COLLECTION (Patient 32-Tooth Chart)
+    // =========================================================================
+    match /odontograms/{patientId} {
+      allow read: if isAuthenticated() && (
+        patientId == request.auth.uid ||
+        isDentist() ||
+        isAdmin()
+      );
+      allow write: if isDentist() || isAdmin();
+    }
+
+    // =========================================================================
+    // TREATMENT PLANS COLLECTION
+    // =========================================================================
+    match /treatmentPlans/{treatmentId} {
+      allow read: if isAuthenticated() && (
+        resource.data.patientId == request.auth.uid ||
+        isDentist() ||
+        isAdmin()
+      );
+      allow write: if isDentist() || isAdmin();
+    }
+
+    // =========================================================================
+    // DENTAL IMAGES COLLECTION (Cloudinary Metadata Store)
+    // =========================================================================
+    match /dentalImages/{imageId} {
+      allow read: if isAuthenticated() && (
+        resource.data.patientId == request.auth.uid ||
+        isDentist() ||
+        isLabTech() ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated() && (
+        request.resource.data.uploadedBy == request.auth.uid ||
+        isDentist() ||
+        isAdmin()
+      );
+      allow update: if isDentist() || isAdmin() || resource.data.uploadedBy == request.auth.uid;
+      allow delete: if isDentist() || isAdmin() || resource.data.uploadedBy == request.auth.uid;
+    }
+
+    // =========================================================================
+    // LAB ORDERS COLLECTION (Digital CAD/CAM Production Board)
+    // =========================================================================
+    match /labOrders/{orderId} {
+      allow read: if isDentist() || isLabTech() || isAdmin();
+      allow create: if isDentist() || isAdmin();
+      allow update: if isDentist() || isLabTech() || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // NOTIFICATIONS COLLECTION
+    // =========================================================================
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // =========================================================================
+    // BRUSHING STREAKS COLLECTION
+    // =========================================================================
+    match /brushStreaks/{patientId} {
+      allow read: if isAuthenticated() && (
+        patientId == request.auth.uid ||
+        isDentist() ||
+        isAdmin()
+      );
+      allow write: if isAuthenticated() && patientId == request.auth.uid;
+    }
+
+    // =========================================================================
+    // AUDIT LOGS COLLECTION (Immutable Append-Only Audit Trail)
+    // =========================================================================
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+  }
+}

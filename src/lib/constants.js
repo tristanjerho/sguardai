@@ -19,11 +19,27 @@ export const TREATMENT_STAGE = {
 };
 
 export const LAB_ORDER_STATUS = {
-  ORDERED: 'ORDERED',
-  IN_PROGRESS: 'IN_PROGRESS',
-  READY: 'READY',
-  DELIVERED: 'DELIVERED',
+  RECEIVED: 'RECEIVED',
+  DESIGN: 'DESIGN',
+  MILLING: 'MILLING',
+  GLAZING: 'GLAZING',
+  QA: 'QA',
+  DISPATCHED: 'DISPATCHED',
+  // Backward compatibility aliases
+  ORDERED: 'RECEIVED',
+  IN_PROGRESS: 'DESIGN',
+  READY: 'QA',
+  DELIVERED: 'DISPATCHED',
 };
+
+export const LAB_ORDER_STAGES = [
+  'RECEIVED',
+  'DESIGN',
+  'MILLING',
+  'GLAZING',
+  'QA',
+  'DISPATCHED',
+];
 
 export const SERVICES = [
   {

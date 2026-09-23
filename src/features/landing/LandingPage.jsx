@@ -89,7 +89,7 @@ export function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
               <Link to="/login" className="w-full sm:w-auto">
                 <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-soft" rightIcon={ArrowRight}>
-                  Launch Interactive Demo
+                  Sign In to Clinic Portal
                 </Button>
               </Link>
               <Link to="/signup" className="w-full sm:w-auto">
@@ -120,7 +120,7 @@ export function LandingPage() {
               <div className="mt-4">
                 <MascotBubble
                   title="Hi there, I'm Sparky!"
-                  message="Welcome to SmileGuard AI! Click 'Launch Interactive Demo' to test-drive both patient check-ins and clinical dentist tools!"
+                  message="Welcome to SmileGuard AI! Sign in to book appointments, track your orthodontic journey, or manage clinical dental records securely."
                   badge="Smile Mascot"
                 />
               </div>
@@ -276,7 +276,7 @@ export function LandingPage() {
             <span className="font-heading font-bold text-teal-700 dark:text-teal-400">
               SmileGuard AI Platform
             </span>
-            <span>• Step 1 Frontend Architecture</span>
+            <span>• Intelligent Dental Cloud Platform</span>
           </div>
 
           <p className="text-center sm:text-right text-ink-muted">

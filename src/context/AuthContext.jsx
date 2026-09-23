@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth, isFirebaseConfigured } from '../config/firebase';
 import { authService } from '../services/authService';
+import { ROLES } from '../lib/roles';
 
 const AuthContext = createContext(null);
 
@@ -8,12 +11,39 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Restore session on initial load
-    const savedUser = authService.getCurrentUser();
-    if (savedUser) {
-      setUser(savedUser);
+    if (!isFirebaseConfigured || !auth) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const profile = await authService.getUserProfile(firebaseUser.uid);
+          if (profile) {
+            setUser(profile);
+          } else {
+            // Document creation in-flight or fallback for newly registered Firebase Auth user
+            setUser({
+              id: firebaseUser.uid,
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              fullName: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+              role: ROLES.PATIENT,
+              isOnboarded: false,
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching Firestore user profile on auth state change:', err);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const login = async (email, password) => {
@@ -50,22 +80,27 @@ export function AuthProvider({ children }) {
   };
 
   const completeOnboarding = async (onboardingData) => {
-    if (!user) return null;
+    if (!user?.id) return null;
     const updated = await authService.completeOnboarding(user.id, onboardingData);
     setUser(updated);
     return updated;
   };
 
   const updateProfile = async (updates) => {
-    if (!user) return null;
+    if (!user?.id) return null;
     const updated = await authService.updateProfile(user.id, updates);
     setUser(updated);
     return updated;
   };
 
   const logout = async () => {
-    await authService.logout();
-    setUser(null);
+    setLoading(true);
+    try {
+      await authService.logout();
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = {

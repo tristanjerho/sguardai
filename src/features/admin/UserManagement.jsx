@@ -38,8 +38,7 @@ export function UserManagement() {
   const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState(ROLES.DENTIST);
   const [newSpecialty, setNewSpecialty] = useState('Orthodontics');
-  const [newPhone, setNewPhone] = useState('+63 9');
-  const [newPassword, setNewPassword] = useState('Demo1234');
+  const [newPassword, setNewPassword] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   // Change Role Modal
@@ -290,7 +289,9 @@ export function UserManagement() {
               onChange={(e) => setNewRole(e.target.value)}
               options={[
                 { value: ROLES.DENTIST, label: 'DENTIST (Clinical Access)' },
-                { value: ROLES.ADMIN, label: 'ADMIN (Full System Access)' },
+                { value: ROLES.LAB_TECH, label: 'LAB_TECH (Laboratory Pipeline)' },
+                { value: ROLES.ADMIN, label: 'ADMIN (Clinic Management)' },
+                { value: ROLES.SUPERADMIN, label: 'SUPERADMIN (Full Platform Access)' },
               ]}
               required
             />
@@ -349,7 +350,9 @@ export function UserManagement() {
             options={[
               { value: ROLES.PATIENT, label: 'PATIENT' },
               { value: ROLES.DENTIST, label: 'DENTIST' },
+              { value: ROLES.LAB_TECH, label: 'LAB_TECH' },
               { value: ROLES.ADMIN, label: 'ADMIN' },
+              { value: ROLES.SUPERADMIN, label: 'SUPERADMIN' },
             ]}
           />
 

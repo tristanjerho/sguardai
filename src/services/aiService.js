@@ -1,48 +1,66 @@
-import { delay } from './mock/storage';
+import { auth } from '../config/firebase';
+
+const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL || '';
 
 /**
- * Mock AI Diagnostic Inference Service
- * (Simulates Deep Learning Panoramic Radiograph Classification & Grad-CAM Heatmap Generation)
+ * Service for AI Diagnostic Workstation & Gemini/CNN radiograph inference.
+ * Strictly adheres to Zero Fabrication Policy:
+ * Results are only produced when a real, authorized server-side AI endpoint responds.
  */
 export const aiService = {
   /**
-   * Runs mock AI analysis on a radiograph image
-   * @param {string} imageSource
-   * @returns {Promise<Object>}
+   * Checks if a server-side AI inference endpoint is configured
+   * @returns {boolean}
    */
-  async analyzeRadiograph(imageSource) {
-    await delay(1200); // Realistic AI inference latency
+  isAiConfigured() {
+    return Boolean(AI_SERVICE_URL);
+  },
 
-    return {
-      id: `ai-diag-${Date.now()}`,
-      modelName: 'SmileGuard DentalDenseNet-v3.2',
-      disclaimer: 'AI suggestion only. Final diagnosis is made by the dentist.',
-      isDemoData: true,
-      findings: [
-        {
-          condition: 'Impacted Mandibular Third Molar (#38)',
-          confidence: 94.2,
-          level: 'HIGH',
-          description: 'Mesioangular impaction contacting distal root of #37.',
-          recommendation: 'Surgical extraction evaluation recommended.',
-        },
-        {
-          condition: 'Interproximal Caries (#16 Distal)',
-          confidence: 76.5,
-          level: 'MODERATE',
-          description: 'Radiolucency extending into middle third of dentin.',
-          recommendation: 'Bitewing verification & class II composite restoration.',
-        },
-        {
-          condition: 'Periapical Radiolucency (#24 Apex)',
-          confidence: 48.1,
-          level: 'LOW',
-          description: 'Inconclusive widening of periodontal ligament space.',
-          recommendation: 'Vitality testing required. Low model confidence.',
-        },
-      ],
-      overallRisk: 'MODERATE',
-      gradCamHeatmapUrl: imageSource, // Heatmap will be composited via CSS gradient/canvas
-    };
+  /**
+   * Sends a radiograph for clinical AI inference to the server-side boundary
+   * @param {string} imageUrl - Authorized Cloudinary or storage radiograph URL
+   * @param {Object} [options]
+   * @param {string} [options.patientId]
+   * @param {string} [options.radiographType]
+   * @returns {Promise<Object>} Authentic model inference results
+   */
+  async analyzeRadiograph(imageUrl, options = {}) {
+    if (!this.isAiConfigured()) {
+      throw new Error(
+        'AI Diagnostic service is unconfigured. A trusted backend endpoint (VITE_AI_SERVICE_URL) holding your Gemini/CNN model credentials is required.'
+      );
+    }
+
+    if (!imageUrl) {
+      throw new Error('Image URL is required for diagnostic analysis.');
+    }
+
+    const currentUser = auth?.currentUser;
+    if (!currentUser) {
+      throw new Error('Authentication required to invoke clinical AI inference.');
+    }
+
+    const idToken = await currentUser.getIdToken();
+
+    const response = await fetch(AI_SERVICE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({
+        imageUrl,
+        patientId: options.patientId,
+        radiographType: options.radiographType,
+      }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || `AI service responded with HTTP status ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result;
   },
 };

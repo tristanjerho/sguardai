@@ -1,305 +1,409 @@
-import { getStorageItem, setStorageItem, STORAGE_KEYS, delay } from './mock/storage';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+  updateProfile as updateFirebaseProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from 'firebase/auth';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  addDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
 import { ROLES } from '../lib/roles';
 import { activityLogService } from './activityLogService';
 
 /**
- * Authentication & User Management Service (Mock layer)
+ * Production Firebase Authentication & User Management Service
+ * Single source of truth: Firebase Auth & Cloud Firestore
  */
 export const authService = {
   /**
-   * Logs in a user with email and password
+   * Logs in a user with real Firebase Authentication credentials
    * @param {string} email
    * @param {string} password
-   * @returns {Promise<Object>} user object
+   * @returns {Promise<Object>} user document with role and profile
    */
   async login(email, password) {
-    await delay(350);
-    const users = getStorageItem(STORAGE_KEYS.USERS, []);
+    if (!auth || !db) {
+      throw new Error('Firebase is not initialized. Please verify your environment configuration.');
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
+    const credential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+    const uid = credential.user.uid;
 
-    const user = users.find(
-      (u) => u.email.toLowerCase() === normalizedEmail && u.password === password
-    );
+    const userDocRef = doc(db, 'users', uid);
+    const userSnapshot = await getDoc(userDocRef);
 
-    if (!user) {
-      throw new Error('Invalid email or password. Please check your credentials.');
+    if (!userSnapshot.exists()) {
+      // Create basic profile if user document doesn't exist yet
+      const initialProfile = {
+        id: uid,
+        uid: uid,
+        email: normalizedEmail,
+        fullName: credential.user.displayName || normalizedEmail.split('@')[0],
+        role: ROLES.PATIENT,
+        isOnboarded: false,
+        createdAt: serverTimestamp(),
+      };
+      await setDoc(userDocRef, initialProfile);
+      return initialProfile;
     }
 
-    if (user.deactivated) {
-      throw new Error('This account has been deactivated. Please contact the administrator.');
-    }
+    const userData = { id: uid, uid, ...userSnapshot.data() };
 
-    // Save session
-    localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(user));
+    if (userData.deactivated) {
+      await signOut(auth);
+      throw new Error('This account has been deactivated. Please contact your clinic administrator.');
+    }
 
     await activityLogService.log({
-      actor: `${user.fullName || user.email} (${user.role})`,
+      userId: uid,
+      actor: `${userData.fullName || userData.email} (${userData.role})`,
       action: 'USER_LOGIN',
-      entity: `Logged into ${user.role.toLowerCase()} portal`,
+      resourceType: 'SESSION',
+      resourceId: uid,
+      entity: `Authenticated session in ${userData.role} portal`,
     });
 
-    return user;
+    return userData;
   },
 
   /**
-   * Mock Google OAuth Login
-   * @returns {Promise<Object>}
+   * Authenticates using real Firebase Google Sign-In with server-authoritative role lock.
+   * If new user: strictly registers as PATIENT (staff cannot self-assign roles).
+   * If existing user: loads authoritative role from Firestore.
+   * @returns {Promise<Object>} user document with role and profile
    */
   async loginWithGoogle() {
-    await delay(450);
-    const users = getStorageItem(STORAGE_KEYS.USERS, []);
-    // Default to Maria Santos demo patient
-    const user = users.find((u) => u.email === 'patient@demo.com') || users[0];
+    if (!auth || !db) {
+      throw new Error('Firebase is not initialized. Please verify your environment configuration.');
+    }
 
-    localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(user));
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    let credential;
+    try {
+      credential = await signInWithPopup(auth, provider);
+    } catch (err) {
+      if (err.code === 'auth/popup-closed-by-user') {
+        throw new Error('Sign-in popup was closed before completing verification.');
+      } else if (err.code === 'auth/popup-blocked') {
+        throw new Error('Browser popup was blocked. Please allow popups for this site.');
+      } else if (err.code === 'auth/unauthorized-domain') {
+        throw new Error('This domain is not authorized in Firebase Authentication Console (Sign-in method > Authorized domains).');
+      } else if (err.code === 'auth/account-exists-with-different-credential') {
+        throw new Error('An account already exists with this email using a different sign-in method.');
+      } else if (err.code === 'auth/network-request-failed') {
+        throw new Error('Network error during Google authentication. Check your internet connection.');
+      }
+      throw err;
+    }
+
+    const uid = credential.user.uid;
+    const userDocRef = doc(db, 'users', uid);
+    const userSnapshot = await getDoc(userDocRef);
+
+    if (!userSnapshot.exists()) {
+      // Strictly self-registers as PATIENT. Privileged staff roles can never be self-assigned.
+      const initialProfile = {
+        id: uid,
+        uid: uid,
+        email: credential.user.email ? credential.user.email.toLowerCase() : '',
+        fullName: credential.user.displayName || credential.user.email?.split('@')[0] || 'Patient',
+        role: ROLES.PATIENT, // Strictly PATIENT
+        phone: credential.user.phoneNumber || '',
+        dateOfBirth: '',
+        medicalHistory: '',
+        emergencyContact: '',
+        isOnboarded: false,
+        avatar: credential.user.photoURL || '',
+        createdAt: serverTimestamp(),
+      };
+      await setDoc(userDocRef, initialProfile);
+
+      await activityLogService.log({
+        userId: uid,
+        actor: `${initialProfile.fullName} (PATIENT)`,
+        action: 'GOOGLE_AUTH_SIGNUP',
+        resourceType: 'USER',
+        resourceId: uid,
+        entity: 'Registered new patient account via Google Authentication',
+      });
+
+      return initialProfile;
+    }
+
+    const userData = { id: uid, uid, ...userSnapshot.data() };
+
+    if (userData.deactivated) {
+      await signOut(auth);
+      throw new Error('This account has been deactivated. Please contact your clinic administrator.');
+    }
 
     await activityLogService.log({
-      actor: `${user.fullName} (${user.role})`,
+      userId: uid,
+      actor: `${userData.fullName || userData.email} (${userData.role})`,
       action: 'GOOGLE_AUTH_LOGIN',
-      entity: 'Logged in via Google Single Sign-On (Mock)',
+      resourceType: 'SESSION',
+      resourceId: uid,
+      entity: `Authenticated session in ${userData.role} portal via Google`,
     });
 
-    return user;
+    return userData;
   },
 
   /**
-   * Registers a new PATIENT user (Role is strictly locked to PATIENT)
+   * Registers a new user with real Firebase Auth and writes their Firestore profile
    * @param {Object} data
    * @param {string} data.email
    * @param {string} data.password
    * @param {string} data.fullName
+   * @param {string} [data.role]
    * @returns {Promise<Object>}
    */
   async signup({ email, password, fullName }) {
-    await delay(400);
-    const users = getStorageItem(STORAGE_KEYS.USERS, []);
-    const normalizedEmail = email.trim().toLowerCase();
-
-    if (users.some((u) => u.email.toLowerCase() === normalizedEmail)) {
-      throw new Error('An account with this email address already exists.');
+    if (!auth || !db) {
+      throw new Error('Firebase is not initialized.');
     }
 
-    const newUser = {
-      id: `usr-patient-${Date.now()}`,
+    const normalizedEmail = email.trim().toLowerCase();
+    const credential = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
+    const uid = credential.user.uid;
+
+    // Update Firebase Auth display name
+    await updateFirebaseProfile(credential.user, {
+      displayName: fullName.trim(),
+    });
+
+    // Server-Authoritative Role Provisioning:
+    // Self-registration can ONLY create a PATIENT profile.
+    // Staff roles (DENTIST, LAB_TECH, ADMIN, SUPERADMIN) are strictly administrator-provisioned.
+    const newUserData = {
+      id: uid,
+      uid: uid,
       email: normalizedEmail,
-      password,
       fullName: fullName.trim(),
-      role: ROLES.PATIENT, // Strictly enforced: only PATIENT
+      role: ROLES.PATIENT,
       phone: '',
       dateOfBirth: '',
       medicalHistory: '',
       emergencyContact: '',
-      isOnboarded: false, // Must complete onboarding
-      privacyConsent: null,
-      avatar: '',
-      createdAt: new Date().toISOString(),
+      isOnboarded: false,
+      createdAt: serverTimestamp(),
     };
 
-    users.push(newUser);
-    setStorageItem(STORAGE_KEYS.USERS, users);
-    localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(newUser));
+    await setDoc(doc(db, 'users', uid), newUserData);
 
     await activityLogService.log({
-      actor: `${newUser.fullName} (PATIENT)`,
+      userId: uid,
+      actor: `${newUserData.fullName} (${newUserData.role})`,
       action: 'USER_SIGNUP',
-      entity: 'Created new patient account',
+      resourceType: 'USER',
+      resourceId: uid,
+      entity: 'Registered new user account in Firestore',
     });
 
-    return newUser;
+    return newUserData;
   },
 
   /**
-   * Completes the required patient onboarding flow
+   * Fetches user profile from Firestore by UID
+   * @param {string} uid
+   * @returns {Promise<Object|null>}
+   */
+  async getUserProfile(uid) {
+    if (!db || !uid) return null;
+    const userDocRef = doc(db, 'users', uid);
+    const snapshot = await getDoc(userDocRef);
+    if (!snapshot.exists()) return null;
+    return { id: uid, uid, ...snapshot.data() };
+  },
+
+  /**
+   * Completes patient onboarding flow in Firestore
    * @param {string} userId
    * @param {Object} onboardingData
    * @returns {Promise<Object>}
    */
   async completeOnboarding(userId, onboardingData) {
-    await delay(350);
-    const users = getStorageItem(STORAGE_KEYS.USERS, []);
-    const index = users.findIndex((u) => u.id === userId);
+    if (!db) throw new Error('Firestore is not initialized.');
 
-    if (index === -1) {
-      throw new Error('User not found');
-    }
-
-    const updatedUser = {
-      ...users[index],
-      fullName: onboardingData.fullName || users[index].fullName,
-      phone: onboardingData.phone,
-      dateOfBirth: onboardingData.dateOfBirth,
-      medicalHistory: onboardingData.medicalHistory,
-      emergencyContact: onboardingData.emergencyContact,
+    const userDocRef = doc(db, 'users', userId);
+    const updates = {
+      fullName: onboardingData.fullName,
+      phone: onboardingData.phone || '',
+      dateOfBirth: onboardingData.dateOfBirth || '',
+      medicalHistory: onboardingData.medicalHistory || '',
+      emergencyContact: onboardingData.emergencyContact || '',
       isOnboarded: true,
       privacyConsent: {
         consented: true,
         timestamp: new Date().toISOString(),
         actReference: 'Data Privacy Act of 2012 (Republic Act No. 10173)',
       },
+      updatedAt: serverTimestamp(),
     };
 
-    users[index] = updatedUser;
-    setStorageItem(STORAGE_KEYS.USERS, users);
-    localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(updatedUser));
+    await updateDoc(userDocRef, updates);
 
     await activityLogService.log({
-      actor: `${updatedUser.fullName} (PATIENT)`,
+      userId,
+      actor: `${onboardingData.fullName} (PATIENT)`,
       action: 'ONBOARDING_COMPLETED',
-      entity: 'Accepted RA 10173 consent and provided clinical profile',
+      resourceType: 'USER',
+      resourceId: userId,
+      entity: 'Completed clinical onboarding and accepted privacy consent',
     });
 
-    return updatedUser;
+    const refreshed = await this.getUserProfile(userId);
+    return refreshed;
   },
 
   /**
-   * Logs out current session
-   * @returns {Promise<boolean>}
-   */
-  async logout() {
-    await delay(150);
-    localStorage.removeItem(STORAGE_KEYS.SESSION);
-    return true;
-  },
-
-  /**
-   * Restores active session user from localStorage
-   * @returns {Object|null}
-   */
-  getCurrentUser() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.SESSION);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  },
-
-  /**
-   * Updates profile information for the current user
+   * Updates user profile fields in Firestore
    * @param {string} userId
    * @param {Object} updates
    * @returns {Promise<Object>}
    */
   async updateProfile(userId, updates) {
-    await delay(300);
-    const users = getStorageItem(STORAGE_KEYS.USERS, []);
-    const index = users.findIndex((u) => u.id === userId);
-
-    if (index === -1) throw new Error('User not found');
-
-    const updatedUser = { ...users[index], ...updates };
-    users[index] = updatedUser;
-    setStorageItem(STORAGE_KEYS.USERS, users);
-    localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(updatedUser));
-
-    return updatedUser;
+    if (!db) throw new Error('Firestore is not initialized.');
+    const userDocRef = doc(db, 'users', userId);
+    await updateDoc(userDocRef, {
+      ...updates,
+      updatedAt: serverTimestamp(),
+    });
+    return this.getUserProfile(userId);
   },
 
   /**
-   * Mock password reset request
+   * Signs out the current Firebase session
+   * @returns {Promise<void>}
+   */
+  async logout() {
+    if (auth) {
+      await signOut(auth);
+    }
+  },
+
+  /**
+   * Sends a real Firebase password reset email
    * @param {string} email
-   * @returns {Promise<boolean>}
+   * @returns {Promise<void>}
    */
   async requestPasswordReset(email) {
-    await delay(350);
-    return true;
+    if (!auth) throw new Error('Firebase is not initialized.');
+    await sendPasswordResetEmail(auth, email.trim());
   },
 
   /**
-   * ADMIN: List all system users
+   * ADMIN: List all system users from Firestore
    * @returns {Promise<Array<Object>>}
    */
   async listUsers() {
-    await delay(250);
-    return getStorageItem(STORAGE_KEYS.USERS, []);
+    if (!db) throw new Error('Firestore is not initialized.');
+    const querySnapshot = await getDocs(collection(db, 'users'));
+    const users = [];
+    querySnapshot.forEach((d) => {
+      users.push({ id: d.id, ...d.data() });
+    });
+    return users;
   },
 
   /**
-   * ADMIN: Create a new Staff Account (Dentist or Admin)
+   * ADMIN: Provision a new staff account profile in Firestore
    * @param {Object} userData
    * @returns {Promise<Object>}
    */
   async createStaffUser(userData) {
-    await delay(350);
-    const users = getStorageItem(STORAGE_KEYS.USERS, []);
+    if (!db) throw new Error('Firestore is not initialized.');
     const normalizedEmail = userData.email.trim().toLowerCase();
 
-    if (users.some((u) => u.email.toLowerCase() === normalizedEmail)) {
-      throw new Error('An account with this email already exists.');
+    const existingSnap = await getDocs(query(collection(db, 'users'), where('email', '==', normalizedEmail)));
+    if (!existingSnap.empty) {
+      throw new Error('An account with this email address already exists.');
     }
 
-    const newUser = {
-      id: `usr-${userData.role.toLowerCase()}-${Date.now()}`,
+    const newStaffData = {
       email: normalizedEmail,
-      password: userData.password || 'Demo1234',
       fullName: userData.fullName.trim(),
       role: userData.role,
       specialty: userData.specialty || '',
-      licenseNumber: userData.licenseNumber || '',
-      department: userData.department || '',
       phone: userData.phone || '',
+      department: userData.department || '',
       isOnboarded: true,
       deactivated: false,
-      createdAt: new Date().toISOString(),
+      createdAt: serverTimestamp(),
     };
 
-    users.push(newUser);
-    setStorageItem(STORAGE_KEYS.USERS, users);
+    const docRef = await addDoc(collection(db, 'users'), newStaffData);
 
     await activityLogService.log({
-      actor: 'Admin',
       action: 'CREATED_STAFF_ACCOUNT',
-      entity: `${newUser.fullName} (${newUser.role})`,
+      resourceType: 'USER',
+      resourceId: docRef.id,
+      entity: `Provisioned staff profile: ${userData.fullName} (${userData.role})`,
     });
 
-    return newUser;
+    return { id: docRef.id, ...newStaffData };
   },
 
   /**
-   * ADMIN: Updates user role
+   * ADMIN: Updates a user's role in Firestore
    * @param {string} userId
    * @param {string} newRole
-   * @returns {Promise<Object>}
+   * @returns {Promise<void>}
    */
   async updateUserRole(userId, newRole) {
-    await delay(250);
-    const users = getStorageItem(STORAGE_KEYS.USERS, []);
-    const index = users.findIndex((u) => u.id === userId);
-    if (index === -1) throw new Error('User not found');
-
-    const oldRole = users[index].role;
-    users[index].role = newRole;
-    setStorageItem(STORAGE_KEYS.USERS, users);
-
-    await activityLogService.log({
-      actor: 'Admin',
-      action: 'ROLE_CHANGED',
-      entity: `${users[index].fullName}: ${oldRole} -> ${newRole}`,
+    if (!db) throw new Error('Firestore is not initialized.');
+    const userDocRef = doc(db, 'users', userId);
+    await updateDoc(userDocRef, {
+      role: newRole,
+      updatedAt: serverTimestamp(),
     });
 
-    return users[index];
+    await activityLogService.log({
+      action: 'ROLE_CHANGED',
+      resourceType: 'USER',
+      resourceId: userId,
+      entity: `Role changed to ${newRole}`,
+    });
   },
 
   /**
-   * ADMIN: Toggle deactivation of an account
+   * ADMIN: Toggles active/deactivated state of a user account
    * @param {string} userId
-   * @returns {Promise<Object>}
+   * @param {boolean} currentDeactivatedState
+   * @returns {Promise<boolean>}
    */
-  async toggleUserStatus(userId) {
-    await delay(250);
-    const users = getStorageItem(STORAGE_KEYS.USERS, []);
-    const index = users.findIndex((u) => u.id === userId);
-    if (index === -1) throw new Error('User not found');
-
-    users[index].deactivated = !users[index].deactivated;
-    setStorageItem(STORAGE_KEYS.USERS, users);
-
-    await activityLogService.log({
-      actor: 'Admin',
-      action: users[index].deactivated ? 'DEACTIVATED_USER' : 'REACTIVATED_USER',
-      entity: `${users[index].fullName} (${users[index].email})`,
+  async toggleUserStatus(userId, currentDeactivatedState) {
+    if (!db) throw new Error('Firestore is not initialized.');
+    const newState = !currentDeactivatedState;
+    const userDocRef = doc(db, 'users', userId);
+    await updateDoc(userDocRef, {
+      deactivated: newState,
+      updatedAt: serverTimestamp(),
     });
 
-    return users[index];
+    await activityLogService.log({
+      action: newState ? 'DEACTIVATED_USER' : 'REACTIVATED_USER',
+      resourceType: 'USER',
+      resourceId: userId,
+      entity: `User account status set to ${newState ? 'deactivated' : 'active'}`,
+    });
+
+    return newState;
   },
 };
