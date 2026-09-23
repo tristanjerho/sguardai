@@ -1,0 +1,35 @@
+{
+  "purpose": "Binary Dental OPG Input Validation Model",
+  "classes": [
+    "dental_opg",
+    "non_opg"
+  ],
+  "class_labels": {
+    "dental_opg": "Dental OPG X-ray",
+    "non_opg": "Non-Dental-OPG Image"
+  },
+  "sources": {
+    "dental_opg": "Dental OPG Panoramic Radiograph Dataset",
+    "non_opg": "Real-world photographs, documents, screenshots, objects, and system images"
+  },
+  "total_images": 464,
+  "split_counts": {
+    "train": {
+      "dental_opg": 162,
+      "non_opg": 162
+    },
+    "val": {
+      "dental_opg": 35,
+      "non_opg": 35
+    },
+    "test": {
+      "dental_opg": 35,
+      "non_opg": 35
+    }
+  },
+  "proportions": {
+    "train": "69.8%",
+    "val": "15.1%",
+    "test": "15.1%"
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "model_name": "SmileGuard Dental OPG Input Validator",
+  "purpose": "Binary Gatekeeper to verify image is a real dental panoramic X-ray before pathology classification",
+  "architecture": "EfficientNetB0 (Transfer Learning + Fine-Tuning)",
+  "input_size": [
+    224,
+    224,
+    3
+  ],
+  "classes": [
+    "dental_opg",
+    "non_opg"
+  ],
+  "opg_class_name": "dental_opg",
+  "non_opg_class_name": "non_opg",
+  "validation_decision_threshold": 0.6,
+  "dataset": {
+    "total_images": 464,
+    "train_images": 324,
+    "validation_images": 70,
+    "test_images": 70
+  },
+  "evaluation": {
+    "test_accuracy": 1.0,
+    "test_precision_weighted": 1.0,
+    "test_recall_weighted": 1.0,
+    "test_f1_weighted": 1.0,
+    "confusion_matrix": [
+      [
+        35,
+        0
+      ],
+      [
+        0,
+        29
+      ]
+    ],
+    "per_class": {
+      "dental_opg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 35.0
+      },
+      "non_opg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 29.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 64.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 64.0
+      }
+    }
+  },
+  "training_completed_at": "2026-09-23T23:29:47.965070Z",
+  "training_duration_seconds": 176.86
+}

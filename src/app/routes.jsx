@@ -43,6 +43,7 @@ import { AiWorkstation } from '../features/clinic/AiWorkstation';
 import { LabOrdersQueue } from '../features/lab/LabOrdersQueue';
 
 // Admin Pages
+import { SuperAdminDashboard } from '../features/admin/SuperAdminDashboard';
 import { UserManagement } from '../features/admin/UserManagement';
 import { ActivityLogs } from '../features/admin/ActivityLogs';
 
@@ -101,6 +102,14 @@ export function PublicAuthRoute({ children }) {
   }
 
   return children;
+}
+
+function AdminIndexRedirect() {
+  const { user } = useAuth();
+  if (user?.role === ROLES.SUPERADMIN) {
+    return <Navigate to="/admin/super" replace />;
+  }
+  return <Navigate to="/admin/users" replace />;
 }
 
 export function AppRoutes() {
@@ -204,7 +213,15 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/admin/users" replace />} />
+        <Route index element={<AdminIndexRedirect />} />
+        <Route
+          path="super"
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.SUPERADMIN, ROLES.ADMIN]}>
+              <SuperAdminDashboard />
+            </ProtectedRoute>
+          }
+        />
         <Route path="users" element={<UserManagement />} />
         <Route path="logs" element={<ActivityLogs />} />
       </Route>

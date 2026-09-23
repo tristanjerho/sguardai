@@ -58,23 +58,27 @@ export function BookAppointment() {
   const minDateString = tomorrow.toISOString().split('T')[0];
 
   useEffect(() => {
-    async function initData() {
-      try {
-        const [usersList, allAppts] = await Promise.all([
-          authService.listUsers(),
-          appointmentService.list(),
-        ]);
-        const dentistUsers = usersList.filter((u) => u.role === 'DENTIST');
-        setDentists(dentistUsers);
-        if (dentistUsers.length > 0) {
-          setSelectedDentistId(dentistUsers[0].id);
-        }
-        setExistingAppointments(allAppts);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    initData();
+    // 1. Ensure baseline verified specialists exist if Firestore is pristine
+    authService.ensureDefaultDentists();
+
+    // 2. Realtime listener for active dentists
+    const unsubDentists = authService.subscribeToDentists((dentistUsers) => {
+      setDentists(dentistUsers);
+      setSelectedDentistId((prev) => {
+        if (prev && dentistUsers.some((d) => d.id === prev)) return prev;
+        return dentistUsers.length > 0 ? dentistUsers[0].id : '';
+      });
+    });
+
+    // 3. Realtime listener for appointments (conflict checking)
+    const unsubAppts = appointmentService.subscribeToAppointments((allAppts) => {
+      setExistingAppointments(allAppts);
+    });
+
+    return () => {
+      unsubDentists();
+      unsubAppts();
+    };
   }, []);
 
   const selectedService = SERVICES.find((s) => s.id === selectedServiceId) || SERVICES[0];

@@ -8,12 +8,18 @@ const MascotContext = createContext({
 
 export function MascotProvider({ children }) {
   const [showSparky, setShowSparky] = useState(() => {
-    const saved = localStorage.getItem('sguardai_mascot_enabled');
-    return saved !== null ? JSON.parse(saved) : true;
+    try {
+      const saved = localStorage.getItem('sguardai_mascot_enabled');
+      return saved !== null ? JSON.parse(saved) : true;
+    } catch {
+      return true;
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('sguardai_mascot_enabled', JSON.stringify(showSparky));
+    try {
+      localStorage.setItem('sguardai_mascot_enabled', JSON.stringify(showSparky));
+    } catch {}
   }, [showSparky]);
 
   const toggleSparky = () => setShowSparky((prev) => !prev);

@@ -1,0 +1,64 @@
+{
+  "total_valid_images": 517,
+  "total_corrupted_filtered": 0,
+  "num_classes": 6,
+  "classes": [
+    "BDC-BDR",
+    "Caries",
+    "Fractured Teeth",
+    "Healthy Teeth",
+    "Impacted teeth",
+    "Infection"
+  ],
+  "class_to_idx": {
+    "BDC-BDR": 0,
+    "Caries": 1,
+    "Fractured Teeth": 2,
+    "Healthy Teeth": 3,
+    "Impacted teeth": 4,
+    "Infection": 5
+  },
+  "splits": {
+    "train_count": 363,
+    "val_count": 77,
+    "test_count": 77
+  },
+  "class_distribution": {
+    "BDC-BDR": {
+      "train": 36,
+      "val": 8,
+      "test": 8,
+      "total": 52
+    },
+    "Caries": {
+      "train": 83,
+      "val": 18,
+      "test": 18,
+      "total": 119
+    },
+    "Fractured Teeth": {
+      "train": 9,
+      "val": 2,
+      "test": 2,
+      "total": 13
+    },
+    "Healthy Teeth": {
+      "train": 157,
+      "val": 33,
+      "test": 33,
+      "total": 223
+    },
+    "Impacted teeth": {
+      "train": 61,
+      "val": 13,
+      "test": 13,
+      "total": 87
+    },
+    "Infection": {
+      "train": 17,
+      "val": 3,
+      "test": 3,
+      "total": 23
+    }
+  }
+}

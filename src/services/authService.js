@@ -1,3 +1,4 @@
+import { initializeApp, deleteApp } from 'firebase/app';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -6,6 +7,7 @@ import {
   updateProfile as updateFirebaseProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  getAuth,
 } from 'firebase/auth';
 import {
   doc,
@@ -17,9 +19,10 @@ import {
   query,
   where,
   addDoc,
+  onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
+import { auth, db, firebaseConfig } from '../config/firebase';
 import { ROLES } from '../lib/roles';
 import { activityLogService } from './activityLogService';
 
@@ -323,7 +326,7 @@ export const authService = {
   },
 
   /**
-   * ADMIN: Provision a new staff account profile in Firestore
+   * ADMIN: Provision a new staff account profile in Firebase Auth and Firestore
    * @param {Object} userData
    * @returns {Promise<Object>}
    */
@@ -348,16 +351,62 @@ export const authService = {
       createdAt: serverTimestamp(),
     };
 
-    const docRef = await addDoc(collection(db, 'users'), newStaffData);
+    let uid = null;
+
+    // If password provided and firebaseConfig is available, provision in Firebase Auth
+    if (userData.password && firebaseConfig?.apiKey) {
+      const secondaryAppName = `StaffProvisioner_${Date.now()}`;
+      let secondaryApp = null;
+      try {
+        secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+        const secondaryAuth = getAuth(secondaryApp);
+        const userCred = await createUserWithEmailAndPassword(
+          secondaryAuth,
+          normalizedEmail,
+          userData.password
+        );
+        uid = userCred.user.uid;
+        if (userData.fullName) {
+          await updateFirebaseProfile(userCred.user, { displayName: userData.fullName.trim() });
+        }
+      } catch (authErr) {
+        if (authErr.code === 'auth/email-already-in-use') {
+          throw new Error('This email is already registered in Firebase Authentication.');
+        } else if (authErr.code === 'auth/weak-password') {
+          throw new Error('Password should be at least 6 characters.');
+        } else {
+          console.warn('Secondary auth provision warning:', authErr);
+        }
+      } finally {
+        if (secondaryApp) {
+          try {
+            await deleteApp(secondaryApp);
+          } catch (e) {
+            console.error('Error deleting secondary app instance:', e);
+          }
+        }
+      }
+    }
+
+    if (uid) {
+      newStaffData.id = uid;
+      newStaffData.uid = uid;
+      await setDoc(doc(db, 'users', uid), newStaffData);
+    } else {
+      const docRef = await addDoc(collection(db, 'users'), newStaffData);
+      uid = docRef.id;
+      newStaffData.id = uid;
+      newStaffData.uid = uid;
+    }
 
     await activityLogService.log({
       action: 'CREATED_STAFF_ACCOUNT',
       resourceType: 'USER',
-      resourceId: docRef.id,
+      resourceId: uid,
       entity: `Provisioned staff profile: ${userData.fullName} (${userData.role})`,
     });
 
-    return { id: docRef.id, ...newStaffData };
+    return { id: uid, ...newStaffData };
   },
 
   /**
@@ -405,5 +454,104 @@ export const authService = {
     });
 
     return newState;
+  },
+
+  /**
+   * Realtime Firestore listener for all users
+   * @param {Function} callback
+   * @returns {Function} unsubscribe function
+   */
+  subscribeToUsers(callback) {
+    if (!db) {
+      callback([]);
+      return () => {};
+    }
+    const q = collection(db, 'users');
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const users = [];
+        snapshot.forEach((d) => {
+          users.push({ id: d.id, ...d.data() });
+        });
+        callback(users);
+      },
+      (err) => {
+        console.error('Realtime users listener error:', err);
+      }
+    );
+  },
+
+  /**
+   * Realtime Firestore listener for registered active clinic dentists
+   * @param {Function} callback
+   * @returns {Function} unsubscribe function
+   */
+  subscribeToDentists(callback) {
+    if (!db) {
+      callback([]);
+      return () => {};
+    }
+    const q = collection(db, 'users');
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const dentists = [];
+        snapshot.forEach((d) => {
+          const data = d.data();
+          const role = (data.role || '').toUpperCase();
+          if (role === 'DENTIST' && !data.deactivated) {
+            dentists.push({ id: d.id, ...data });
+          }
+        });
+        callback(dentists);
+      },
+      (err) => {
+        console.error('Realtime dentists listener error:', err);
+      }
+    );
+  },
+
+  /**
+   * Ensures baseline clinical specialists exist in Firestore if the clinic has 0 registered dentists
+   */
+  async ensureDefaultDentists() {
+    if (!db) return;
+    try {
+      const users = await this.listUsers();
+      const existingDentists = users.filter((u) => (u.role || '').toUpperCase() === 'DENTIST');
+      if (existingDentists.length === 0) {
+        const defaultDentists = [
+          {
+            fullName: 'Dr. Maria Elena Santos, DMD',
+            email: 'dr.santos@smileguard.ai',
+            role: ROLES.DENTIST,
+            specialty: 'Orthodontics & Dento-Facial Orthopedics',
+            phone: '+63 917 555 0192',
+            department: 'Orthodontics',
+            isOnboarded: true,
+            deactivated: false,
+          },
+          {
+            fullName: 'Dr. Aris Rodriguez, DMD',
+            email: 'dr.rodriguez@smileguard.ai',
+            role: ROLES.DENTIST,
+            specialty: 'Restorative & Endodontic Specialist',
+            phone: '+63 918 555 0841',
+            department: 'Endodontics',
+            isOnboarded: true,
+            deactivated: false,
+          },
+        ];
+        for (const docData of defaultDentists) {
+          await addDoc(collection(db, 'users'), {
+            ...docData,
+            createdAt: serverTimestamp(),
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Error verifying default dentists:', err);
+    }
   },
 };

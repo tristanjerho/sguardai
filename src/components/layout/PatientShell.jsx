@@ -6,26 +6,40 @@ import { BottomTabBar } from './BottomTabBar';
 import { ROLES } from '../../lib/roles';
 import { notificationService } from '../../services/notificationService';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/useToast';
 
 export function PatientShell() {
   const { user } = useAuth();
+  const toast = useToast();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 
   useEffect(() => {
-    async function loadNotifications() {
-      if (user?.id) {
-        try {
-          const unread = await notificationService.getUnreadCount(user.id);
-          setUnreadCount(unread);
-        } catch (err) {
-          console.error(err);
-        }
+    const userId = user?.id || user?.uid;
+    if (!userId) return;
+
+    let previousIds = null;
+
+    const unsubscribe = notificationService.subscribeForUser(userId, (notifs) => {
+      const unread = notifs.filter((n) => !n.read).length;
+      setUnreadCount(unread);
+
+      // Check for newly arrived unread notifications and pop up a live toast
+      if (previousIds !== null) {
+        const newlyArrived = notifs.filter(
+          (n) => !n.read && !previousIds.has(n.id)
+        );
+        newlyArrived.forEach((notif) => {
+          toast.info(notif.title + ' — ' + notif.message);
+        });
       }
-    }
-    loadNotifications();
-  }, [user?.id, location.pathname]);
+
+      previousIds = new Set(notifs.map((n) => n.id));
+    });
+
+    return () => unsubscribe();
+  }, [user?.id, user?.uid]);
 
   const getPageTitle = () => {
     const path = location.pathname;

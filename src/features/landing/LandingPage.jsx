@@ -19,6 +19,7 @@ import { Mascot } from '../../components/mascot/Mascot';
 import { MascotBubble } from '../../components/mascot/MascotBubble';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { Logo } from '../../components/common/Logo';
 import { useTheme } from '../../context/ThemeContext';
 
 export function LandingPage() {
@@ -28,14 +29,7 @@ export function LandingPage() {
     <div className="min-h-screen bg-surface-base text-ink-primary flex flex-col selection:bg-teal-500 selection:text-white">
       {/* Navigation Bar */}
       <header className="sticky top-0 z-30 w-full h-16 border-b border-surface-border bg-surface-card/85 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-600 to-teal-400 flex items-center justify-center text-white shadow-soft">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <span className="font-heading font-extrabold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-teal-700 via-teal-600 to-teal-500 dark:from-teal-300 dark:to-teal-500 bg-clip-text text-transparent">
-            SmileGuard<span className="text-orange-500">.AI</span>
-          </span>
-        </Link>
+        <Logo size="md" />
 
         <div className="flex items-center gap-3">
           <button
@@ -115,13 +109,14 @@ export function LandingPage() {
           {/* Hero Right: Sparky & Interactive Speech Bubble */}
           <div className="lg:col-span-5 flex flex-col items-center justify-center space-y-4">
             <div className="relative p-8 rounded-3xl bg-gradient-to-br from-teal-500/10 via-teal-50/50 to-orange-50/30 dark:from-teal-950/40 dark:via-slate-900/60 dark:to-slate-950 border border-teal-200/80 dark:border-teal-800/60 shadow-soft-lg flex flex-col items-center text-center">
-              <Mascot mood="wave" size="xl" />
+              <Mascot mood="wave" size="xl" forceShow={true} />
 
               <div className="mt-4">
                 <MascotBubble
                   title="Hi there, I'm Sparky!"
-                  message="Welcome to SmileGuard AI! Sign in to book appointments, track your orthodontic journey, or manage clinical dental records securely."
+                  message="Welcome to SmileGuard! Sign in to book appointments, track your orthodontic journey, or manage clinical dental records securely."
                   badge="Smile Mascot"
+                  forceShow={true}
                 />
               </div>
             </div>
@@ -225,7 +220,7 @@ export function LandingPage() {
               Simple Workflow
             </span>
             <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary">
-              How SmileGuard AI Works in 3 Steps
+              How SmileGuard Works in 3 Steps
             </h2>
           </div>
 
@@ -274,7 +269,7 @@ export function LandingPage() {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="font-heading font-bold text-teal-700 dark:text-teal-400">
-              SmileGuard AI Platform
+              SmileGuard Platform
             </span>
             <span>• Intelligent Dental Cloud Platform</span>
           </div>

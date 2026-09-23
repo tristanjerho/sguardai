@@ -6,6 +6,7 @@ import { useToast } from '../../hooks/useToast';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { Logo } from '../../components/common/Logo';
 import { ROLES } from '../../lib/roles';
 
 export function Signup() {
@@ -69,7 +70,7 @@ export function Signup() {
     setIsLoading(true);
     try {
       const user = await loginWithGoogle();
-      toast.success(`Welcome to SmileGuard AI, ${user.fullName}!`);
+      toast.success(`Welcome to SmileGuard, ${user.fullName}!`);
       if (user.role === ROLES.PATIENT) {
         navigate(user.isOnboarded ? '/patient' : '/onboarding');
       } else if (user.role === ROLES.DENTIST) {
@@ -92,16 +93,14 @@ export function Signup() {
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-teal-50/50 via-surface-base to-orange-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <Link to="/" className="inline-flex items-center gap-2 group mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-600 to-teal-400 flex items-center justify-center text-white shadow-soft group-hover:scale-105 transition-transform">
-              <Sparkles className="w-6 h-6" />
-            </div>
-          </Link>
+          <div className="inline-flex justify-center mb-1">
+            <Logo size="xl" showText={false} />
+          </div>
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
             Create Patient Account
           </h1>
           <p className="text-sm text-ink-secondary">
-            Join SmileGuard AI for digital dental charts & orthodontic tracking
+            Join SmileGuard for digital dental charts & orthodontic tracking
           </p>
         </div>
 

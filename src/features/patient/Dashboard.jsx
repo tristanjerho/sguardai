@@ -41,34 +41,47 @@ export function PatientDashboard() {
   const triviaList = MASCOT_MESSAGES.toothTrivia;
 
   useEffect(() => {
-    async function loadData() {
-      if (!user?.id) return;
+    const userId = user?.id || user?.uid;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    async function loadStaticData() {
       try {
-        setLoading(true);
-        const [appts, trt, streak, notifs] = await Promise.all([
-          appointmentService.listForPatient(user.id),
-          treatmentService.getByPatientId(user.id),
-          patientService.getBrushStreak(user.id),
-          notificationService.listForUser(user.id),
+        const [trt, streak] = await Promise.all([
+          treatmentService.getByPatientId(userId),
+          patientService.getBrushStreak(userId),
         ]);
-
-        // Find upcoming appointment
-        const upcoming = appts
-          .filter((a) => a.status === 'CONFIRMED' || a.status === 'PENDING')
-          .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
-
-        setNextAppointment(upcoming || null);
         setTreatment(trt || null);
         setBrushStreak(streak || null);
-        setNotifications(notifs.slice(0, 3));
       } catch (err) {
-        console.error('Error loading patient dashboard:', err);
+        console.error('Error loading patient dashboard details:', err);
       } finally {
         setLoading(false);
       }
     }
-    loadData();
-  }, [user?.id]);
+    loadStaticData();
+
+    // Real-time listener for patient appointments
+    const unsubAppts = appointmentService.subscribeToAppointments((appts) => {
+      const patientAppts = appts.filter((a) => a.patientId === userId);
+      const upcoming = patientAppts
+        .filter((a) => a.status === 'CONFIRMED' || a.status === 'PENDING')
+        .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+      setNextAppointment(upcoming || null);
+    });
+
+    // Real-time listener for notifications
+    const unsubNotifs = notificationService.subscribeForUser(userId, (notifs) => {
+      setNotifications(notifs.slice(0, 3));
+    });
+
+    return () => {
+      unsubAppts();
+      unsubNotifs();
+    };
+  }, [user?.id, user?.uid]);
 
   const handleNextTip = () => {
     setTriviaIndex((prev) => (prev + 1) % triviaList.length);

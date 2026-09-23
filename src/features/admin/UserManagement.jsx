@@ -38,6 +38,7 @@ export function UserManagement() {
   const [newEmail, setNewEmail] = useState('');
   const [newRole, setNewRole] = useState(ROLES.DENTIST);
   const [newSpecialty, setNewSpecialty] = useState('Orthodontics');
+  const [newPhone, setNewPhone] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
@@ -45,21 +46,14 @@ export function UserManagement() {
   const [roleModalUser, setRoleModalUser] = useState(null);
   const [selectedRole, setSelectedRole] = useState('');
 
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      const list = await authService.listUsers();
-      setUsers(list);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to load user registry');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadUsers();
+    setLoading(true);
+    const unsubscribe = authService.subscribeToUsers((list) => {
+      setUsers(list);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleCreateStaff = async (e) => {
@@ -78,7 +72,8 @@ export function UserManagement() {
       setIsCreateOpen(false);
       setNewFullName('');
       setNewEmail('');
-      await loadUsers();
+      setNewPhone('');
+      setNewPassword('');
     } catch (err) {
       toast.error(err.message || 'Failed to create staff account.');
     } finally {
@@ -92,7 +87,6 @@ export function UserManagement() {
       await authService.updateUserRole(roleModalUser.id, selectedRole);
       toast.success(`Role for ${roleModalUser.fullName} updated to ${selectedRole}.`);
       setRoleModalUser(null);
-      await loadUsers();
     } catch (err) {
       toast.error('Failed to update role.');
     }
@@ -106,7 +100,6 @@ export function UserManagement() {
     try {
       await authService.toggleUserStatus(userToToggle.id);
       toast.success(`User status updated.`);
-      await loadUsers();
     } catch (err) {
       toast.error('Failed to change user status.');
     }

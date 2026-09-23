@@ -1,5 +1,5 @@
 /**
- * Core constants for SmileGuard AI
+ * Core constants for SmileGuard
  */
 
 export const APPOINTMENT_STATUS = {

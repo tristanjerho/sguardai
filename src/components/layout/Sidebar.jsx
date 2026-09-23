@@ -14,9 +14,11 @@ import {
   FlaskConical,
   BrainCircuit,
   ShieldAlert,
+  ShieldCheck,
   X,
 } from 'lucide-react';
 import { ROLES } from '../../lib/roles';
+import { Logo } from '../common/Logo';
 
 export function Sidebar({ role, isOpen = true, onClose }) {
   let navItems = [];
@@ -46,13 +48,22 @@ export function Sidebar({ role, isOpen = true, onClose }) {
       { to: '/clinic/ai-workstation', label: 'AI Workstation', icon: BrainCircuit, badge: 'AI' },
     ];
 
-    if (role === ROLES.ADMIN || role === ROLES.SUPERADMIN) {
+    if (role === ROLES.SUPERADMIN) {
       navItems = [
-        ...clinicItems,
-        { type: 'divider', label: 'Administration' },
-        { to: '/admin/users', label: 'User Management', icon: Users },
+        { to: '/admin/super', label: 'Command Center', icon: ShieldCheck, badge: 'ROOT', end: true },
+        { to: '/admin/users', label: 'User Registry & Roles', icon: Users },
+        { to: '/admin/logs', label: 'Security & Audit Stream', icon: ShieldAlert },
+        { to: '/lab', label: 'CAD/CAM Laboratory', icon: FlaskConical },
+        { type: 'divider', label: 'Operational Portals' },
+        { to: '/clinic', label: 'Chairside Clinic Portal', icon: LayoutDashboard },
+      ];
+    } else if (role === ROLES.ADMIN) {
+      navItems = [
+        { to: '/admin/users', label: 'User Management', icon: Users, end: true },
         { to: '/admin/logs', label: 'Activity Logs', icon: ShieldAlert },
         { to: '/lab', label: 'Laboratory Pipeline', icon: FlaskConical },
+        { type: 'divider', label: 'Operational Portals' },
+        { to: '/clinic', label: 'Chairside Clinic Portal', icon: LayoutDashboard },
       ];
     } else {
       navItems = clinicItems;
@@ -76,11 +87,9 @@ export function Sidebar({ role, isOpen = true, onClose }) {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-16 px-6 flex items-center justify-between border-b border-surface-border">
+        <div className="h-16 px-4 flex items-center justify-between border-b border-surface-border">
           <div className="flex items-center gap-2">
-            <span className="font-heading font-extrabold text-base tracking-tight text-teal-700 dark:text-teal-400">
-              SmileGuard
-            </span>
+            <Logo size="sm" asLink={false} />
             <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300">
               {role}
             </span>

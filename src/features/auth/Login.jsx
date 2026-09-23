@@ -6,6 +6,7 @@ import { useToast } from '../../hooks/useToast';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { Logo } from '../../components/common/Logo';
 import { ROLES } from '../../lib/roles';
 
 export function Login() {
@@ -91,13 +92,11 @@ export function Login() {
       <div className="w-full max-w-md space-y-6">
         {/* Brand header */}
         <div className="text-center space-y-2">
-          <Link to="/" className="inline-flex items-center gap-2 group mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-600 to-teal-400 flex items-center justify-center text-white shadow-soft group-hover:scale-105 transition-transform">
-              <Sparkles className="w-6 h-6" />
-            </div>
-          </Link>
+          <div className="inline-flex justify-center mb-1">
+            <Logo size="xl" showText={false} />
+          </div>
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
-            Welcome to SmileGuard<span className="text-orange-500">.AI</span>
+            Welcome to <span className="text-teal-700 dark:text-teal-400">SmileGuard</span>
           </h1>
           <p className="text-sm text-ink-secondary">
             Sign in to access your clinical workspace or patient portal

@@ -1,5 +1,5 @@
 /**
- * Cloudinary Configuration for SmileGuard AI
+ * Cloudinary Configuration for SmileGuard
  * Handles client-side direct uploads using unsigned upload presets
  * and responsive/diagnostic image transformations.
  */

@@ -41,21 +41,14 @@ export function AppointmentsQueue() {
 
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const loadAppointments = async () => {
-    try {
-      setLoading(true);
-      const list = await appointmentService.list();
-      setAppointments(list);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to load appointments queue.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadAppointments();
+    setLoading(true);
+    const unsubscribe = appointmentService.subscribeToAppointments((list) => {
+      setAppointments(list);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleApprove = async () => {
@@ -70,7 +63,6 @@ export function AppointmentsQueue() {
       );
       toast.success(`Confirmed appointment for ${approveModalItem.patientName}. Patient has been notified.`);
       setApproveModalItem(null);
-      await loadAppointments();
     } catch (err) {
       toast.error(err.message || 'Failed to approve appointment.');
     } finally {
@@ -95,7 +87,6 @@ export function AppointmentsQueue() {
       toast.success(`Declined appointment #${rejectModalItem.id}. Patient has been notified.`);
       setRejectModalItem(null);
       setRejectionReason('');
-      await loadAppointments();
     } catch (err) {
       toast.error(err.message || 'Failed to reject appointment.');
     } finally {
@@ -115,7 +106,6 @@ export function AppointmentsQueue() {
       );
       toast.success(`Appointment marked as completed.`);
       setCompleteModalItem(null);
-      await loadAppointments();
     } catch (err) {
       toast.error(err.message || 'Failed to complete appointment.');
     } finally {

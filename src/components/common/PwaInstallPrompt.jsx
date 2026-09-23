@@ -74,7 +74,7 @@ export function PwaInstallPrompt() {
             </div>
             <div>
               <div className="text-xs font-heading font-extrabold text-ink-primary flex items-center gap-1.5">
-                <span>Install SmileGuard AI App</span>
+                <span>Install SmileGuard App</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 font-bold">
                   PWA
                 </span>
@@ -102,7 +102,7 @@ export function PwaInstallPrompt() {
             <ol className="list-decimal pl-4 space-y-0.5 text-[11px] text-ink-muted">
               <li>Tap the <strong className="text-ink-primary">Share</strong> button in your Safari toolbar.</li>
               <li>Scroll down and tap <strong className="text-ink-primary">Add to Home Screen ⊞</strong>.</li>
-              <li>Open SmileGuard AI from your home screen as a native app!</li>
+              <li>Open SmileGuard from your home screen as a native app!</li>
             </ol>
           </div>
         ) : (

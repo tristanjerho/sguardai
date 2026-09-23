@@ -25,7 +25,7 @@ export function FirebaseSetupScreen() {
             Firebase Configuration Required
           </h1>
           <p className="text-sm text-ink-secondary max-w-md mx-auto">
-            SmileGuard AI operates exclusively on real Firebase Authentication and Cloud Firestore.
+            SmileGuard operates exclusively on real Firebase Authentication and Cloud Firestore.
             Please connect your Firebase project environment variables.
           </p>
         </div>

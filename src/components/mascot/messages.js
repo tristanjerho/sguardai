@@ -50,7 +50,7 @@ export const MASCOT_MESSAGES = {
   ],
   rubberBandReminder: [
     "Wearing your orthodontic elastics 24/7 (except when eating) cuts months off your treatment time!",
-    "Hook your rubber bands exactly as Dr. Elena showed you! Consistency is the secret to a perfect bite.",
+    "Hook your rubber bands exactly as your orthodontist demonstrated! Consistency is the secret to a perfect bite.",
     "Always carry extra elastic packets in your bag so you can replace broken ones immediately.",
   ],
   appointmentReminder: [

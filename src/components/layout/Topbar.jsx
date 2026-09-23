@@ -16,6 +16,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
 import { useMascot } from '../../context/MascotContext';
 import { Avatar } from '../ui/Avatar';
+import { Logo } from '../common/Logo';
 import { ROLES } from '../../lib/roles';
 
 export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCount = 0 }) {
@@ -47,14 +48,7 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
         )}
 
         <div className="flex items-center gap-2.5">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-600 to-teal-400 flex items-center justify-center text-white shadow-soft group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <span className="font-heading font-extrabold text-base sm:text-lg tracking-tight bg-gradient-to-r from-teal-700 via-teal-600 to-teal-500 dark:from-teal-300 dark:to-teal-500 bg-clip-text text-transparent">
-              SmileGuard<span className="text-orange-500">.AI</span>
-            </span>
-          </Link>
+          <Logo size="md" />
 
           {title && (
             <>

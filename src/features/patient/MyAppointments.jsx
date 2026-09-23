@@ -80,7 +80,7 @@ export function MyAppointments() {
       await appointmentService.cancel(
         cancelModalItem.id,
         cancelReason || 'Cancelled by patient request',
-        user.fullName || user.email
+        user?.fullName || user?.email || user?.uid || 'Patient'
       );
       toast.success('Appointment cancelled.');
       setCancelModalItem(null);
@@ -106,7 +106,7 @@ export function MyAppointments() {
         newDate,
         newSlot,
         rescheduleModalItem.dentistId,
-        user.fullName || user.email
+        user?.fullName || user?.email || user?.uid || 'Patient'
       );
       toast.success('Appointment rescheduled and queued for confirmation!');
       setRescheduleModalItem(null);

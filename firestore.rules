@@ -48,8 +48,8 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated();
       
-      // On creation: User can only create their own profile and role MUST be PATIENT
-      allow create: if isOwner(userId) && request.resource.data.role == 'PATIENT';
+      // On creation: User can only create their own profile as PATIENT, or Admin/SuperAdmin can provision staff
+      allow create: if (isOwner(userId) && request.resource.data.role == 'PATIENT') || isAdmin();
       
       // On update: Self-update allowed only if role is NOT modified; Admins can modify any field including role
       allow update: if (
@@ -63,12 +63,7 @@ service cloud.firestore {
     // APPOINTMENTS COLLECTION
     // =========================================================================
     match /appointments/{appointmentId} {
-      allow read: if isAuthenticated() && (
-        resource.data.patientId == request.auth.uid ||
-        resource.data.dentistId == request.auth.uid ||
-        isDentist() ||
-        isAdmin()
-      );
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && (
         request.resource.data.patientId == request.auth.uid ||
         isDentist() ||
@@ -76,6 +71,7 @@ service cloud.firestore {
       );
       allow update: if isAuthenticated() && (
         resource.data.patientId == request.auth.uid ||
+        resource.data.dentistId == request.auth.uid ||
         isDentist() ||
         isAdmin()
       );

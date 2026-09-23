@@ -25,22 +25,21 @@ export function Notifications() {
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('ALL');
 
-  const loadNotifications = async () => {
-    if (!user?.id) return;
-    try {
-      setLoading(true);
-      const list = await notificationService.listForUser(user.id);
-      setNotifications(list);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadNotifications();
-  }, [user?.id]);
+    const userId = user?.id || user?.uid;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const unsubscribe = notificationService.subscribeForUser(userId, (list) => {
+      setNotifications(list);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user?.id, user?.uid]);
 
   const handleMarkAsRead = async (notifId) => {
     try {

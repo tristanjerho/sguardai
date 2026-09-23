@@ -11,10 +11,11 @@ export function MascotBubble({
   onClose,
   className = '',
   badge = 'Sparky Tip',
+  forceShow = false,
 }) {
   const { showSparky } = useMascot();
 
-  if (!showSparky || !message) return null;
+  if ((!showSparky && !forceShow) || !message) return null;
 
   return (
     <AnimatePresence>

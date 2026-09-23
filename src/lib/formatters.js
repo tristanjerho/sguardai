@@ -1,11 +1,25 @@
 /**
- * Date, currency and string formatters
+ * Safely parses any date input (Firestore Timestamp, Date, string, number, or { seconds }) into a valid Date object.
  */
+function parseDateInput(input) {
+  if (!input) return null;
+  if (typeof input?.toDate === 'function') {
+    return input.toDate();
+  }
+  if (typeof input === 'object' && typeof input?.seconds === 'number') {
+    return new Date(input.seconds * 1000);
+  }
+  if (input instanceof Date) {
+    return isNaN(input.getTime()) ? null : input;
+  }
+  const parsed = new Date(input);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
 
 export function formatDate(dateString) {
   if (!dateString) return 'N/A';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return dateString;
+  const date = parseDateInput(dateString);
+  if (!date) return typeof dateString === 'string' ? dateString : 'N/A';
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
@@ -15,8 +29,8 @@ export function formatDate(dateString) {
 
 export function formatDateTime(dateString) {
   if (!dateString) return 'N/A';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return dateString;
+  const date = parseDateInput(dateString);
+  if (!date) return typeof dateString === 'string' ? dateString : 'N/A';
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
@@ -29,7 +43,8 @@ export function formatDateTime(dateString) {
 
 export function formatRelativeTime(dateString) {
   if (!dateString) return '';
-  const date = new Date(dateString);
+  const date = parseDateInput(dateString);
+  if (!date) return '';
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
 
@@ -37,7 +52,7 @@ export function formatRelativeTime(dateString) {
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
   if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  return formatDate(dateString);
+  return formatDate(date);
 }
 
 export function getStatusColor(status) {

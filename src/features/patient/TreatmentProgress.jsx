@@ -63,7 +63,7 @@ export function TreatmentProgress() {
         </div>
         <EmptyState
           title="No Active Treatment Plan Found"
-          description="You do not currently have an active braces or orthodontic plan recorded. Book a consultation with Dr. Elena Gomez to start your journey."
+          description="You do not currently have an active braces or orthodontic plan recorded. Book a consultation with an attending specialist to start your treatment plan."
           icon={Activity}
           actionLabel="Book Consultation"
           onAction={() => (window.location.href = '/patient/book')}

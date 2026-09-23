@@ -1,5 +1,5 @@
 /**
- * System user roles for SmileGuard AI
+ * System user roles for SmileGuard
  */
 export const ROLES = {
   PATIENT: 'PATIENT',

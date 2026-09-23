@@ -6,6 +6,7 @@ import { useToast } from '../../hooks/useToast';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { Logo } from '../../components/common/Logo';
 
 export function Onboarding() {
   const { user, completeOnboarding } = useAuth();
@@ -69,16 +70,14 @@ export function Onboarding() {
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 mb-2">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-600 to-teal-400 flex items-center justify-center text-white shadow-soft">
-              <Sparkles className="w-6 h-6" />
-            </div>
+          <div className="inline-flex justify-center mb-1">
+            <Logo size="xl" showText={false} />
           </div>
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
             Patient Medical Onboarding
           </h1>
           <p className="text-sm text-ink-secondary">
-            Welcome to SmileGuard AI! Please complete your dental chart baseline.
+            Welcome to <span className="text-teal-700 dark:text-teal-400 font-bold">SmileGuard</span>! Please complete your dental chart baseline.
           </p>
         </div>
 
@@ -159,7 +158,7 @@ export function Onboarding() {
 
               <div className="text-xs text-teal-800/90 dark:text-teal-300/90 leading-relaxed bg-surface-card/60 p-3 rounded-xl border border-teal-200/50 dark:border-teal-800/40 max-h-32 overflow-y-auto">
                 <p>
-                  By checking the box below, you voluntarily consent to the collection, processing, diagnostic storage, and secure transmission of your personal and health-sensitive dental records (including radiographs, clinical photographs, treatment progressions, and appointment histories) by SmileGuard AI and its certified dental practitioners in compliance with <strong>Republic Act No. 10173 (Philippine Data Privacy Act of 2012)</strong>.
+                  By checking the box below, you voluntarily consent to the collection, processing, diagnostic storage, and secure transmission of your personal and health-sensitive dental records (including radiographs, clinical photographs, treatment progressions, and appointment histories) by SmileGuard and its certified dental practitioners in compliance with <strong>Republic Act No. 10173 (Philippine Data Privacy Act of 2012)</strong>.
                 </p>
                 <p className="mt-1.5">
                   Your data will be safeguarded with end-to-end encryption and will never be shared with third parties without your explicit authorization.

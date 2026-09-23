@@ -8,12 +8,13 @@ export function Mascot({
   size = 'md',
   className = '',
   showSparkles = true,
+  forceShow = false,
   onClick,
 }) {
   const { showSparky } = useMascot();
   const prefersReducedMotion = useReducedMotion();
 
-  if (!showSparky) return null;
+  if (!showSparky && !forceShow) return null;
 
   const sizeDimensions = {
     sm: { width: 56, height: 60, scale: 0.5 },

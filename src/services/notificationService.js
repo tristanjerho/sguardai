@@ -6,6 +6,7 @@ import {
   updateDoc,
   query,
   where,
+  onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -93,5 +94,38 @@ export const notificationService = {
     };
     const docRef = await addDoc(collection(db, 'notifications'), newNotif);
     return { id: docRef.id, ...newNotif, createdAt: new Date().toISOString() };
+  },
+
+  /**
+   * Realtime Firestore subscription for a user's notifications
+   * @param {string} userId
+   * @param {Function} callback
+   * @returns {Function} unsubscribe function
+   */
+  subscribeForUser(userId, callback) {
+    if (!db || !userId) {
+      callback([]);
+      return () => {};
+    }
+    const q = query(collection(db, 'notifications'), where('userId', '==', userId));
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const list = [];
+        snapshot.forEach((d) => {
+          const data = d.data();
+          list.push({
+            id: d.id,
+            ...data,
+            createdAt: data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt,
+          });
+        });
+        list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        callback(list);
+      },
+      (err) => {
+        console.error('Realtime notification listener error:', err);
+      }
+    );
   },
 };
