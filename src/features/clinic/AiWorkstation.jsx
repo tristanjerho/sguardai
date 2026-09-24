@@ -19,6 +19,10 @@ import {
   FileUp,
   ShieldCheck,
   X,
+  Download,
+  FileDown,
+  Printer,
+  Share2,
 } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
 import { aiService } from '../../services/aiService';
@@ -188,8 +192,144 @@ export function AiWorkstation() {
     toast.success('Clinical verification signed and appended to patient chart.');
   };
 
+  const handleDownloadReport = () => {
+    if (!analysisResult) return;
+    const patientName = selectedPatient ? selectedPatient.fullName : 'Walk-in / Direct Assessment';
+    const timestamp = new Date().toLocaleString();
+    const primaryClass = analysisResult.prediction?.class || 'N/A';
+    const confidence = analysisResult.prediction?.confidence_percentage || 0;
+    const observations = analysisResult.observations || '';
+    const signoffNotes = dentistVerification.clinicalSignoffNotes || 'Preliminary Diagnostic Report (Pending Final Review)';
+    const dentistName = user?.fullName || 'Dr. Attending Practitioner';
+    const gradcamImg = analysisResult.gradcam?.overlayUrl || displayImageUrl || '';
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>SmileGuard AI Clinical Diagnostic Report - ${patientName}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 40px; color: #1e293b; line-height: 1.5; }
+          .header { border-bottom: 2px solid #0d9488; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+          .title { font-size: 24px; font-weight: 800; color: #0f766e; }
+          .meta { font-size: 12px; color: #64748b; }
+          .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+          .section-title { font-size: 14px; font-weight: 700; color: #0f766e; text-transform: uppercase; margin-bottom: 8px; }
+          .primary-diag { font-size: 20px; font-weight: 800; color: #0f172a; }
+          .badge { display: inline-block; background: #ccfbf1; color: #0f766e; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 12px; }
+          .prob-bar { margin: 6px 0; font-size: 12px; }
+          .bar-bg { background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; }
+          .bar-fill { background: #0d9488; height: 100%; }
+          .image-grid { display: flex; gap: 16px; margin-top: 12px; }
+          .image-box { flex: 1; text-align: center; }
+          .image-box img { max-width: 100%; max-height: 280px; border-radius: 8px; border: 1px solid #cbd5e1; object-fit: contain; }
+          .disclaimer { font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 30px; font-style: italic; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="title">SmileGuard AI Diagnostic Report</div>
+            <div class="meta">Two-Stage Deep Learning Radiographic Analysis Engine</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="meta">Date: ${timestamp}</div>
+            <div class="meta">Patient: <strong>${patientName}</strong></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Primary Neural Radiographic Findings</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="primary-diag">${primaryClass}</div>
+            <div class="badge">${confidence}% Confidence</div>
+          </div>
+          <p style="font-size: 13px; color: #334155; margin-top: 8px;">${observations}</p>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Radiograph & Grad-CAM Attention Map</div>
+          <div class="image-grid">
+            <div class="image-box">
+              <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">Diagnostic Overlay</div>
+              <img src="${gradcamImg}" alt="Grad-CAM Overlay" />
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title">Softmax Probability Distribution (6 Clinical Classes)</div>
+          ${(analysisResult.ranked_predictions || []).map(p => `
+            <div class="prob-bar">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                <span>${p.class}</span>
+                <span><strong>${p.percentage.toFixed(1)}%</strong></span>
+              </div>
+              <div class="bar-bg">
+                <div class="bar-fill" style="width: ${p.percentage}%;"></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="card">
+          <div class="section-title">Clinician Verification & Signature</div>
+          <p style="font-size: 13px; margin: 0 0 10px 0;">${signoffNotes}</p>
+          <div style="font-size: 12px; color: #64748b;">
+            Verified By: <strong>${dentistName}</strong> ${dentistVerification.signed ? '✓ (Digitally Signed)' : '(Pending Verification)'}
+          </div>
+        </div>
+
+        <div class="disclaimer">
+          FDA / DOH Class II SaMD Clinical Decision Support Notice: SmileGuard AI utilizes a trained convolutional neural network for radiographic screening assistance. All findings and class probabilities must be corroborated by a licensed dental practitioner before clinical or surgical intervention.
+        </div>
+        <script>
+          window.onload = function() { window.print(); }
+        </script>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    if (!win) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `SmileGuard_AI_Report_${patientName.replace(/\s+/g, '_')}_${Date.now()}.html`;
+      a.click();
+    }
+    toast.success('Clinical Diagnostic Report generated for download & printing.', 'Report Exported');
+  };
+
+  const handleDownloadGradcam = () => {
+    if (!analysisResult?.gradcam?.overlayUrl) {
+      toast.warning('No Grad-CAM overlay available to download.');
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = analysisResult.gradcam.overlayUrl;
+    a.download = `SmileGuard_GradCAM_${analysisResult.prediction?.class || 'Analysis'}_${Date.now()}.jpg`;
+    a.click();
+    toast.success('Grad-CAM Attention Map saved to device.', 'Image Downloaded');
+  };
+
+  const handleDownloadJson = () => {
+    if (!analysisResult) return;
+    const blob = new Blob([JSON.stringify(analysisResult, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SmileGuard_Inference_Result_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Inference JSON payload exported.', 'Data Exported');
+  };
+
   // Determine current active display image
   const displayImageUrl = inputMode === 'upload' ? uploadedFilePreview : selectedImageUrl;
+
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -617,6 +757,49 @@ export function AiWorkstation() {
                         <p className="text-ink-secondary leading-relaxed">{finding.description}</p>
                       </div>
                     ))}
+
+                    {/* CNN Result Export & Downloads Toolbar */}
+                    <div className="p-3.5 rounded-2xl bg-teal-50/70 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-800 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-xs font-heading font-bold text-teal-900 dark:text-teal-200">
+                          <FileDown className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                          <span>Download & Export CNN Results</span>
+                        </div>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold text-teal-700 dark:text-teal-300 bg-teal-100 dark:bg-teal-900/60 px-2 py-0.5 rounded-md">
+                          AI Artifacts
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleDownloadReport}
+                          leftIcon={Printer}
+                          className="text-xs justify-center shadow-xs"
+                        >
+                          Print / PDF
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={handleDownloadGradcam}
+                          leftIcon={Download}
+                          disabled={!analysisResult?.gradcam?.overlayUrl}
+                          className="text-xs justify-center shadow-xs"
+                        >
+                          Grad-CAM
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleDownloadJson}
+                          leftIcon={FileText}
+                          className="text-xs justify-center"
+                        >
+                          Raw JSON
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )
               ) : displayImageUrl ? (

@@ -34,7 +34,7 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
   const isPatient = user?.role === ROLES.PATIENT;
 
   return (
-    <header className="sticky top-0 z-30 w-full h-16 border-b border-surface-border bg-surface-card/85 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between transition-colors">
+    <header className="sticky top-0 z-40 w-full h-16 border-b border-surface-border bg-surface-card/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between transition-colors shadow-xs">
       <div className="flex items-center gap-3">
         {showMenuButton && (
           <button
