@@ -88,7 +88,7 @@ def load_resources():
     # Load Stage 1 Validator
     if VALIDATOR_MODEL_FILE.exists() and validator_model is None:
         print(f"[*] Loading Stage-1 X-ray Validator from {VALIDATOR_MODEL_FILE}...")
-        validator_model = keras.models.load_model(VALIDATOR_MODEL_FILE)
+        validator_model = keras.models.load_model(VALIDATOR_MODEL_FILE, compile=False)
         print("[OK] Stage-1 X-ray Validator loaded successfully.")
 
     if VALIDATOR_CLASSES_FILE.exists() and not validator_classes:
@@ -104,8 +104,9 @@ def load_resources():
     # Load Stage 2 Pathology
     if PATHOLOGY_MODEL_FILE.exists() and pathology_model is None:
         print(f"[*] Loading Stage-2 Pathology CNN from {PATHOLOGY_MODEL_FILE}...")
-        pathology_model = keras.models.load_model(PATHOLOGY_MODEL_FILE)
+        pathology_model = keras.models.load_model(PATHOLOGY_MODEL_FILE, compile=False)
         print("[OK] Stage-2 Pathology CNN loaded successfully.")
+
 
     if PATHOLOGY_CLASSES_FILE.exists() and not pathology_classes:
         with open(PATHOLOGY_CLASSES_FILE, "r") as f:
