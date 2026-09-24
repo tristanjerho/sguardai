@@ -55,7 +55,7 @@ export function PatientShell() {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-surface-base text-ink-primary">
+    <div className="min-h-screen bg-surface-base text-ink-primary">
       <Topbar
         title={getPageTitle()}
         showMenuButton={true}
@@ -63,19 +63,17 @@ export function PatientShell() {
         unreadCount={unreadCount}
       />
 
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar
-          role={ROLES.PATIENT}
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-        />
+      <Sidebar
+        role={ROLES.PATIENT}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
-          <div className="max-w-6xl mx-auto">
-            <Outlet />
-          </div>
-        </main>
-      </div>
+      <main className="lg:pl-64 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 min-h-[calc(100vh-4rem)] transition-all">
+        <div className="max-w-6xl mx-auto">
+          <Outlet />
+        </div>
+      </main>
 
       <BottomTabBar />
     </div>

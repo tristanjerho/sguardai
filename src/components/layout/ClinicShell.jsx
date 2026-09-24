@@ -23,26 +23,24 @@ export function ClinicShell() {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-surface-base text-ink-primary">
+    <div className="min-h-screen bg-surface-base text-ink-primary">
       <Topbar
         title={getPageTitle()}
         showMenuButton={true}
         onMenuToggle={() => setIsSidebarOpen(true)}
       />
 
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar
-          role={user?.role || ROLES.DENTIST}
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-        />
+      <Sidebar
+        role={user?.role || ROLES.DENTIST}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">
-            <Outlet />
-          </div>
-        </main>
-      </div>
+      <main className="lg:pl-64 p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-4rem)] transition-all">
+        <div className="max-w-7xl mx-auto">
+          <Outlet />
+        </div>
+      </main>
     </div>
   );
 }
