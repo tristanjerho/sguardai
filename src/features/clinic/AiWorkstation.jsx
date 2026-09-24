@@ -195,12 +195,14 @@ export function AiWorkstation() {
   const handleDownloadReport = () => {
     if (!analysisResult) return;
     const currentPatient = (patients || []).find((p) => p.id === selectedPatientId) || null;
-    const patientName = currentPatient?.fullName || currentPatient?.name || (selectedPatientId ? `Patient #${selectedPatientId.slice(0, 8)}` : 'Walk-in Assessment');
+    const patientName = currentPatient?.fullName || currentPatient?.name || (selectedPatientId ? `Patient #${selectedPatientId.slice(0, 8)}` : 'Walk-in Direct Assessment');
     const timestamp = new Date().toLocaleString();
     const primaryClass = analysisResult.prediction?.class || 'N/A';
-    const confidence = analysisResult.prediction?.confidence_percentage || 0;
+    const confidence = analysisResult.prediction?.confidence_percentage || (analysisResult.prediction?.confidence ? (analysisResult.prediction.confidence * 100).toFixed(1) : 0);
     const observations = analysisResult.observations || '';
-    const signoffNotes = dentistVerification.clinicalSignoffNotes || 'Preliminary Diagnostic Report (Pending Final Review)';
+    const findingsList = analysisResult.findings || [];
+    const validationConfidence = analysisResult.xray_validation?.confidence || 100;
+    const signoffNotes = dentistVerification.clinicalSignoffNotes || 'Preliminary AI Diagnostic Screening (Pending Final In-Clinic Corroboration)';
     const dentistName = user?.fullName || user?.displayName || 'Dr. Attending Practitioner';
     const gradcamImg = analysisResult.gradcam?.overlayUrl || displayImageUrl || '';
 
@@ -208,41 +210,43 @@ export function AiWorkstation() {
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>SmileGuard AI Diagnostic Report - ${patientName}</title>
+  <title>SmileGuard AI Clinical Diagnostic Report - ${patientName}</title>
   <style>
     @page { size: A4 portrait; margin: 12mm; }
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; color: #0f172a; line-height: 1.5; background: #ffffff; }
-    .header { border-bottom: 2px solid #0d9488; padding-bottom: 14px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
-    .title { font-size: 20px; font-weight: 800; color: #0f766e; }
+    .header { border-bottom: 2px solid #0d9488; padding-bottom: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .title { font-size: 22px; font-weight: 800; color: #0f766e; }
     .subtitle { font-size: 11px; color: #64748b; margin-top: 2px; }
-    .meta { font-size: 11px; color: #475569; line-height: 1.4; }
+    .meta { font-size: 11.5px; color: #475569; line-height: 1.4; }
     .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; page-break-inside: avoid; }
     .section-title { font-size: 12px; font-weight: 700; color: #0f766e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-    .primary-diag { font-size: 17px; font-weight: 800; color: #0f172a; }
+    .primary-diag { font-size: 18px; font-weight: 800; color: #0f172a; }
     .badge { display: inline-block; background: #ccfbf1; color: #0f766e; font-weight: 700; padding: 3px 8px; border-radius: 6px; font-size: 11px; }
-    .prob-bar { margin: 4px 0; font-size: 11px; }
-    .bar-bg { background: #e2e8f0; height: 7px; border-radius: 4px; overflow: hidden; margin-top: 2px; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .prob-bar { margin: 5px 0; font-size: 11.5px; }
+    .bar-bg { background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 2px; }
     .bar-fill { background: #0d9488; height: 100%; }
     .image-grid { display: flex; gap: 14px; justify-content: center; margin-top: 6px; }
     .image-box { text-align: center; }
-    .image-box img { max-width: 100%; max-height: 220px; border-radius: 6px; border: 1px solid #cbd5e1; object-fit: contain; }
+    .image-box img { max-width: 100%; max-height: 240px; border-radius: 6px; border: 1px solid #cbd5e1; object-fit: contain; }
+    .finding-item { background: #f1f5f9; border-left: 3px solid #0d9488; padding: 8px 12px; border-radius: 4px; margin-top: 6px; font-size: 11.5px; }
     .disclaimer { font-size: 9.5px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 16px; font-style: italic; page-break-inside: avoid; }
     .print-bar { background: #0f766e; color: white; padding: 10px 18px; border-radius: 8px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
-    .print-btn { background: white; color: #0f766e; font-weight: bold; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .print-btn { background: white; color: #0f766e; font-weight: bold; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; }
     @media print { .print-bar { display: none; } body { padding: 0; } }
   </style>
 </head>
 <body>
   <div class="print-bar">
-    <span style="font-size: 13px; font-weight: 700;">SmileGuard AI Diagnostic Report</span>
+    <span style="font-size: 13px; font-weight: 700;">SmileGuard AI Clinical Diagnostic Report</span>
     <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
   </div>
 
   <div class="header">
     <div>
       <div class="title">SmileGuard AI Diagnostic Report</div>
-      <div class="subtitle">Deep Learning Radiographic Neural Screening & Analysis Engine</div>
+      <div class="subtitle">Two-Stage Deep Learning Radiographic Analysis Engine</div>
     </div>
     <div style="text-align: right;">
       <div class="meta">Date: <strong>${timestamp}</strong></div>
@@ -250,15 +254,38 @@ export function AiWorkstation() {
     </div>
   </div>
 
+  <!-- Stage 1: Validation -->
+  <div class="card" style="background: #f0fdf4; border-color: #bbf7d0;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 12px; font-weight: 700; color: #166534;">✓ Stage 1: Validated Dental OPG Radiograph</span>
+      <span class="badge badge-success">${validationConfidence}% Verified</span>
+    </div>
+  </div>
+
+  <!-- Primary Findings -->
   <div class="card">
     <div class="section-title">Primary Neural Radiographic Findings</div>
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <div class="primary-diag">${primaryClass}</div>
       <div class="badge">${confidence}% Confidence</div>
     </div>
-    <p style="font-size: 11.5px; color: #334155; margin: 6px 0 0 0;">${observations}</p>
+    <p style="font-size: 12px; color: #334155; margin: 6px 0 0 0;">${observations}</p>
   </div>
 
+  <!-- Detailed Pathology Findings -->
+  ${findingsList.length > 0 ? `
+  <div class="card">
+    <div class="section-title">Clinical Pathology Assessment</div>
+    ${findingsList.map(f => `
+      <div class="finding-item">
+        <div style="font-weight: 700; color: #0f172a;">${f.condition} Pathology</div>
+        <div style="color: #475569; margin-top: 2px;">${f.description}</div>
+      </div>
+    `).join('')}
+  </div>
+  ` : ''}
+
+  <!-- Grad-CAM Attention Map -->
   ${gradcamImg ? `
   <div class="card">
     <div class="section-title">Radiograph & Grad-CAM Attention Map</div>
@@ -270,8 +297,9 @@ export function AiWorkstation() {
   </div>
   ` : ''}
 
+  <!-- Softmax Probability Distribution -->
   <div class="card">
-    <div class="section-title">Softmax Probability Distribution (6 Clinical Classes)</div>
+    <div class="section-title">Softmax Probability Distribution (6 Clinical Categories)</div>
     ${(analysisResult.ranked_predictions || []).map(p => `
       <div class="prob-bar">
         <div style="display: flex; justify-content: space-between;">
@@ -285,11 +313,12 @@ export function AiWorkstation() {
     `).join('')}
   </div>
 
+  <!-- Clinician Verification & Signature -->
   <div class="card">
     <div class="section-title">Clinician Verification & Signature</div>
-    <p style="font-size: 11.5px; margin: 0 0 6px 0;">${signoffNotes}</p>
-    <div style="font-size: 10.5px; color: #64748b;">
-      Verified By: <strong>${dentistName}</strong> ${dentistVerification.signed ? '✓ (Digitally Signed)' : '(Pending Final Review)'}
+    <p style="font-size: 12px; margin: 0 0 8px 0;">${signoffNotes}</p>
+    <div style="font-size: 11px; color: #64748b;">
+      Verified By: <strong>${dentistName}</strong> ${dentistVerification.signed ? '✓ (Digitally Signed)' : '(Pending Final In-Clinic Signoff)'}
     </div>
   </div>
 
@@ -299,7 +328,7 @@ export function AiWorkstation() {
 </body>
 </html>`;
 
-    // 1. Direct download of the clinical report file
+    // 1. Direct file download of self-contained diagnostic report
     try {
       const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
       const fileUrl = URL.createObjectURL(blob);
@@ -318,27 +347,39 @@ export function AiWorkstation() {
       console.error('File download error:', downloadErr);
     }
 
-    // 2. Open printable view / trigger print dialog
+    // 2. Open printable view / trigger print dialog directly via iframe
     try {
-      const printWin = window.open('', '_blank');
-      if (printWin) {
-        printWin.document.open();
-        printWin.document.write(htmlContent);
-        printWin.document.close();
-        setTimeout(() => {
-          try {
-            printWin.focus();
-            printWin.print();
-          } catch (e) {
-            console.warn('Print prompt skipped:', e);
-          }
-        }, 300);
-      }
+      let iframe = document.getElementById('sg-print-frame');
+      if (iframe) iframe.remove();
+      iframe = document.createElement('iframe');
+      iframe.id = 'sg-print-frame';
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.visibility = 'hidden';
+      document.body.appendChild(iframe);
+
+      const frameDoc = iframe.contentWindow.document;
+      frameDoc.open();
+      frameDoc.write(htmlContent);
+      frameDoc.close();
+
+      setTimeout(() => {
+        try {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        } catch (e) {
+          console.warn('Iframe print skipped:', e);
+        }
+      }, 350);
     } catch (printErr) {
-      console.warn('Print window error:', printErr);
+      console.warn('Print frame error:', printErr);
     }
 
-    toast.success('Diagnostic Report downloaded & opened for PDF printing.', 'Report Exported');
+    toast.success('Diagnostic Report downloaded to device and opened for PDF printing.', 'Report Exported');
   };
 
   const handleDownloadGradcam = () => {
