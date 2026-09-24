@@ -10,8 +10,12 @@ import io
 import json
 import base64
 import urllib.request
+import gc
 from pathlib import Path
 from typing import Optional, Dict, Any, List
+
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 import numpy as np
 from PIL import Image
@@ -22,6 +26,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import tensorflow as tf
 from tensorflow import keras
+
+# Constrain thread allocations to prevent high RAM spikes on cloud free tiers
+tf.config.threading.set_inter_op_parallelism_threads(1)
+tf.config.threading.set_intra_op_parallelism_threads(1)
 
 from scripts.gradcam import generate_gradcam_heatmap, create_gradcam_overlay
 
@@ -53,10 +61,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+@app.head("/")
+async def root():
+    return {
+        "status": "online",
+        "service": "SmileGuard AI Diagnostic API",
+        "version": "2.0.0"
+    }
+
 # Global models
 pathology_model = None
 pathology_classes = []
 pathology_metadata = {}
+
 
 validator_model = None
 validator_classes = []
