@@ -37,11 +37,13 @@ BACKEND_DIR = Path(__file__).resolve().parent
 
 # Stage 2 (Pathology Model)
 PATHOLOGY_MODEL_FILE = BACKEND_DIR / "models" / "smileguard_model.keras"
+PATHOLOGY_TFLITE_FILE = BACKEND_DIR / "models" / "smileguard_model.tflite"
 PATHOLOGY_CLASSES_FILE = BACKEND_DIR / "models" / "class_names.json"
 PATHOLOGY_METADATA_FILE = BACKEND_DIR / "models" / "model_metadata.json"
 
 # Stage 1 (Validator Model)
 VALIDATOR_MODEL_FILE = BACKEND_DIR / "models" / "xray_validator.keras"
+VALIDATOR_TFLITE_FILE = BACKEND_DIR / "models" / "xray_validator.tflite"
 VALIDATOR_CLASSES_FILE = BACKEND_DIR / "models" / "xray_validator_classes.json"
 VALIDATOR_METADATA_FILE = BACKEND_DIR / "models" / "xray_validator_metadata.json"
 
@@ -70,26 +72,43 @@ async def root():
         "version": "2.0.0"
     }
 
-# Global models
+# Global models and interpreters
 pathology_model = None
+pathology_interpreter = None
 pathology_classes = []
 pathology_metadata = {}
 
-
 validator_model = None
+validator_interpreter = None
 validator_classes = []
 validator_metadata = {}
 validation_threshold = 0.60
 
-def load_resources():
-    global pathology_model, pathology_classes, pathology_metadata
-    global validator_model, validator_classes, validator_metadata, validation_threshold
+def run_tflite_predict(interpreter, input_tensor: np.ndarray) -> np.ndarray:
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    interpreter.set_tensor(input_details[0]['index'], input_tensor)
+    interpreter.invoke()
+    return interpreter.get_tensor(output_details[0]['index'])[0]
 
-    # Load Stage 1 Validator
-    if VALIDATOR_MODEL_FILE.exists() and validator_model is None:
-        print(f"[*] Loading Stage-1 X-ray Validator from {VALIDATOR_MODEL_FILE}...")
+def load_resources():
+    global pathology_model, pathology_interpreter, pathology_classes, pathology_metadata
+    global validator_model, validator_interpreter, validator_classes, validator_metadata, validation_threshold
+
+    # Load Stage 1 Validator (Prefer TFLite for low RAM)
+    if VALIDATOR_TFLITE_FILE.exists() and validator_interpreter is None:
+        try:
+            print(f"[*] Loading Stage-1 TFLite Validator from {VALIDATOR_TFLITE_FILE}...")
+            validator_interpreter = tf.lite.Interpreter(model_path=str(VALIDATOR_TFLITE_FILE))
+            validator_interpreter.allocate_tensors()
+            print("[OK] Stage-1 TFLite Validator loaded.")
+        except Exception as e:
+            print(f"[!] Warning: TFLite validator failed, falling back to Keras: {e}")
+
+    if validator_model is None and validator_interpreter is None and VALIDATOR_MODEL_FILE.exists():
+        print(f"[*] Loading Stage-1 Keras Validator from {VALIDATOR_MODEL_FILE}...")
         validator_model = keras.models.load_model(VALIDATOR_MODEL_FILE, compile=False)
-        print("[OK] Stage-1 X-ray Validator loaded successfully.")
+        print("[OK] Stage-1 Keras Validator loaded.")
 
     if VALIDATOR_CLASSES_FILE.exists() and not validator_classes:
         with open(VALIDATOR_CLASSES_FILE, "r") as f:
@@ -101,12 +120,23 @@ def load_resources():
             validation_threshold = float(validator_metadata.get("validation_decision_threshold", 0.60))
         print(f"[OK] Validator threshold established at: {validation_threshold}")
 
-    # Load Stage 2 Pathology
-    if PATHOLOGY_MODEL_FILE.exists() and pathology_model is None:
-        print(f"[*] Loading Stage-2 Pathology CNN from {PATHOLOGY_MODEL_FILE}...")
-        pathology_model = keras.models.load_model(PATHOLOGY_MODEL_FILE, compile=False)
-        print("[OK] Stage-2 Pathology CNN loaded successfully.")
+    # Load Stage 2 Pathology (Prefer TFLite for inference)
+    if PATHOLOGY_TFLITE_FILE.exists() and pathology_interpreter is None:
+        try:
+            print(f"[*] Loading Stage-2 TFLite Pathology from {PATHOLOGY_TFLITE_FILE}...")
+            pathology_interpreter = tf.lite.Interpreter(model_path=str(PATHOLOGY_TFLITE_FILE))
+            pathology_interpreter.allocate_tensors()
+            print("[OK] Stage-2 TFLite Pathology model loaded.")
+        except Exception as e:
+            print(f"[!] Warning: TFLite pathology failed: {e}")
 
+    if PATHOLOGY_MODEL_FILE.exists() and pathology_model is None:
+        try:
+            print(f"[*] Loading Stage-2 Keras Pathology from {PATHOLOGY_MODEL_FILE}...")
+            pathology_model = keras.models.load_model(PATHOLOGY_MODEL_FILE, compile=False)
+            print("[OK] Stage-2 Keras Pathology model loaded.")
+        except Exception as e:
+            print(f"[!] Warning: Keras model load skipped: {e}")
 
     if PATHOLOGY_CLASSES_FILE.exists() and not pathology_classes:
         with open(PATHOLOGY_CLASSES_FILE, "r") as f:
@@ -123,6 +153,7 @@ async def startup_event():
 
 class UrlPredictRequest(BaseModel):
     imageUrl: Optional[str] = None
+
     imageBase64: Optional[str] = None
     patientId: Optional[str] = None
     radiographType: Optional[str] = "OPG"
@@ -134,13 +165,13 @@ def preprocess_pil_image(pil_img: Image.Image) -> np.ndarray:
     return img_array
 
 def process_and_infer(pil_img: Image.Image, source_name: str = "Uploaded Image") -> Dict[str, Any]:
-    global pathology_model, pathology_classes, pathology_metadata
-    global validator_model, validator_classes, validator_metadata, validation_threshold
+    global pathology_model, pathology_interpreter, pathology_classes, pathology_metadata
+    global validator_model, validator_interpreter, validator_classes, validator_metadata, validation_threshold
 
-    if validator_model is None or pathology_model is None:
+    if (validator_model is None and validator_interpreter is None) or (pathology_model is None and pathology_interpreter is None):
         load_resources()
 
-    if validator_model is None or pathology_model is None:
+    if (validator_model is None and validator_interpreter is None) or (pathology_model is None and pathology_interpreter is None):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
@@ -157,7 +188,10 @@ def process_and_infer(pil_img: Image.Image, source_name: str = "Uploaded Image")
     # ==========================================================
     print(f"\n[XRAY VALIDATOR] Image received: {source_name}")
     try:
-        val_probs = validator_model.predict(img_array, verbose=0)[0]
+        if validator_interpreter is not None:
+            val_probs = run_tflite_predict(validator_interpreter, img_array)
+        else:
+            val_probs = validator_model.predict(img_array, verbose=0)[0]
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -197,7 +231,10 @@ def process_and_infer(pil_img: Image.Image, source_name: str = "Uploaded Image")
     # ==========================================================
     print("[PATHOLOGY MODEL] Running clinical inference...")
     try:
-        pathology_probs = pathology_model.predict(img_array, verbose=0)[0]
+        if pathology_interpreter is not None:
+            pathology_probs = run_tflite_predict(pathology_interpreter, img_array)
+        else:
+            pathology_probs = pathology_model.predict(img_array, verbose=0)[0]
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -207,6 +244,7 @@ def process_and_infer(pil_img: Image.Image, source_name: str = "Uploaded Image")
     pred_idx = int(np.argmax(pathology_probs))
     pred_class = pathology_classes[pred_idx]
     confidence = float(pathology_probs[pred_idx])
+
 
     print(f"[PATHOLOGY MODEL] Predicted class: {pred_class} (Confidence: {confidence*100:.2f}%)")
 
