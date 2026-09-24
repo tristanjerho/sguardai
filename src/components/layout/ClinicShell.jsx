@@ -23,7 +23,7 @@ export function ClinicShell() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-base text-ink-primary flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden bg-surface-base text-ink-primary">
       <Topbar
         title={getPageTitle()}
         showMenuButton={true}
