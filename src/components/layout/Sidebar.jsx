@@ -83,11 +83,11 @@ export function Sidebar({ role, isOpen = true, onClose }) {
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 w-64 bg-surface-card border-r border-surface-border flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static ${
+        className={`fixed top-0 bottom-0 left-0 z-40 w-64 bg-surface-card border-r border-surface-border flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:shrink-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-16 px-4 flex items-center justify-between border-b border-surface-border">
+        <div className="h-16 px-4 flex items-center justify-between border-b border-surface-border lg:hidden">
           <div className="flex items-center gap-2">
             <Logo size="sm" asLink={false} />
             <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300">
