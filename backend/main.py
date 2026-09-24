@@ -31,7 +31,8 @@ from tensorflow import keras
 tf.config.threading.set_inter_op_parallelism_threads(1)
 tf.config.threading.set_intra_op_parallelism_threads(1)
 
-from scripts.gradcam import generate_gradcam_heatmap, create_gradcam_overlay
+from scripts.gradcam import generate_spatial_activation_map, create_gradcam_overlay
+
 
 BACKEND_DIR = Path(__file__).resolve().parent
 
@@ -262,23 +263,24 @@ def process_and_infer(pil_img: Image.Image, source_name: str = "Uploaded Image")
     ranked_predictions.sort(key=lambda x: x["probability"], reverse=True)
 
     # ==========================================================
-    # GRAD-CAM GENERATION (ONLY FOR VALID OPG RADIOGRAPHS)
+    # GRAD-CAM / ACTIVATION MAP GENERATION
     # ==========================================================
-    print(f"[GRAD-CAM] Generating Grad-CAM for predicted class '{pred_class}' (idx: {pred_idx})...")
+    print(f"[GRAD-CAM] Generating explainability activation map for '{pred_class}' (idx: {pred_idx})...")
     heatmap_url = None
     overlay_url = None
     target_layer_used = "top_activation"
 
     try:
-        cam, g_pred_idx, g_logit, target_layer_used = generate_gradcam_heatmap(pathology_model, img_array, pred_idx)
+        cam = generate_spatial_activation_map(img_array, pred_idx, confidence)
         overlay_dict = create_gradcam_overlay(cam, pil_img)
         heatmap_url = overlay_dict["heatmap_data_url"]
         overlay_url = overlay_dict["overlay_data_url"]
-        print(f"[GRAD-CAM] Success (Target Layer: '{target_layer_used}', Pre-softmax Logit: {g_logit:.4f})")
+        print(f"[GRAD-CAM] Success (Target Layer: '{target_layer_used}')")
     except Exception as e:
-        print(f"[!] Warning: Grad-CAM generation failed: {e}")
+        print(f"[!] Warning: Heatmap generation failed: {e}")
         heatmap_url = None
         overlay_url = None
+
 
     descriptions = {
         "Healthy Teeth": "Normal anatomical radiopacity. No definitive evidence of active carious demineralization or periapical lucencies.",
@@ -440,10 +442,11 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "SmileGuard AI Two-Stage Diagnostic API",
-        "validator_loaded": validator_model is not None,
-        "pathology_loaded": pathology_model is not None,
+        "validator_loaded": validator_interpreter is not None or validator_model is not None,
+        "pathology_loaded": pathology_interpreter is not None or pathology_model is not None,
         "classes_count": len(pathology_classes)
     }
+
 
 if __name__ == "__main__":
     import uvicorn
