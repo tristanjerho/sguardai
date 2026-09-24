@@ -194,7 +194,7 @@ export function AiWorkstation() {
 
   const handleDownloadReport = () => {
     if (!analysisResult) return;
-    const patientName = selectedPatient ? selectedPatient.fullName : 'Walk-in / Direct Assessment';
+    const patientName = selectedPatient ? selectedPatient.fullName : 'Walk-in Assessment';
     const timestamp = new Date().toLocaleString();
     const primaryClass = analysisResult.prediction?.class || 'N/A';
     const confidence = analysisResult.prediction?.confidence_percentage || 0;
@@ -203,100 +203,116 @@ export function AiWorkstation() {
     const dentistName = user?.fullName || 'Dr. Attending Practitioner';
     const gradcamImg = analysisResult.gradcam?.overlayUrl || displayImageUrl || '';
 
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>SmileGuard AI Clinical Diagnostic Report - ${patientName}</title>
-        <style>
-          @page { size: A4; margin: 15mm; }
-          * { box-sizing: border-box; }
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 24px; color: #1e293b; line-height: 1.5; background: #ffffff; }
-          .header { border-bottom: 2px solid #0d9488; padding-bottom: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-          .title { font-size: 22px; font-weight: 800; color: #0f766e; }
-          .subtitle { font-size: 11px; color: #64748b; margin-top: 2px; }
-          .meta { font-size: 12px; color: #475569; }
-          .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 16px; page-break-inside: avoid; }
-          .section-title { font-size: 13px; font-weight: 700; color: #0f766e; text-transform: uppercase; margin-bottom: 8px; }
-          .primary-diag { font-size: 18px; font-weight: 800; color: #0f172a; }
-          .badge { display: inline-block; background: #ccfbf1; color: #0f766e; font-weight: 700; padding: 4px 10px; border-radius: 6px; font-size: 12px; }
-          .prob-bar { margin: 5px 0; font-size: 11px; }
-          .bar-bg { background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 2px; }
-          .bar-fill { background: #0d9488; height: 100%; }
-          .image-grid { display: flex; gap: 16px; margin-top: 8px; justify-content: center; }
-          .image-box { text-align: center; }
-          .image-box img { max-width: 100%; max-height: 240px; border-radius: 6px; border: 1px solid #cbd5e1; object-fit: contain; }
-          .disclaimer { font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 20px; font-style: italic; page-break-inside: avoid; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div>
-            <div class="title">SmileGuard AI Diagnostic Report</div>
-            <div class="subtitle">Two-Stage Deep Learning Radiographic Analysis Engine</div>
-          </div>
-          <div style="text-align: right;">
-            <div class="meta">Date: <strong>${timestamp}</strong></div>
-            <div class="meta">Patient: <strong>${patientName}</strong></div>
-          </div>
-        </div>
+    const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SmileGuard AI Clinical Diagnostic Report - ${patientName}</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; color: #0f172a; line-height: 1.5; background: #ffffff; }
+    .header { border-bottom: 2px solid #0d9488; padding-bottom: 14px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+    .title { font-size: 20px; font-weight: 800; color: #0f766e; }
+    .subtitle { font-size: 11px; color: #64748b; margin-top: 2px; }
+    .meta { font-size: 11px; color: #475569; line-height: 1.4; }
+    .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; page-break-inside: avoid; }
+    .section-title { font-size: 12px; font-weight: 700; color: #0f766e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .primary-diag { font-size: 17px; font-weight: 800; color: #0f172a; }
+    .badge { display: inline-block; background: #ccfbf1; color: #0f766e; font-weight: 700; padding: 3px 8px; border-radius: 6px; font-size: 11px; }
+    .prob-bar { margin: 4px 0; font-size: 11px; }
+    .bar-bg { background: #e2e8f0; height: 7px; border-radius: 4px; overflow: hidden; margin-top: 2px; }
+    .bar-fill { background: #0d9488; height: 100%; }
+    .image-grid { display: flex; gap: 14px; justify-content: center; margin-top: 6px; }
+    .image-box { text-align: center; }
+    .image-box img { max-width: 100%; max-height: 220px; border-radius: 6px; border: 1px solid #cbd5e1; object-fit: contain; }
+    .disclaimer { font-size: 9.5px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 16px; font-style: italic; page-break-inside: avoid; }
+    .print-bar { background: #0f766e; color: white; padding: 8px 16px; border-radius: 6px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .print-btn { background: white; color: #0f766e; font-weight: bold; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    @media print { .print-bar { display: none; } body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="print-bar">
+    <span style="font-size: 12px; font-weight: 600;">SmileGuard Clinical Report Document</span>
+    <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+  </div>
 
-        <div class="card">
-          <div class="section-title">Primary Neural Radiographic Findings</div>
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div class="primary-diag">${primaryClass}</div>
-            <div class="badge">${confidence}% Confidence</div>
-          </div>
-          <p style="font-size: 12px; color: #334155; margin: 8px 0 0 0;">${observations}</p>
-        </div>
+  <div class="header">
+    <div>
+      <div class="title">SmileGuard AI Diagnostic Report</div>
+      <div class="subtitle">Deep Learning Radiographic Neural Screening & Analysis Engine</div>
+    </div>
+    <div style="text-align: right;">
+      <div class="meta">Date: <strong>${timestamp}</strong></div>
+      <div class="meta">Patient: <strong>${patientName}</strong></div>
+    </div>
+  </div>
 
-        ${gradcamImg ? `
-        <div class="card">
-          <div class="section-title">Radiograph & Grad-CAM Attention Map</div>
-          <div class="image-grid">
-            <div class="image-box">
-              <img src="${gradcamImg}" alt="Grad-CAM Overlay" />
-            </div>
-          </div>
-        </div>
-        ` : ''}
+  <div class="card">
+    <div class="section-title">Primary Neural Radiographic Findings</div>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div class="primary-diag">${primaryClass}</div>
+      <div class="badge">${confidence}% Confidence</div>
+    </div>
+    <p style="font-size: 11.5px; color: #334155; margin: 6px 0 0 0;">${observations}</p>
+  </div>
 
-        <div class="card">
-          <div class="section-title">Softmax Probability Distribution (6 Clinical Classes)</div>
-          ${(analysisResult.ranked_predictions || []).map(p => `
-            <div class="prob-bar">
-              <div style="display: flex; justify-content: space-between;">
-                <span>${p.class}</span>
-                <span><strong>${p.percentage.toFixed(1)}%</strong></span>
-              </div>
-              <div class="bar-bg">
-                <div class="bar-fill" style="width: ${p.percentage}%;"></div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
+  ${gradcamImg ? `
+  <div class="card">
+    <div class="section-title">Radiograph & Grad-CAM Attention Map</div>
+    <div class="image-grid">
+      <div class="image-box">
+        <img src="${gradcamImg}" alt="Grad-CAM Overlay" />
+      </div>
+    </div>
+  </div>
+  ` : ''}
 
-        <div class="card">
-          <div class="section-title">Clinician Verification & Signature</div>
-          <p style="font-size: 12px; margin: 0 0 8px 0;">${signoffNotes}</p>
-          <div style="font-size: 11px; color: #64748b;">
-            Verified By: <strong>${dentistName}</strong> ${dentistVerification.signed ? '✓ (Digitally Signed)' : '(Pending Verification)'}
-          </div>
+  <div class="card">
+    <div class="section-title">Softmax Probability Distribution (6 Clinical Classes)</div>
+    ${(analysisResult.ranked_predictions || []).map(p => `
+      <div class="prob-bar">
+        <div style="display: flex; justify-content: space-between;">
+          <span>${p.class}</span>
+          <span><strong>${p.percentage.toFixed(1)}%</strong></span>
         </div>
-
-        <div class="disclaimer">
-          FDA / DOH Class II SaMD Clinical Decision Support Notice: SmileGuard AI utilizes a trained convolutional neural network for radiographic screening assistance. All findings and class probabilities must be corroborated by a licensed dental practitioner before clinical or surgical intervention.
+        <div class="bar-bg">
+          <div class="bar-fill" style="width: ${p.percentage}%;"></div>
         </div>
-      </body>
-      </html>
-    `;
+      </div>
+    `).join('')}
+  </div>
 
+  <div class="card">
+    <div class="section-title">Clinician Verification & Signature</div>
+    <p style="font-size: 11.5px; margin: 0 0 6px 0;">${signoffNotes}</p>
+    <div style="font-size: 10.5px; color: #64748b;">
+      Verified By: <strong>${dentistName}</strong> ${dentistVerification.signed ? '✓ (Digitally Signed)' : '(Pending Final Review)'}
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    FDA / DOH Class II SaMD Decision Support Notice: SmileGuard AI utilizes a trained convolutional neural network for radiographic screening assistance. All findings and class probabilities must be corroborated by a licensed dental practitioner before clinical or surgical intervention.
+  </div>
+</body>
+</html>`;
+
+    // 1. Direct file download of self-contained diagnostic report
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const fileUrl = URL.createObjectURL(blob);
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.href = fileUrl;
+    downloadAnchor.download = `SmileGuard_Report_${patientName.replace(/\s+/g, '_')}_${Date.now()}.html`;
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    document.body.removeChild(downloadAnchor);
+    setTimeout(() => URL.revokeObjectURL(fileUrl), 2000);
+
+    // 2. Also trigger printable iframe for instant Print / Save to PDF
     try {
       let iframe = document.getElementById('sg-print-frame');
-      if (iframe) {
-        iframe.remove();
-      }
+      if (iframe) iframe.remove();
       iframe = document.createElement('iframe');
       iframe.id = 'sg-print-frame';
       iframe.style.position = 'fixed';
@@ -317,23 +333,15 @@ export function AiWorkstation() {
         try {
           iframe.contentWindow.focus();
           iframe.contentWindow.print();
-        } catch (printErr) {
-          console.error('Print iframe error, fallback to window:', printErr);
-          const printWin = window.open('', '_blank');
-          if (printWin) {
-            printWin.document.write(htmlContent);
-            printWin.document.close();
-            printWin.focus();
-            printWin.print();
-          }
+        } catch (e) {
+          console.warn('Iframe print skipped:', e);
         }
-      }, 400);
-
-      toast.success('Clinical Diagnostic Report generated for PDF/Print.', 'Print / PDF Ready');
-    } catch (err) {
-      console.error('Print generation failed:', err);
-      toast.error('Unable to open print dialog. Please check browser permissions.');
+      }, 300);
+    } catch (e) {
+      console.warn('Print frame error:', e);
     }
+
+    toast.success('Diagnostic Report downloaded to device and opened for PDF printing.', 'Report Downloaded');
   };
 
   const handleDownloadGradcam = () => {
@@ -344,8 +352,10 @@ export function AiWorkstation() {
     const a = document.createElement('a');
     a.href = analysisResult.gradcam.overlayUrl;
     a.download = `SmileGuard_GradCAM_${analysisResult.prediction?.class || 'Analysis'}_${Date.now()}.jpg`;
+    document.body.appendChild(a);
     a.click();
-    toast.success('Grad-CAM Attention Map saved to device.', 'Image Downloaded');
+    document.body.removeChild(a);
+    toast.success('Grad-CAM Attention Map downloaded to device.', 'Image Downloaded');
   };
 
   // Determine current active display image
