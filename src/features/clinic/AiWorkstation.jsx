@@ -194,20 +194,21 @@ export function AiWorkstation() {
 
   const handleDownloadReport = () => {
     if (!analysisResult) return;
-    const patientName = selectedPatient ? selectedPatient.fullName : 'Walk-in Assessment';
+    const currentPatient = (patients || []).find((p) => p.id === selectedPatientId) || null;
+    const patientName = currentPatient?.fullName || currentPatient?.name || (selectedPatientId ? `Patient #${selectedPatientId.slice(0, 8)}` : 'Walk-in Assessment');
     const timestamp = new Date().toLocaleString();
     const primaryClass = analysisResult.prediction?.class || 'N/A';
     const confidence = analysisResult.prediction?.confidence_percentage || 0;
     const observations = analysisResult.observations || '';
     const signoffNotes = dentistVerification.clinicalSignoffNotes || 'Preliminary Diagnostic Report (Pending Final Review)';
-    const dentistName = user?.fullName || 'Dr. Attending Practitioner';
+    const dentistName = user?.fullName || user?.displayName || 'Dr. Attending Practitioner';
     const gradcamImg = analysisResult.gradcam?.overlayUrl || displayImageUrl || '';
 
     const htmlContent = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>SmileGuard AI Clinical Diagnostic Report - ${patientName}</title>
+  <title>SmileGuard AI Diagnostic Report - ${patientName}</title>
   <style>
     @page { size: A4 portrait; margin: 12mm; }
     * { box-sizing: border-box; }
@@ -227,15 +228,15 @@ export function AiWorkstation() {
     .image-box { text-align: center; }
     .image-box img { max-width: 100%; max-height: 220px; border-radius: 6px; border: 1px solid #cbd5e1; object-fit: contain; }
     .disclaimer { font-size: 9.5px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 16px; font-style: italic; page-break-inside: avoid; }
-    .print-bar { background: #0f766e; color: white; padding: 8px 16px; border-radius: 6px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
-    .print-btn { background: white; color: #0f766e; font-weight: bold; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+    .print-bar { background: #0f766e; color: white; padding: 10px 18px; border-radius: 8px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .print-btn { background: white; color: #0f766e; font-weight: bold; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
     @media print { .print-bar { display: none; } body { padding: 0; } }
   </style>
 </head>
 <body>
   <div class="print-bar">
-    <span style="font-size: 12px; font-weight: 600;">SmileGuard Clinical Report Document</span>
-    <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+    <span style="font-size: 13px; font-weight: 700;">SmileGuard AI Diagnostic Report</span>
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
   </div>
 
   <div class="header">
@@ -298,50 +299,46 @@ export function AiWorkstation() {
 </body>
 </html>`;
 
-    // 1. Direct file download of self-contained diagnostic report
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-    const fileUrl = URL.createObjectURL(blob);
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.href = fileUrl;
-    downloadAnchor.download = `SmileGuard_Report_${patientName.replace(/\s+/g, '_')}_${Date.now()}.html`;
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    document.body.removeChild(downloadAnchor);
-    setTimeout(() => URL.revokeObjectURL(fileUrl), 2000);
-
-    // 2. Also trigger printable iframe for instant Print / Save to PDF
+    // 1. Direct download of the clinical report file
     try {
-      let iframe = document.getElementById('sg-print-frame');
-      if (iframe) iframe.remove();
-      iframe = document.createElement('iframe');
-      iframe.id = 'sg-print-frame';
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      iframe.style.visibility = 'hidden';
-      document.body.appendChild(iframe);
-
-      const frameDoc = iframe.contentWindow.document;
-      frameDoc.open();
-      frameDoc.write(htmlContent);
-      frameDoc.close();
-
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const fileUrl = URL.createObjectURL(blob);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.href = fileUrl;
+      downloadAnchor.download = `SmileGuard_Report_${patientName.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.html`;
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
       setTimeout(() => {
-        try {
-          iframe.contentWindow.focus();
-          iframe.contentWindow.print();
-        } catch (e) {
-          console.warn('Iframe print skipped:', e);
+        if (downloadAnchor.parentNode) {
+          downloadAnchor.parentNode.removeChild(downloadAnchor);
         }
-      }, 300);
-    } catch (e) {
-      console.warn('Print frame error:', e);
+        URL.revokeObjectURL(fileUrl);
+      }, 2000);
+    } catch (downloadErr) {
+      console.error('File download error:', downloadErr);
     }
 
-    toast.success('Diagnostic Report downloaded to device and opened for PDF printing.', 'Report Downloaded');
+    // 2. Open printable view / trigger print dialog
+    try {
+      const printWin = window.open('', '_blank');
+      if (printWin) {
+        printWin.document.open();
+        printWin.document.write(htmlContent);
+        printWin.document.close();
+        setTimeout(() => {
+          try {
+            printWin.focus();
+            printWin.print();
+          } catch (e) {
+            console.warn('Print prompt skipped:', e);
+          }
+        }, 300);
+      }
+    } catch (printErr) {
+      console.warn('Print window error:', printErr);
+    }
+
+    toast.success('Diagnostic Report downloaded & opened for PDF printing.', 'Report Exported');
   };
 
   const handleDownloadGradcam = () => {
