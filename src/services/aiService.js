@@ -1,7 +1,10 @@
 import { auth } from '../config/firebase';
 
-const AI_SERVICE_URL = import.meta.env.VITE_AI_SERVICE_URL || 'http://127.0.0.1:8000/api/predict';
-const AI_MODEL_INFO_URL = import.meta.env.VITE_AI_MODEL_INFO_URL || 'http://127.0.0.1:8000/api/model-info';
+const PRIMARY_AI_URL = import.meta.env.VITE_AI_SERVICE_URL || 'https://sguardai.onrender.com/api/predict';
+const LOCAL_AI_URL = 'http://127.0.0.1:8000/api/predict';
+
+const PRIMARY_INFO_URL = import.meta.env.VITE_AI_MODEL_INFO_URL || 'https://sguardai.onrender.com/api/model-info';
+const LOCAL_INFO_URL = 'http://127.0.0.1:8000/api/model-info';
 
 /**
  * Service for SmileGuard AI Diagnostic Workstation & Real CNN radiograph inference.
@@ -15,7 +18,7 @@ export const aiService = {
    * @returns {boolean}
    */
   isAiConfigured() {
-    return Boolean(AI_SERVICE_URL);
+    return Boolean(PRIMARY_AI_URL || LOCAL_AI_URL);
   },
 
   /**
@@ -23,21 +26,23 @@ export const aiService = {
    * @returns {Promise<Object>}
    */
   async getModelInfo() {
-    try {
-      const response = await fetch(AI_MODEL_INFO_URL, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-      });
-      if (!response.ok) return null;
-      return await response.json();
-    } catch (err) {
-      console.warn('Could not fetch model info:', err);
-      return null;
+    const urls = [PRIMARY_INFO_URL, LOCAL_INFO_URL].filter(Boolean);
+    for (const url of urls) {
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+        });
+        if (response.ok) return await response.json();
+      } catch (err) {
+        console.warn(`Could not fetch model info from ${url}:`, err);
+      }
     }
+    return null;
   },
 
   /**
-   * Sends a radiograph (File or Image URL) for real clinical CNN inference
+   * Sends a radiograph (File or Image URL) for real clinical CNN inference with auto-failover
    * @param {File|Blob|string} imageInput - File object or image URL
    * @param {Object} [options]
    * @param {string} [options.patientId]
@@ -45,12 +50,6 @@ export const aiService = {
    * @returns {Promise<Object>} Authentic neural network inference results
    */
   async analyzeRadiograph(imageInput, options = {}) {
-    if (!this.isAiConfigured()) {
-      throw new Error(
-        'AI Diagnostic service is unconfigured. A running ML backend endpoint (VITE_AI_SERVICE_URL) is required.'
-      );
-    }
-
     if (!imageInput) {
       throw new Error('Dental radiograph image is required for diagnostic analysis.');
     }
@@ -66,60 +65,76 @@ export const aiService = {
       }
     }
 
-    let response;
+    // Build unique endpoints list to try in order (cloud first, then local fallback)
+    const targetEndpoints = Array.from(new Set([PRIMARY_AI_URL, LOCAL_AI_URL].filter(Boolean)));
+    let lastError = null;
 
-    if (imageInput instanceof File || imageInput instanceof Blob) {
-      // Send as Multipart FormData
-      const formData = new FormData();
-      formData.append('file', imageInput);
-      if (options.patientId) formData.append('patientId', options.patientId);
-      if (options.radiographType) formData.append('radiographType', options.radiographType);
+    for (const endpoint of targetEndpoints) {
+      try {
+        let response;
 
-      response = await fetch(AI_SERVICE_URL, {
-        method: 'POST',
-        headers,
-        body: formData,
-      });
-    } else if (typeof imageInput === 'string') {
-      // Send URL or Base64 payload
-      if (imageInput.startsWith('data:image/')) {
-        const jsonUrl = AI_SERVICE_URL.replace('/api/predict', '/api/predict-json');
-        response = await fetch(jsonUrl, {
-          method: 'POST',
-          headers: {
-            ...headers,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            imageBase64: imageInput,
-            patientId: options.patientId,
-            radiographType: options.radiographType || 'OPG',
-          }),
-        });
-      } else {
-        // Multipart with imageUrl or JSON
-        const formData = new FormData();
-        formData.append('imageUrl', imageInput);
-        if (options.patientId) formData.append('patientId', options.patientId);
-        if (options.radiographType) formData.append('radiographType', options.radiographType);
+        if (imageInput instanceof File || imageInput instanceof Blob) {
+          const formData = new FormData();
+          formData.append('file', imageInput);
+          if (options.patientId) formData.append('patientId', options.patientId);
+          if (options.radiographType) formData.append('radiographType', options.radiographType);
 
-        response = await fetch(AI_SERVICE_URL, {
-          method: 'POST',
-          headers,
-          body: formData,
-        });
+          response = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: formData,
+          });
+        } else if (typeof imageInput === 'string') {
+          if (imageInput.startsWith('data:image/')) {
+            const jsonUrl = endpoint.replace('/api/predict', '/api/predict-json');
+            response = await fetch(jsonUrl, {
+              method: 'POST',
+              headers: {
+                ...headers,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                imageBase64: imageInput,
+                patientId: options.patientId,
+                radiographType: options.radiographType || 'OPG',
+              }),
+            });
+          } else {
+            const formData = new FormData();
+            formData.append('imageUrl', imageInput);
+            if (options.patientId) formData.append('patientId', options.patientId);
+            if (options.radiographType) formData.append('radiographType', options.radiographType);
+
+            response = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: formData,
+            });
+          }
+        } else {
+          throw new Error('Unsupported image input format. Provide a File object or Image URL string.');
+        }
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          const detailMsg = typeof errData.detail === 'object' ? errData.detail?.message : errData.detail;
+          throw new Error(detailMsg || errData.message || `AI service error HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result;
+      } catch (err) {
+        lastError = err;
+        console.warn(`Inference attempt failed on ${endpoint}:`, err.message);
+        // Continue to next endpoint if network failed (Failed to fetch)
       }
-    } else {
-      throw new Error('Unsupported image input format. Provide a File object or Image URL string.');
     }
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      const detailMsg = typeof errData.detail === 'object' ? errData.detail?.message : errData.detail;
-      throw new Error(detailMsg || errData.message || `AI service responded with HTTP error ${response.status}`);
-    }
-
-    const result = await response.json();
-    return result;
+    throw new Error(
+      lastError?.message?.includes('Failed to fetch')
+        ? 'Cannot connect to AI backend. The cloud server may be spinning up from sleep, or the local server is offline.'
+        : (lastError?.message || 'AI inference failed.')
+    );
   },
 };
+
