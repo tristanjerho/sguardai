@@ -549,28 +549,29 @@ export function PatientDetail() {
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
-              className={`relative rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 h-[65vh] flex items-center justify-center select-none ${
+              className={`relative rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 h-[65vh] flex items-center justify-center select-none touch-none ${
                 zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
               }`}
             >
               <div
                 style={{
-                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)`,
+                  transform: `translate3d(${pan.x}px, ${pan.y}px, 0px) scale(${zoom}) rotate(${rotation}deg)`,
                   filter: `${isInverted ? 'invert(1) ' : ''}${isHighContrast ? 'contrast(1.6) brightness(1.1) ' : ''}`,
-                  transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)',
+                  willChange: 'transform',
+                  transition: isDragging ? 'none' : 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)',
                 }}
-                className="max-h-[60vh] max-w-[90vw] flex items-center justify-center origin-center"
+                className="max-h-[60vh] max-w-[90vw] flex items-center justify-center origin-center pointer-events-none transform-gpu"
               >
                 <img
                   src={selectedRecord.secureUrl || selectedRecord.imageUrl}
                   alt={selectedRecord.type}
                   draggable={false}
-                  className="max-h-[58vh] w-auto object-contain rounded-xl shadow-2xl pointer-events-none"
+                  className="max-h-[58vh] w-auto object-contain rounded-xl shadow-2xl pointer-events-none select-none"
                 />
               </div>
 
               {zoom > 1 && (
-                <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md text-teal-300 text-[11px] px-3 py-1.5 rounded-xl border border-slate-700/60 flex items-center gap-1.5 pointer-events-none">
+                <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md text-teal-300 text-[11px] px-3 py-1.5 rounded-xl border border-slate-700/60 flex items-center gap-1.5 pointer-events-none select-none">
                   <Move className="w-3.5 h-3.5 text-teal-400" />
                   Click & drag to pan around radiograph
                 </div>
