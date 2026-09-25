@@ -61,6 +61,7 @@ export function PatientDetail() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = React.useRef({ x: 0, y: 0 });
+  const touchStartDistRef = React.useRef(0);
 
   const handleOpenRecord = (rec) => {
     setSelectedRecord(rec);
@@ -69,6 +70,14 @@ export function PatientDetail() {
     setIsInverted(false);
     setIsHighContrast(false);
     setPan({ x: 0, y: 0 });
+    setIsDragging(false);
+  };
+
+  const handleCloseRecord = () => {
+    setSelectedRecord(null);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    setIsDragging(false);
   };
 
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.35, 4));
@@ -86,16 +95,20 @@ export function PatientDetail() {
     setIsInverted(false);
     setIsHighContrast(false);
     setPan({ x: 0, y: 0 });
+    setIsDragging(false);
   };
 
+  // Desktop Mouse Drag handlers
   const handleMouseDown = (e) => {
     if (zoom <= 1) return;
+    e.preventDefault();
     setIsDragging(true);
     dragStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
   };
 
   const handleMouseMove = (e) => {
     if (!isDragging || zoom <= 1) return;
+    e.preventDefault();
     setPan({
       x: e.clientX - dragStartRef.current.x,
       y: e.clientY - dragStartRef.current.y,
@@ -104,8 +117,52 @@ export function PatientDetail() {
 
   const handleMouseUp = () => setIsDragging(false);
 
+  // Mobile Touch Handlers (Single finger pan + Two finger pinch)
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 1 && zoom > 1) {
+      setIsDragging(true);
+      dragStartRef.current = {
+        x: e.touches[0].clientX - pan.x,
+        y: e.touches[0].clientY - pan.y,
+      };
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchStartDistRef.current = dist;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 1 && isDragging && zoom > 1) {
+      setPan({
+        x: e.touches[0].clientX - dragStartRef.current.x,
+        y: e.touches[0].clientY - dragStartRef.current.y,
+      });
+    } else if (e.touches.length === 2 && touchStartDistRef.current > 0) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const factor = dist / touchStartDistRef.current;
+      if (factor > 1.05) {
+        handleZoomIn();
+        touchStartDistRef.current = dist;
+      } else if (factor < 0.95) {
+        handleZoomOut();
+        touchStartDistRef.current = dist;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    touchStartDistRef.current = 0;
+  };
+
+  // Wheel zoom handler
   const handleWheel = (e) => {
-    e.preventDefault();
     if (e.deltaY < 0) {
       handleZoomIn();
     } else {
@@ -456,7 +513,7 @@ export function PatientDetail() {
       {/* Interactive Medical Lightbox Modal */}
       <Modal
         isOpen={!!selectedRecord}
-        onClose={() => setSelectedRecord(null)}
+        onClose={handleCloseRecord}
         title={selectedRecord ? `${selectedRecord.type} Diagnostic Radiograph Viewer` : ''}
         maxWidth="max-w-5xl"
       >
@@ -465,6 +522,18 @@ export function PatientDetail() {
             {/* Top Toolbar */}
             <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-2xl bg-surface-subtle border border-surface-border text-xs">
               <div className="flex items-center gap-1.5 flex-wrap">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  leftIcon={ArrowLeft}
+                  onClick={handleCloseRecord}
+                  className="h-8 px-3 text-xs font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 hover:bg-teal-100 shadow-xs"
+                >
+                  Back
+                </Button>
+
+                <div className="h-4 w-px bg-surface-border hidden sm:block mx-1" />
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -492,7 +561,7 @@ export function PatientDetail() {
                   size="sm"
                   leftIcon={RotateCw}
                   onClick={handleRotate}
-                  className="h-8 px-2.5 text-xs font-semibold"
+                  className="h-8 px-2.5 text-xs font-semibold hidden sm:inline-flex"
                   title="Rotate 90 degrees"
                 >
                   Rotate
@@ -511,7 +580,7 @@ export function PatientDetail() {
                   variant={isInverted ? 'primary' : 'outline'}
                   size="sm"
                   onClick={() => setIsInverted(!isInverted)}
-                  className="h-8 px-2.5 text-xs font-semibold"
+                  className="h-8 px-2.5 text-xs font-semibold hidden sm:inline-flex"
                   title="Invert negative colors"
                 >
                   Invert
@@ -549,7 +618,14 @@ export function PatientDetail() {
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
-              className={`relative rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 h-[65vh] flex items-center justify-center select-none touch-none ${
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchEnd}
+              style={{
+                touchAction: zoom > 1 ? 'none' : 'pan-y',
+              }}
+              className={`relative rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 h-[45vh] sm:h-[60vh] flex items-center justify-center select-none ${
                 zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
               }`}
             >
@@ -560,20 +636,20 @@ export function PatientDetail() {
                   willChange: 'transform',
                   transition: isDragging ? 'none' : 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)',
                 }}
-                className="max-h-[60vh] max-w-[90vw] flex items-center justify-center origin-center pointer-events-none transform-gpu"
+                className="max-h-[42vh] sm:max-h-[56vh] max-w-[90vw] flex items-center justify-center origin-center pointer-events-none transform-gpu"
               >
                 <img
                   src={selectedRecord.secureUrl || selectedRecord.imageUrl}
                   alt={selectedRecord.type}
                   draggable={false}
-                  className="max-h-[58vh] w-auto object-contain rounded-xl shadow-2xl pointer-events-none select-none"
+                  className="max-h-[40vh] sm:max-h-[54vh] w-auto object-contain rounded-xl shadow-2xl pointer-events-none select-none"
                 />
               </div>
 
               {zoom > 1 && (
                 <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md text-teal-300 text-[11px] px-3 py-1.5 rounded-xl border border-slate-700/60 flex items-center gap-1.5 pointer-events-none select-none">
                   <Move className="w-3.5 h-3.5 text-teal-400" />
-                  Click & drag to pan around radiograph
+                  Drag with finger or mouse to pan
                 </div>
               )}
             </div>
@@ -586,6 +662,19 @@ export function PatientDetail() {
                   Associated Teeth: #{selectedRecord.toothNumbers.join(', #')}
                 </div>
               )}
+            </div>
+
+            {/* Bottom Back Button */}
+            <div className="flex items-center justify-between pt-2 border-t border-surface-border">
+              <Button
+                variant="secondary"
+                size="sm"
+                leftIcon={ArrowLeft}
+                onClick={handleCloseRecord}
+                className="w-full sm:w-auto font-bold"
+              >
+                Back to Patient Chart
+              </Button>
             </div>
           </div>
         )}
