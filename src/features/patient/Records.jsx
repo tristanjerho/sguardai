@@ -8,12 +8,10 @@ import {
   Eye,
   FileText,
   Sparkles,
-  UploadCloud,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { patientService } from '../../services/patientService';
-import { imageService } from '../../services/imageService';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -28,13 +26,6 @@ export function Records() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState(null);
-
-  // Upload modal
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [file, setFile] = useState(null);
-  const [type, setType] = useState('INTRAORAL');
-  const [notes, setNotes] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
 
   const loadRecords = async () => {
     if (!user?.id) return;
@@ -53,33 +44,6 @@ export function Records() {
     loadRecords();
   }, [user?.id]);
 
-  const handleUpload = async (e) => {
-    e.preventDefault();
-    if (!file) {
-      toast.error('Please select an image file to upload.');
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const newRec = await imageService.uploadDentalImage(file, {
-        patientId: user.id,
-        type,
-        uploadedBy: user.id,
-        notes,
-      });
-      setRecords((prev) => [newRec, ...prev]);
-      setIsUploadOpen(false);
-      setFile(null);
-      setNotes('');
-      toast.success('Dental image uploaded to your digital record!');
-    } catch (err) {
-      toast.error(err.message || 'Image upload failed. Please verify Cloudinary configuration.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -92,14 +56,11 @@ export function Records() {
           </p>
         </div>
 
-        <Button
-          variant="primary"
-          size="sm"
-          leftIcon={UploadCloud}
-          onClick={() => setIsUploadOpen(true)}
-        >
-          Upload Dental Photo
-        </Button>
+        <div className="flex items-center gap-2">
+          <Badge variant="primary" size="md">
+            Clinical Verified Scans
+          </Badge>
+        </div>
       </div>
 
       {loading ? (
@@ -109,10 +70,8 @@ export function Records() {
       ) : records.length === 0 ? (
         <EmptyState
           title="No Dental Records Found"
-          description="Your radiographic scans and clinical photos will appear here after your in-clinic diagnostics."
+          description="Your radiographic scans and clinical photos will appear here once uploaded by your attending dental practitioner."
           icon={FolderArchive}
-          actionLabel="Upload Dental Photo"
-          onAction={() => setIsUploadOpen(true)}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -212,79 +171,6 @@ export function Records() {
             )}
           </div>
         )}
-      </Modal>
-
-      {/* Upload Modal */}
-      <Modal
-        isOpen={isUploadOpen}
-        onClose={() => setIsUploadOpen(false)}
-        title="Upload Dental Image to Cloudinary"
-        size="md"
-      >
-        <form onSubmit={handleUpload} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-heading font-bold text-ink-primary">
-              Image File
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              required
-              className="w-full text-xs p-2.5 rounded-xl border border-surface-border bg-surface-base text-ink-primary file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-600 file:text-white hover:file:bg-teal-700 cursor-pointer"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-heading font-bold text-ink-primary">
-              Category
-            </label>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="w-full text-xs p-2.5 rounded-xl border border-surface-border bg-surface-base text-ink-primary focus:border-teal-500 focus:outline-none"
-            >
-              <option value="INTRAORAL">Intraoral Photo</option>
-              <option value="EXTRAORAL">Extraoral Facial Photo</option>
-              <option value="PANORAMIC">Panoramic OPG Radiograph</option>
-              <option value="PERIAPICAL">Periapical Radiograph</option>
-              <option value="BITEWING">Bitewing Radiograph</option>
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-heading font-bold text-ink-primary">
-              Patient Notes (Optional)
-            </label>
-            <textarea
-              placeholder="Add any notes about symptoms, previous clinic visits, or tracking..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              className="w-full text-xs p-2.5 rounded-xl border border-surface-border bg-surface-base text-ink-primary focus:border-teal-500 focus:outline-none resize-none"
-            />
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-surface-border">
-            <Button
-              variant="outline"
-              size="sm"
-              type="button"
-              onClick={() => setIsUploadOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              type="submit"
-              isLoading={isUploading}
-              leftIcon={UploadCloud}
-            >
-              Upload
-            </Button>
-          </div>
-        </form>
       </Modal>
     </div>
   );

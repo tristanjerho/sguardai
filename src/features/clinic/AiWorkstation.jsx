@@ -182,14 +182,51 @@ export function AiWorkstation() {
     }
   };
 
-  const handleSignOff = (e) => {
+  const [isSigning, setIsSigning] = useState(false);
+
+  const handleSignOff = async (e) => {
     e.preventDefault();
     if (!dentistVerification.clinicalSignoffNotes) {
       toast.error('Please provide clinical notes before signing off.');
       return;
     }
-    setDentistVerification({ ...dentistVerification, signed: true });
-    toast.success('Clinical verification signed and appended to patient chart.');
+
+    if (!selectedPatientId) {
+      toast.warning('Please select a patient case to bind this diagnostic record to.');
+      return;
+    }
+
+    setIsSigning(true);
+    try {
+      const currentPatient = (patients || []).find((p) => p.id === selectedPatientId);
+      const patientName = currentPatient?.fullName || currentPatient?.name || 'Patient';
+
+      // If dentist uploaded a new file directly in AI Workstation, upload to Cloudinary and bind to patient
+      if (inputMode === 'upload' && uploadedFile) {
+        const diagNote = `[AI Diagnostic Screening: ${analysisResult?.prediction?.class || 'OPG Radiograph'} (${analysisResult?.prediction?.confidence_percentage || ''}% Confidence)] - Verified Findings: ${dentistVerification.clinicalSignoffNotes}`;
+
+        await imageService.uploadDentalImage(uploadedFile, {
+          patientId: selectedPatientId,
+          type: 'PANORAMIC',
+          toothNumbers: [],
+          uploadedBy: user?.id || 'dentist',
+          notes: diagNote,
+        });
+
+        toast.success(
+          `Radiograph uploaded to Cloudinary, AI report attached, and successfully bound to ${patientName}'s clinical chart!`
+        );
+      } else {
+        toast.success(`Clinical verification signed and appended to ${patientName}'s clinical chart.`);
+      }
+
+      setDentistVerification({ ...dentistVerification, signed: true });
+    } catch (err) {
+      console.error('Failed to bind record to patient chart:', err);
+      toast.error(err.message || 'Failed to bind diagnostic record to patient chart.');
+    } finally {
+      setIsSigning(false);
+    }
   };
 
   const handleDownloadReport = () => {
@@ -562,6 +599,31 @@ export function AiWorkstation() {
                 </div>
               </div>
             )}
+
+            {/* Bind to Patient Selector in Upload Mode */}
+            <div className="pt-2">
+              <label className="text-xs font-heading font-bold text-ink-primary block mb-1">
+                Bind Radiograph to Patient Chart (Required for Sign-off)
+              </label>
+              {patients.length === 0 ? (
+                <p className="text-xs text-ink-muted p-2 rounded-xl border border-surface-border bg-surface-subtle">
+                  No registered patients found.
+                </p>
+              ) : (
+                <select
+                  value={selectedPatientId}
+                  onChange={(e) => setSelectedPatientId(e.target.value)}
+                  className="w-full text-xs p-2.5 rounded-xl border border-surface-border bg-surface-base text-ink-primary focus:border-teal-500 focus:outline-none"
+                >
+                  <option value="">-- Select Patient to Bind --</option>
+                  {patients.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.fullName} (ID: {p.id.slice(0, 8)})
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -913,6 +975,7 @@ export function AiWorkstation() {
                   variant="primary"
                   size="sm"
                   className="w-full"
+                  isLoading={isSigning}
                   disabled={dentistVerification.signed}
                 >
                   {dentistVerification.signed ? 'Clinical Verification Signed ✓' : 'Sign & Append to Chart'}
