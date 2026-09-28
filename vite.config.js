@@ -86,6 +86,13 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  root: path.resolve(__dirname, '.'),
+  build: {
+    outDir: 'dist',
+    rollupOptions: {
+      input: path.resolve(__dirname, 'index.html'),
+    },
+  },
   server: {
     port: 3000,
     open: false,
