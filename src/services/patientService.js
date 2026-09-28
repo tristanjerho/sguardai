@@ -9,7 +9,7 @@ import {
   where,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { auth, db } from '../config/firebase';
 import { ROLES } from '../lib/roles';
 import { imageService } from './imageService';
 import { activityLogService } from './activityLogService';
@@ -62,11 +62,12 @@ export const patientService = {
 
   /**
    * Retrieves brushing habit streak for a patient from Firestore
-   * @param {string} patientId
+   * @param {string} [patientId]
    * @returns {Promise<Object>}
    */
   async getBrushStreak(patientId) {
-    if (!db || !patientId) {
+    const effectivePatientId = patientId || auth?.currentUser?.uid;
+    if (!db || !effectivePatientId) {
       return {
         currentStreak: 0,
         longestStreak: 0,
@@ -78,7 +79,7 @@ export const patientService = {
     }
 
     try {
-      const docRef = doc(db, 'brushStreaks', patientId);
+      const docRef = doc(db, 'brushStreaks', effectivePatientId);
       const snap = await getDoc(docRef);
       if (!snap.exists()) {
         return {
@@ -106,15 +107,17 @@ export const patientService = {
 
   /**
    * Logs a real brushing session (morning/night) for a patient in Firestore
-   * @param {string} patientId
+   * @param {string} [patientId]
    * @param {'morning'|'night'} sessionType
    * @returns {Promise<Object>}
    */
   async recordBrush(patientId, sessionType) {
-    if (!db || !patientId) throw new Error('Firestore is not initialized.');
+    const effectivePatientId = patientId || auth?.currentUser?.uid;
+    if (!db) throw new Error('Firestore is not initialized.');
+    if (!effectivePatientId) throw new Error('Please sign in to log your brushing check-in.');
 
-    const docRef = doc(db, 'brushStreaks', patientId);
-    const streak = await this.getBrushStreak(patientId);
+    const docRef = doc(db, 'brushStreaks', effectivePatientId);
+    const streak = await this.getBrushStreak(effectivePatientId);
     const today = new Date().toISOString().split('T')[0];
 
     const todayHistory = streak.history?.[today] || { morning: false, night: false };
@@ -122,11 +125,11 @@ export const patientService = {
       throw new Error(`You have already logged your ${sessionType} brushing session today!`);
     }
 
-    todayHistory[sessionType] = true;
-    const updatedHistory = { ...(streak.history || {}), [today]: todayHistory };
+    const updatedTodayHistory = { ...todayHistory, [sessionType]: true };
+    const updatedHistory = { ...(streak.history || {}), [today]: updatedTodayHistory };
 
     let currentStreak = streak.currentStreak || 0;
-    const isFirstSessionToday = !todayHistory.morning || !todayHistory.night;
+    const isFirstSessionToday = !todayHistory.morning && !todayHistory.night;
 
     if (isFirstSessionToday) {
       const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
@@ -138,7 +141,7 @@ export const patientService = {
     }
 
     const longestStreak = Math.max(streak.longestStreak || 0, currentStreak);
-    const pointsGained = sessionType === 'night' ? 15 : 10;
+    const pointsGained = 25;
     const totalPoints = (streak.totalPoints || 0) + pointsGained;
 
     // Check newly unlocked badges
@@ -158,7 +161,7 @@ export const patientService = {
     }
 
     const updatedStreak = {
-      patientId,
+      patientId: effectivePatientId,
       currentStreak,
       longestStreak,
       totalPoints,
@@ -170,13 +173,17 @@ export const patientService = {
 
     await setDoc(docRef, updatedStreak, { merge: true });
 
-    await activityLogService.log({
-      userId: patientId,
-      action: 'BRUSH_SESSION_LOGGED',
-      resourceType: 'BRUSH_STREAK',
-      resourceId: patientId,
-      entity: `Logged ${sessionType} brushing (+${pointsGained} pts, streak: ${currentStreak} days)`,
-    });
+    try {
+      await activityLogService.log({
+        userId: effectivePatientId,
+        action: 'BRUSH_SESSION_LOGGED',
+        resourceType: 'BRUSH_STREAK',
+        resourceId: effectivePatientId,
+        entity: `Logged ${sessionType} brushing (+${pointsGained} pts, streak: ${currentStreak} days)`,
+      });
+    } catch (logErr) {
+      console.warn('Non-critical audit log error:', logErr);
+    }
 
     return { ...updatedStreak, newBadges, pointsGained };
   },

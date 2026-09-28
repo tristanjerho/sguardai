@@ -37,14 +37,16 @@ export function BrushStreak() {
   const [quizFinished, setQuizFinished] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
 
+  const targetUserId = user?.id || user?.uid;
+
   const loadStreak = async () => {
-    if (!user?.id) return;
+    if (!targetUserId) return;
     try {
       setLoading(true);
-      const data = await patientService.getBrushStreak(user.id);
+      const data = await patientService.getBrushStreak(targetUserId);
       setStreakData(data);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load streak:', err);
     } finally {
       setLoading(false);
     }
@@ -52,7 +54,7 @@ export function BrushStreak() {
 
   useEffect(() => {
     loadStreak();
-  }, [user?.id]);
+  }, [targetUserId]);
 
   const today = new Date().toISOString().split('T')[0];
   const todayHistory = streakData?.history?.[today] || { morning: false, night: false };
@@ -67,7 +69,7 @@ export function BrushStreak() {
     setMascotMood('cheer');
 
     try {
-      const updated = await patientService.recordBrushCheckIn(user.id, period);
+      const updated = await patientService.recordBrushCheckIn(targetUserId, period);
       setStreakData(updated);
 
       confetti({
@@ -77,13 +79,14 @@ export function BrushStreak() {
         colors: ['#f97316', '#0d9488', '#fbbf24'],
       });
 
-      toast.success(`+25 Smile Points earned for ${period} brushing!`);
+      toast.success(`+${updated?.pointsGained || 25} Smile Points earned for ${period} brushing!`);
 
-      if (updated.newBadges?.length > 0) {
+      if (updated?.newBadges?.length > 0) {
         toast.success(`🏆 Unlocked: ${updated.newBadges.join(', ')}!`);
       }
     } catch (err) {
-      toast.error('Failed to log check-in');
+      console.error('Check-in error:', err);
+      toast.error(err.message || 'Failed to log check-in');
     } finally {
       setIsCheckingIn(false);
       setTimeout(() => setMascotMood('happy'), 4000);
