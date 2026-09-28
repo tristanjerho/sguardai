@@ -124,10 +124,12 @@ export function LabOrdersManager() {
 
   const tabs = [
     { id: 'ALL', label: 'All Orders', badge: orders.length },
-    { id: LAB_ORDER_STATUS.ORDERED, label: 'Ordered' },
-    { id: LAB_ORDER_STATUS.IN_PROGRESS, label: 'In Lab Fabrication' },
-    { id: LAB_ORDER_STATUS.READY, label: 'Ready for Fitting' },
-    { id: LAB_ORDER_STATUS.DELIVERED, label: 'Delivered' },
+    { id: 'RECEIVED', label: 'Received & Intake' },
+    { id: 'DESIGN', label: 'CAD Design' },
+    { id: 'MILLING', label: 'CAM Milling' },
+    { id: 'GLAZING', label: 'Glazing & Sintering' },
+    { id: 'QA', label: 'Quality Assurance' },
+    { id: 'DISPATCHED', label: 'Dispatched / Fitted' },
   ];
 
   return (
@@ -320,10 +322,12 @@ export function LabOrdersManager() {
             value={newStatus}
             onChange={(e) => setNewStatus(e.target.value)}
             options={[
-              { value: LAB_ORDER_STATUS.ORDERED, label: 'ORDERED (Prescription Sent)' },
-              { value: LAB_ORDER_STATUS.IN_PROGRESS, label: 'IN_PROGRESS (Under Fabrication)' },
-              { value: LAB_ORDER_STATUS.READY, label: 'READY (Arrived at Clinic)' },
-              { value: LAB_ORDER_STATUS.DELIVERED, label: 'DELIVERED (Fitted to Patient)' },
+              { value: 'RECEIVED', label: 'RECEIVED (Received & Intake)' },
+              { value: 'DESIGN', label: 'DESIGN (CAD 3D Modeling)' },
+              { value: 'MILLING', label: 'MILLING (CAM Milling / 3D Print)' },
+              { value: 'GLAZING', label: 'GLAZING (Staining & Glazing)' },
+              { value: 'QA', label: 'QA (Quality Assurance Inspection)' },
+              { value: 'DISPATCHED', label: 'DISPATCHED (Dispatched / Ready for Fitting)' },
             ]}
           />
 

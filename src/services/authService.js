@@ -439,8 +439,15 @@ export const authService = {
    */
   async toggleUserStatus(userId, currentDeactivatedState) {
     if (!db) throw new Error('Firestore is not initialized.');
-    const newState = !currentDeactivatedState;
     const userDocRef = doc(db, 'users', userId);
+    
+    let isCurrentlyDeactivated = currentDeactivatedState;
+    if (isCurrentlyDeactivated === undefined) {
+      const snap = await getDoc(userDocRef);
+      isCurrentlyDeactivated = snap.exists() ? Boolean(snap.data()?.deactivated) : false;
+    }
+    
+    const newState = !isCurrentlyDeactivated;
     await updateDoc(userDocRef, {
       deactivated: newState,
       updatedAt: serverTimestamp(),

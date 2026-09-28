@@ -732,7 +732,7 @@ export function AiWorkstation() {
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   <span className="font-semibold text-ink-primary">Model Attention Visualization:</span>
                   <span className="text-ink-secondary">
-                    Grad-CAM visualization of image regions contributing to the model&apos;s prediction (Layer: <code className="font-mono bg-surface-base px-1 py-0.5 rounded text-[11px]">{analysisResult.gradcam.target_layer || 'top_conv'}</code>).
+                    Grad-CAM visualization of image regions contributing to the model&apos;s prediction (Layer: <code className="font-mono bg-surface-base px-1 py-0.5 rounded text-[11px]">{analysisResult.gradcam.targetLayer || analysisResult.gradcam.target_layer || 'top_conv'}</code>).
                   </span>
                 </div>
                 <Badge variant="neutral" size="sm">Pre-Softmax Logits</Badge>

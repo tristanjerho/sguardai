@@ -141,6 +141,22 @@ export const patientService = {
     const pointsGained = sessionType === 'night' ? 15 : 10;
     const totalPoints = (streak.totalPoints || 0) + pointsGained;
 
+    // Check newly unlocked badges
+    const unlockedBadges = [...(streak.unlockedBadges || [])];
+    const newBadges = [];
+    if (currentStreak >= 3 && !unlockedBadges.includes('badge-3-days')) {
+      unlockedBadges.push('badge-3-days');
+      newBadges.push('3-Day Sparkle');
+    }
+    if (currentStreak >= 7 && !unlockedBadges.includes('badge-7-days')) {
+      unlockedBadges.push('badge-7-days');
+      newBadges.push('7-Day Diamond');
+    }
+    if (currentStreak >= 30 && !unlockedBadges.includes('badge-30-days')) {
+      unlockedBadges.push('badge-30-days');
+      newBadges.push('30-Day Master');
+    }
+
     const updatedStreak = {
       patientId,
       currentStreak,
@@ -148,6 +164,7 @@ export const patientService = {
       totalPoints,
       lastCheckInDate: today,
       history: updatedHistory,
+      unlockedBadges,
       updatedAt: serverTimestamp(),
     };
 
@@ -161,7 +178,14 @@ export const patientService = {
       entity: `Logged ${sessionType} brushing (+${pointsGained} pts, streak: ${currentStreak} days)`,
     });
 
-    return updatedStreak;
+    return { ...updatedStreak, newBadges, pointsGained };
+  },
+
+  /**
+   * Alias for recordBrush
+   */
+  async recordBrushCheckIn(patientId, sessionType) {
+    return this.recordBrush(patientId, sessionType);
   },
 
   /**

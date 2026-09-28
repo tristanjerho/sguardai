@@ -98,7 +98,7 @@ export function UserManagement() {
       return;
     }
     try {
-      await authService.toggleUserStatus(userToToggle.id);
+      await authService.toggleUserStatus(userToToggle.id, userToToggle.deactivated);
       toast.success(`User status updated.`);
     } catch (err) {
       toast.error('Failed to change user status.');
