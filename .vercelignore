@@ -1,4 +1,9 @@
 backend/
 backend/**
 *.py
+*.ipynb
+*.h5
 *.keras
+*.pt
+requirements.txt
+pyproject.toml
