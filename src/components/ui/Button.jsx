@@ -21,17 +21,17 @@ export function Button({
 
   const variants = {
     primary:
-      'bg-teal-600 hover:bg-teal-700 text-white shadow-soft hover:shadow-glow focus-visible:ring-teal-500 dark:bg-teal-500 dark:hover:bg-teal-600 dark:text-slate-950 dark:font-semibold',
+      'bg-teal-600 hover:bg-teal-700 text-white shadow-soft hover:shadow-glow focus-visible:ring-teal-500 dark:bg-gradient-to-r dark:from-[#83A6CE] dark:to-[#C48CB3] dark:hover:from-[#95B5DC] dark:hover:to-[#D19EC2] dark:text-[#0B1B32] dark:font-bold dark:shadow-[0_0_20px_rgba(131,166,206,0.3)]',
     accent:
-      'bg-orange-500 hover:bg-orange-600 text-white shadow-soft hover:shadow-glow-accent focus-visible:ring-orange-500',
+      'bg-orange-500 hover:bg-orange-600 text-white shadow-soft hover:shadow-glow-accent focus-visible:ring-orange-500 dark:bg-gradient-to-r dark:from-[#C48CB3] dark:to-[#E5C9D7] dark:hover:from-[#D19EC2] dark:hover:to-[#F0DCE6] dark:text-[#0B1B32] dark:font-bold dark:shadow-[0_0_20px_rgba(196,140,179,0.35)]',
     secondary:
-      'bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-teal-300 dark:border-slate-700',
+      'bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 dark:bg-[#26415E]/80 dark:hover:bg-[#26415E] dark:text-[#E5C9D7] dark:border-[#83A6CE]/30 dark:shadow-sm',
     outline:
-      'border-2 border-slate-200 hover:border-teal-500 hover:bg-teal-50/50 text-slate-700 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:border-teal-400',
+      'border border-slate-200 hover:border-teal-500 hover:bg-teal-50/50 text-slate-700 dark:border-[#83A6CE]/35 dark:text-[#E5C9D7] dark:hover:bg-[#26415E]/60 dark:hover:border-[#C48CB3]/60 dark:hover:text-white',
     ghost:
-      'text-slate-600 hover:text-teal-600 hover:bg-teal-50/60 dark:text-slate-300 dark:hover:text-teal-300 dark:hover:bg-slate-800/60',
+      'text-slate-600 hover:text-teal-600 hover:bg-teal-50/60 dark:text-[#83A6CE] dark:hover:text-[#E5C9D7] dark:hover:bg-[#26415E]/50',
     danger:
-      'bg-rose-600 hover:bg-rose-700 text-white shadow-soft focus-visible:ring-rose-500',
+      'bg-rose-600 hover:bg-rose-700 text-white shadow-soft focus-visible:ring-rose-500 dark:bg-rose-600 dark:hover:bg-rose-500 dark:shadow-[0_0_20px_rgba(225,29,72,0.3)]',
   };
 
   const sizes = {

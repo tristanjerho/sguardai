@@ -5,13 +5,15 @@ import {
   Clock,
   User,
   Sparkles,
-  Flame,
   Activity,
   ArrowRight,
   Lightbulb,
   CheckCircle2,
   Bell,
   RefreshCw,
+  FolderArchive,
+  CalendarPlus,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { appointmentService } from '../../services/appointmentService';
@@ -24,9 +26,10 @@ import { getGreeting, MASCOT_MESSAGES } from '../../components/mascot/messages';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
 import { ProgressRing } from '../../components/charts/ProgressRing';
 import { CardSkeleton } from '../../components/ui/Skeleton';
-import { formatDate, formatRelativeTime } from '../../lib/formatters';
+import { formatDate, formatDateTime, formatRelativeTime } from '../../lib/formatters';
 
 export function PatientDashboard() {
   const { user } = useAuth();
@@ -34,8 +37,8 @@ export function PatientDashboard() {
   const [loading, setLoading] = useState(true);
   const [nextAppointment, setNextAppointment] = useState(null);
   const [treatment, setTreatment] = useState(null);
-  const [brushStreak, setBrushStreak] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [selectedNotif, setSelectedNotif] = useState(null);
   const [triviaIndex, setTriviaIndex] = useState(0);
 
   const triviaList = MASCOT_MESSAGES.toothTrivia;
@@ -49,12 +52,8 @@ export function PatientDashboard() {
 
     async function loadStaticData() {
       try {
-        const [trt, streak] = await Promise.all([
-          treatmentService.getByPatientId(userId),
-          patientService.getBrushStreak(userId),
-        ]);
+        const trt = await treatmentService.getByPatientId(userId);
         setTreatment(trt || null);
-        setBrushStreak(streak || null);
       } catch (err) {
         console.error('Error loading patient dashboard details:', err);
       } finally {
@@ -83,6 +82,20 @@ export function PatientDashboard() {
     };
   }, [user?.id, user?.uid]);
 
+  const handleOpenNotification = async (notif) => {
+    setSelectedNotif(notif);
+    if (!notif.read) {
+      try {
+        await notificationService.markAsRead(notif.id);
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notif.id ? { ...n, read: true } : n))
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
   const handleNextTip = () => {
     setTriviaIndex((prev) => (prev + 1) % triviaList.length);
   };
@@ -99,31 +112,29 @@ export function PatientDashboard() {
     );
   }
 
-  const today = new Date().toISOString().split('T')[0];
-  const isTodayBrushed = brushStreak?.history?.[today]?.morning || brushStreak?.history?.[today]?.night;
-
   return (
     <div className="space-y-6">
       {/* Top Sparky Greeting Hero */}
-      <div className="rounded-3xl bg-gradient-to-r from-teal-600 via-teal-500 to-teal-700 dark:from-teal-900 dark:via-teal-800 dark:to-slate-900 p-6 sm:p-8 text-white shadow-soft-lg flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
-        {/* Background decorative circles */}
-        <div className="absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
+      <div className="rounded-3xl bg-gradient-to-r from-teal-600 via-teal-500 to-teal-700 dark:from-[#0D1E4C] dark:via-[#1B2F52] dark:to-[#26415E] dark:border dark:border-[#83A6CE]/30 p-6 sm:p-8 text-white shadow-soft-lg dark:shadow-[0_12px_40px_-8px_rgba(11,27,50,0.8),0_0_30px_-5px_rgba(131,166,206,0.2)] flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
+        {/* Background ambient lighting */}
+        <div className="absolute -right-10 -bottom-10 w-72 h-72 rounded-full bg-[#C48CB3]/25 dark:bg-[#C48CB3]/20 blur-3xl pointer-events-none" />
+        <div className="absolute top-0 left-1/3 w-72 h-72 rounded-full bg-white/10 dark:bg-[#83A6CE]/20 blur-3xl pointer-events-none" />
 
         <div className="flex-shrink-0 flex items-center justify-center">
-          <Mascot mood={isTodayBrushed ? 'cheer' : 'happy'} size="lg" />
+          <Mascot mood="happy" size="lg" />
         </div>
 
         <div className="flex-1 space-y-2 text-center md:text-left z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold backdrop-blur-sm">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 dark:bg-[#83A6CE]/20 dark:border dark:border-[#83A6CE]/30 text-white dark:text-[#E5C9D7] text-xs font-semibold backdrop-blur-sm">
+            <Sparkles className="w-3.5 h-3.5 text-[#E5C9D7]" />
             <span>Oral Health Guardian</span>
           </div>
 
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-heading font-extrabold tracking-tight">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-heading font-extrabold tracking-tight text-white dark:text-[#F8FAFC]">
             {getGreeting(user?.fullName || user?.name || 'Friend')}
           </h2>
 
-          <p className="text-sm text-teal-100 max-w-xl">
+          <p className="text-sm text-teal-100 dark:text-[#E5C9D7]/90 max-w-xl">
             {treatment
               ? `You are currently at ${treatment.progressPercentage}% of your ${treatment.treatmentType}. Keep following your home-care plan!`
               : 'Keep up your daily oral routines and book your routine dental checkup regularly!'}
@@ -150,7 +161,7 @@ export function PatientDashboard() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <Calendar className="w-5 h-5 text-teal-600 dark:text-[#83A6CE]" />
               <CardTitle>Next Scheduled Visit</CardTitle>
             </div>
             {nextAppointment && <Badge status={nextAppointment.status} showDot>{nextAppointment.status}</Badge>}
@@ -159,13 +170,13 @@ export function PatientDashboard() {
           <CardContent>
             {nextAppointment ? (
               <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/70 dark:border-teal-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="p-4 rounded-2xl bg-teal-50/70 dark:bg-[#0B1B32]/75 border border-teal-200/70 dark:border-[#26415E]/80 dark:shadow-inner flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <p className="text-base font-heading font-bold text-ink-primary">
                       {nextAppointment.serviceName}
                     </p>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-ink-secondary">
-                      <span className="flex items-center gap-1 font-semibold text-teal-700 dark:text-teal-300">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-ink-secondary dark:text-[#83A6CE]">
+                      <span className="flex items-center gap-1 font-semibold text-teal-700 dark:text-[#E5C9D7]">
                         <Calendar className="w-3.5 h-3.5" />
                         {formatDate(nextAppointment.date)}
                       </span>
@@ -195,12 +206,12 @@ export function PatientDashboard() {
               </div>
             ) : (
               <div className="text-center py-6 space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-surface-100 flex items-center justify-center text-ink-muted mx-auto">
+                <div className="w-12 h-12 rounded-2xl bg-surface-100 dark:bg-[#26415E]/60 flex items-center justify-center text-ink-muted mx-auto">
                   <Calendar className="w-6 h-6" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-ink-primary">No Upcoming Appointments</p>
-                  <p className="text-xs text-ink-secondary mt-0.5">
+                  <p className="text-xs text-ink-secondary dark:text-[#83A6CE] mt-0.5">
                     Schedule your next cleaning or orthodontic adjustment with our specialists.
                   </p>
                 </div>
@@ -218,12 +229,12 @@ export function PatientDashboard() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <Activity className="w-5 h-5 text-teal-600 dark:text-[#83A6CE]" />
               <CardTitle>Treatment Progress</CardTitle>
             </div>
             <Link
               to="/patient/treatment"
-              className="text-xs font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400"
+              className="text-xs font-bold text-teal-600 hover:text-teal-700 dark:text-[#83A6CE] hover:dark:text-[#E5C9D7]"
             >
               Details
             </Link>
@@ -238,7 +249,7 @@ export function PatientDashboard() {
                   sublabel={treatment.stage.replace('_', ' ')}
                 />
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-ink-secondary">
+                  <p className="text-xs font-semibold text-ink-secondary dark:text-[#83A6CE]">
                     Next Adjustment Target:
                   </p>
                   <Badge variant="primary" size="sm">
@@ -260,60 +271,57 @@ export function PatientDashboard() {
         </Card>
       </div>
 
-      {/* Second Row: Streak & Daily Oral Care Trivia */}
+      {/* Second Row: Dental Records Quick Access & Daily Oral Care Trivia */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Brush Streak Card */}
+        {/* Dental Records Quick Access Card */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Flame className="w-5 h-5 text-orange-500" />
-              <CardTitle>Brush Streak & Rewards</CardTitle>
+              <FolderArchive className="w-5 h-5 text-teal-600 dark:text-[#83A6CE]" />
+              <CardTitle>Dental Records & Imaging</CardTitle>
             </div>
             <Link
-              to="/patient/brush-streak"
-              className="text-xs font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400"
+              to="/patient/records"
+              className="text-xs font-bold text-teal-600 hover:text-teal-700 dark:text-[#83A6CE] hover:dark:text-[#E5C9D7]"
             >
-              Check In
+              View Hub
             </Link>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-teal-50/60 dark:bg-[#0B1B32]/75 border border-teal-200/60 dark:border-[#26415E]/80 dark:shadow-inner">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-orange-500 flex flex-col items-center justify-center text-white shadow-soft">
-                  <Flame className="w-6 h-6" />
-                  <span className="text-xs font-extrabold leading-none">
-                    {brushStreak?.currentStreak || 0}d
-                  </span>
+                <div className="w-12 h-12 rounded-2xl bg-teal-600 dark:bg-[#83A6CE]/20 dark:border dark:border-[#83A6CE]/30 flex items-center justify-center text-white dark:text-[#E5C9D7] shadow-soft">
+                  <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div>
                   <p className="font-heading font-bold text-ink-primary text-base">
-                    {brushStreak?.currentStreak || 0} Day Streak 🔥
+                    Clinical Chart & Radiographs
                   </p>
-                  <p className="text-xs text-ink-secondary mt-0.5">
-                    Total Points: <strong className="text-orange-600 dark:text-orange-400">{brushStreak?.totalPoints || 0} Smile Points</strong>
+                  <p className="text-xs text-ink-secondary dark:text-[#83A6CE] mt-0.5">
+                    End-to-end encrypted under <strong className="text-teal-700 dark:text-[#E5C9D7]">RA 10173</strong>
                   </p>
                 </div>
               </div>
 
-              <Link to="/patient/brush-streak">
-                <Button variant="accent" size="sm">
-                  Daily Check-in
+              <Link to="/patient/records">
+                <Button variant="outline" size="sm" rightIcon={ArrowRight}>
+                  Open Records
                 </Button>
               </Link>
             </div>
           </CardContent>
         </Card>
 
-        {/* Sparky Tooth Trivia & Quiz Widget */}
+        {/* Sparky Tooth Trivia & Care Tips Widget */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Lightbulb className="w-5 h-5 text-amber-500" />
-              <CardTitle>Sparky&apos;s Tooth Trivia</CardTitle>
+              <Lightbulb className="w-5 h-5 text-[#C48CB3]" />
+              <CardTitle>Sparky&apos;s Daily Care Tip</CardTitle>
             </div>
             <button
               onClick={handleNextTip}
-              className="p-1.5 rounded-lg text-ink-muted hover:text-ink-primary hover:bg-surface-100 flex items-center gap-1 text-xs font-semibold"
+              className="p-1.5 rounded-lg text-ink-muted hover:text-ink-primary hover:bg-surface-100 dark:hover:bg-[#26415E]/60 flex items-center gap-1 text-xs font-semibold transition-colors"
               title="Next Trivia Fact"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -321,20 +329,20 @@ export function PatientDashboard() {
             </button>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 rounded-2xl bg-teal-50/60 dark:bg-teal-950/30 border border-teal-200/60 dark:border-teal-800/40 space-y-2">
-              <p className="text-xs font-bold text-teal-800 dark:text-teal-300 uppercase tracking-wider">
+            <div className="p-4 rounded-2xl bg-teal-50/60 dark:bg-[#0B1B32]/75 border border-teal-200/60 dark:border-[#26415E]/80 dark:shadow-inner space-y-2">
+              <p className="text-xs font-bold text-teal-800 dark:text-[#C48CB3] uppercase tracking-wider">
                 Did You Know? (Fact #{triviaIndex + 1})
               </p>
-              <p className="text-xs sm:text-sm text-ink-primary leading-relaxed">
+              <p className="text-xs sm:text-sm text-ink-primary leading-relaxed dark:text-[#E5C9D7]">
                 &ldquo;{triviaList[triviaIndex]}&rdquo;
               </p>
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <span className="text-xs text-ink-muted">Want to test your dental IQ?</span>
-              <Link to="/patient/brush-streak">
-                <Button variant="outline" size="sm">
-                  Play Mini-Quiz
+              <span className="text-xs text-ink-muted">Need to schedule a routine cleaning?</span>
+              <Link to="/patient/book">
+                <Button variant="primary" size="sm" rightIcon={CalendarPlus}>
+                  Book Visit
                 </Button>
               </Link>
             </div>
@@ -347,39 +355,127 @@ export function PatientDashboard() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Bell className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <Bell className="w-5 h-5 text-teal-600 dark:text-[#83A6CE]" />
               <CardTitle>Recent Alerts & Updates</CardTitle>
             </div>
             <Link
               to="/patient/notifications"
-              className="text-xs font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400"
+              className="text-xs font-bold text-teal-600 hover:text-teal-700 dark:text-[#83A6CE] hover:dark:text-[#E5C9D7]"
             >
               View All
             </Link>
           </CardHeader>
-          <CardContent className="divide-y divide-surface-border/60 p-0">
+          <CardContent className="divide-y divide-surface-border/60 dark:divide-[#26415E]/80 p-0">
             {notifications.map((n) => (
               <div
                 key={n.id}
-                className={`p-4 flex items-start justify-between gap-4 transition-colors ${
-                  !n.read ? 'bg-teal-50/30 dark:bg-teal-950/20' : ''
+                onClick={() => handleOpenNotification(n)}
+                className={`p-4 flex items-start justify-between gap-4 transition-all cursor-pointer hover:bg-surface-50 dark:hover:bg-[#26415E]/40 ${
+                  !n.read ? 'bg-teal-50/40 dark:bg-[#83A6CE]/10' : ''
                 }`}
               >
-                <div className="space-y-1">
+                <div className="space-y-1 flex-1">
                   <div className="flex items-center gap-2">
-                    {!n.read && <span className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />}
-                    <p className="text-sm font-semibold text-ink-primary">{n.title}</p>
+                    {!n.read && <span className="w-2 h-2 rounded-full bg-[#C48CB3] flex-shrink-0" />}
+                    <p className="text-sm font-semibold text-ink-primary hover:text-teal-600 dark:hover:text-[#E5C9D7] transition-colors">
+                      {n.title}
+                    </p>
                   </div>
-                  <p className="text-xs text-ink-secondary">{n.message}</p>
+                  <p className="text-xs text-ink-secondary dark:text-[#83A6CE] line-clamp-2">{n.message}</p>
                 </div>
-                <span className="text-[11px] text-ink-muted whitespace-nowrap flex-shrink-0">
-                  {formatRelativeTime(n.createdAt)}
-                </span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-[11px] text-ink-muted whitespace-nowrap">
+                    {formatRelativeTime(n.createdAt)}
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 text-ink-muted" />
+                </div>
               </div>
             ))}
           </CardContent>
         </Card>
       )}
+
+      {/* Notification Details Pop-up Modal */}
+      <Modal
+        isOpen={!!selectedNotif}
+        onClose={() => setSelectedNotif(null)}
+        title="Notification Details"
+        description="View full alert message and related shortcuts."
+      >
+        {selectedNotif && (
+          <div className="space-y-5">
+            <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/60 dark:border-teal-800/40">
+              <div className="w-12 h-12 rounded-2xl bg-surface-card border border-surface-border flex items-center justify-center flex-shrink-0 shadow-soft">
+                <Bell className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+              </div>
+              <div className="space-y-1 flex-1">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300">
+                    {selectedNotif.type || 'NOTIFICATION'}
+                  </span>
+                  <span className="text-xs text-ink-muted">
+                    {formatDateTime(selectedNotif.createdAt)}
+                  </span>
+                </div>
+                <h4 className="font-heading font-bold text-base text-ink-primary">
+                  {selectedNotif.title}
+                </h4>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-surface-50 dark:bg-slate-900/40 border border-surface-border space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-ink-secondary">
+                Message
+              </p>
+              <p className="text-sm text-ink-primary leading-relaxed whitespace-pre-wrap">
+                {selectedNotif.message}
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-surface-border">
+              <span className="text-xs text-ink-muted">
+                Received: {formatRelativeTime(selectedNotif.createdAt)}
+              </span>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                {selectedNotif.type === 'APPOINTMENT' && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedNotif(null);
+                      navigate('/patient/appointments');
+                    }}
+                    rightIcon={ArrowRight}
+                  >
+                    My Appointments
+                  </Button>
+                )}
+                {selectedNotif.type === 'TREATMENT' && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedNotif(null);
+                      navigate('/patient/treatment');
+                    }}
+                    rightIcon={ArrowRight}
+                  >
+                    View Treatment Plan
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedNotif(null)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

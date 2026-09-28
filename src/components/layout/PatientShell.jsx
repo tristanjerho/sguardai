@@ -7,6 +7,7 @@ import { ROLES } from '../../lib/roles';
 import { notificationService } from '../../services/notificationService';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
+import { triggerDeviceNotification, requestNotificationPermission } from '../../lib/deviceNotifications';
 
 export function PatientShell() {
   const { user } = useAuth();
@@ -14,6 +15,10 @@ export function PatientShell() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
+
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
 
   useEffect(() => {
     const userId = user?.id || user?.uid;
@@ -25,13 +30,18 @@ export function PatientShell() {
       const unread = notifs.filter((n) => !n.read).length;
       setUnreadCount(unread);
 
-      // Check for newly arrived unread notifications and pop up a live toast
+      // Check for newly arrived unread notifications and pop up a live toast & mobile alert
       if (previousIds !== null) {
         const newlyArrived = notifs.filter(
           (n) => !n.read && !previousIds.has(n.id)
         );
         newlyArrived.forEach((notif) => {
-          toast.info(notif.title + ' — ' + notif.message);
+          if (notif.title?.includes('Confirmed') || notif.title?.includes('Accepted')) {
+            toast.success(`${notif.title} — ${notif.message}`);
+          } else {
+            toast.info(`${notif.title} — ${notif.message}`);
+          }
+          triggerDeviceNotification(notif.title, notif.message);
         });
       }
 
@@ -48,7 +58,6 @@ export function PatientShell() {
     if (path.includes('/appointments')) return 'My Appointments';
     if (path.includes('/treatment')) return 'Treatment Progress';
     if (path.includes('/records')) return 'Dental Records & Imaging';
-    if (path.includes('/brush-streak')) return 'Oral Care & Streak';
     if (path.includes('/notifications')) return 'Notifications';
     if (path.includes('/profile')) return 'Profile & Settings';
     return 'Patient Portal';

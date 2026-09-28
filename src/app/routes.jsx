@@ -168,7 +168,7 @@ export function AppRoutes() {
         <Route path="appointments" element={<MyAppointments />} />
         <Route path="treatment" element={<TreatmentProgress />} />
         <Route path="records" element={<Records />} />
-        <Route path="brush-streak" element={<BrushStreak />} />
+        <Route path="brush-streak" element={<Navigate to="/patient" replace />} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="profile" element={<PatientProfile />} />
       </Route>

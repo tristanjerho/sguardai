@@ -30,7 +30,6 @@ export function Sidebar({ role, isOpen = true, onClose }) {
       { to: '/patient/appointments', label: 'My Appointments', icon: CalendarCheck },
       { to: '/patient/treatment', label: 'Treatment Progress', icon: Activity },
       { to: '/patient/records', label: 'Dental Records', icon: FolderArchive },
-      { to: '/patient/brush-streak', label: 'Brush Streak', icon: Flame, highlight: true },
       { to: '/patient/profile', label: 'Profile & Settings', icon: User },
     ];
   } else if (role === ROLES.LAB_TECH) {
@@ -83,14 +82,14 @@ export function Sidebar({ role, isOpen = true, onClose }) {
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface-card border-r border-surface-border flex flex-col transition-transform duration-200 ease-in-out lg:fixed lg:top-16 lg:bottom-0 lg:left-0 lg:z-30 lg:w-64 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface-card dark:bg-[#0B1B32]/95 dark:backdrop-blur-xl border-r border-surface-border dark:border-[#26415E]/80 flex flex-col transition-transform duration-200 ease-in-out lg:fixed lg:top-16 lg:bottom-0 lg:left-0 lg:z-30 lg:w-64 lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="h-16 px-4 flex items-center justify-between border-b border-surface-border lg:hidden">
+        <div className="h-16 px-4 flex items-center justify-between border-b border-surface-border dark:border-[#26415E]/80 lg:hidden">
           <div className="flex items-center gap-2">
             <Logo size="sm" asLink={false} />
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300">
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 dark:bg-[#83A6CE]/20 dark:text-[#E5C9D7] dark:border dark:border-[#83A6CE]/30">
               {role}
             </span>
           </div>
@@ -98,7 +97,7 @@ export function Sidebar({ role, isOpen = true, onClose }) {
           {onClose && (
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-ink-muted hover:text-ink-primary hover:bg-surface-100 lg:hidden"
+              className="p-1.5 rounded-lg text-ink-muted hover:text-ink-primary hover:bg-surface-100 dark:hover:bg-[#26415E]/60 lg:hidden"
               aria-label="Close sidebar"
             >
               <X className="w-5 h-5" />
@@ -112,7 +111,7 @@ export function Sidebar({ role, isOpen = true, onClose }) {
             if (item.type === 'divider') {
               return (
                 <div key={idx} className="pt-4 pb-2 px-3">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink-muted dark:text-[#83A6CE]/70">
                     {item.label}
                   </p>
                 </div>
@@ -129,8 +128,8 @@ export function Sidebar({ role, isOpen = true, onClose }) {
                 className={({ isActive }) =>
                   `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 ${
                     isActive
-                      ? 'bg-teal-600 text-white shadow-soft dark:bg-teal-500 dark:text-slate-950'
-                      : 'text-ink-secondary hover:text-ink-primary hover:bg-surface-100 dark:hover:bg-surface-200/50'
+                      ? 'bg-teal-600 text-white shadow-soft dark:bg-[#83A6CE]/20 dark:text-[#E5C9D7] dark:border dark:border-[#83A6CE]/35 dark:shadow-[0_0_15px_rgba(131,166,206,0.18)]'
+                      : 'text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-[#F8FAFC] hover:bg-surface-100 dark:hover:bg-[#26415E]/50'
                   }`
                 }
               >
@@ -138,12 +137,12 @@ export function Sidebar({ role, isOpen = true, onClose }) {
                   <>
                     <div className="flex items-center gap-3">
                       <Icon
-                        className={`w-4 h-4 ${
+                        className={`w-4 h-4 transition-colors ${
                           isActive
-                            ? 'text-white dark:text-slate-950'
+                            ? 'text-white dark:text-[#C48CB3]'
                             : item.highlight
-                            ? 'text-orange-500'
-                            : 'text-teal-600 dark:text-teal-400'
+                            ? 'text-orange-500 dark:text-[#C48CB3]'
+                            : 'text-teal-600 dark:text-[#83A6CE] group-hover:dark:text-[#E5C9D7]'
                         }`}
                       />
                       <span>{item.label}</span>
@@ -152,8 +151,8 @@ export function Sidebar({ role, isOpen = true, onClose }) {
                       <span
                         className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
                           isActive
-                            ? 'bg-white/20 text-white'
-                            : 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300'
+                            ? 'bg-white/20 text-white dark:bg-[#C48CB3]/30 dark:text-[#E5C9D7]'
+                            : 'bg-orange-100 text-orange-700 dark:bg-[#C48CB3]/20 dark:text-[#E5C9D7] dark:border dark:border-[#C48CB3]/30'
                         }`}
                       >
                         {item.badge}
@@ -167,12 +166,15 @@ export function Sidebar({ role, isOpen = true, onClose }) {
         </nav>
 
         {/* Clinic emergency hotline / assistance badge */}
-        <div className="p-4 m-3 rounded-2xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/60 dark:border-teal-800/50">
-          <p className="text-xs font-heading font-bold text-teal-900 dark:text-teal-200">
-            Need Dental Support?
-          </p>
-          <p className="text-[11px] text-teal-700 dark:text-teal-300 mt-0.5">
-            Hotline: +63 (2) 8888-DENT
+        <div className="p-4 m-3 rounded-2xl bg-teal-50/70 dark:bg-[#0D1E4C]/90 border border-teal-200/60 dark:border-[#26415E]/80 dark:shadow-inner relative overflow-hidden">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-[#C48CB3] animate-pulse" />
+            <p className="text-xs font-heading font-bold text-teal-900 dark:text-[#E5C9D7]">
+              Need Dental Support?
+            </p>
+          </div>
+          <p className="text-[11px] text-teal-700 dark:text-[#83A6CE] font-medium pl-4">
+            Hotline: <strong className="text-teal-800 dark:text-[#E5C9D7]">+63 (2) 8888-DENT</strong>
           </p>
         </div>
       </aside>

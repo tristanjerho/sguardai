@@ -12,10 +12,10 @@ export function StatCard({
   color = 'teal',
 }) {
   const colorMap = {
-    teal: 'bg-teal-50 text-teal-600 dark:bg-teal-950/60 dark:text-teal-400 border-teal-200 dark:border-teal-800',
-    orange: 'bg-orange-50 text-orange-600 dark:bg-orange-950/60 dark:text-orange-400 border-orange-200 dark:border-orange-800',
-    blue: 'bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 border-blue-200 dark:border-blue-800',
-    purple: 'bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400 border-purple-200 dark:border-purple-800',
+    teal: 'bg-teal-50 text-teal-600 dark:bg-teal-500/15 dark:text-teal-300 border-teal-200 dark:border-teal-500/30',
+    orange: 'bg-orange-50 text-orange-600 dark:bg-amber-500/15 dark:text-amber-300 border-orange-200 dark:border-amber-500/30',
+    blue: 'bg-blue-50 text-blue-600 dark:bg-sky-500/15 dark:text-sky-300 border-blue-200 dark:border-sky-500/30',
+    purple: 'bg-purple-50 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300 border-purple-200 dark:border-purple-500/30',
   };
 
   return (

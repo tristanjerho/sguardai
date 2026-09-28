@@ -16,6 +16,7 @@ import { appointmentService } from '../../services/appointmentService';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { Tabs } from '../../components/ui/Tabs';
 import { Modal } from '../../components/ui/Modal';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -73,6 +74,15 @@ export function MyAppointments() {
     { id: 'cancelled', label: 'Cancelled / Declined', badge: cancelledList.length },
   ];
 
+  const getTodayStr = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const todayStr = getTodayStr();
+
   const handleConfirmCancel = async () => {
     if (!cancelModalItem) return;
     setIsCancelling(true);
@@ -96,6 +106,10 @@ export function MyAppointments() {
   const handleConfirmReschedule = async () => {
     if (!rescheduleModalItem || !newDate || !newSlot) {
       setRescheduleError('Please choose both a new date and time slot.');
+      return;
+    }
+    if (newDate < todayStr) {
+      setRescheduleError('Appointments cannot be rescheduled to a past date. Please select today or a future date.');
       return;
     }
     setIsRescheduling(true);
@@ -221,8 +235,10 @@ export function MyAppointments() {
                       size="sm"
                       onClick={() => {
                         setRescheduleModalItem(apt);
-                        setNewDate(apt.date);
-                        setNewSlot(apt.timeSlot);
+                        const initialDate = apt.date && apt.date >= todayStr ? apt.date : todayStr;
+                        setNewDate(initialDate);
+                        setNewSlot(apt.timeSlot || TIME_SLOTS[0]);
+                        setRescheduleError('');
                       }}
                       leftIcon={RefreshCw}
                     >
@@ -304,15 +320,19 @@ export function MyAppointments() {
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-ink-secondary">
-              New Date
-            </label>
-            <input
+          <div>
+            <Input
+              label="New Date (Today or Future Date)"
               type="date"
+              min={todayStr}
               value={newDate}
-              onChange={(e) => setNewDate(e.target.value)}
-              className="w-full bg-surface-card border border-surface-border rounded-xl p-2.5 text-sm outline-none focus:border-teal-500"
+              onChange={(e) => {
+                setNewDate(e.target.value);
+                setRescheduleError('');
+              }}
+              leftIcon={Calendar}
+              helperText="Appointments cannot be rescheduled behind today's date."
+              required
             />
           </div>
 
@@ -328,8 +348,8 @@ export function MyAppointments() {
                   onClick={() => setNewSlot(slot)}
                   className={`p-2 rounded-xl text-xs font-bold border transition-all ${
                     newSlot === slot
-                      ? 'bg-teal-600 text-white border-teal-600'
-                      : 'bg-surface-card border-surface-border hover:border-teal-400'
+                      ? 'bg-teal-600 text-white border-teal-600 dark:bg-gradient-to-r dark:from-[#83A6CE] dark:to-[#C48CB3] dark:text-[#0B1B32] dark:border-transparent'
+                      : 'bg-surface-card border-surface-border dark:border-[#26415E] dark:hover:border-[#83A6CE]'
                   }`}
                 >
                   {slot}

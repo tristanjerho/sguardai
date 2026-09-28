@@ -23,7 +23,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Avatar } from '../../components/ui/Avatar';
-import { formatDate } from '../../lib/formatters';
+import { formatDate, formatPhPhone, isValidPhPhone } from '../../lib/formatters';
 
 export function PatientProfile() {
   const { user, updateProfile } = useAuth();
@@ -32,7 +32,7 @@ export function PatientProfile() {
   const toast = useToast();
 
   const [fullName, setFullName] = useState(user?.fullName || '');
-  const [phone, setPhone] = useState(user?.phone || '');
+  const [phone, setPhone] = useState(user?.phone ? formatPhPhone(user.phone) : '');
   const [emergencyContact, setEmergencyContact] = useState(user?.emergencyContact || '');
   const [medicalHistory, setMedicalHistory] = useState(user?.medicalHistory || '');
 
@@ -44,15 +44,28 @@ export function PatientProfile() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPass, setIsChangingPass] = useState(false);
 
+  const handlePhoneChange = (val) => {
+    if (!val || val.trim() === '+' || val.trim() === '+63') {
+      setPhone(val.trim() === '' ? '' : '+63 ');
+      return;
+    }
+    setPhone(formatPhPhone(val));
+  };
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
+    if (phone && !isValidPhPhone(phone)) {
+      toast.error('Please enter a valid 12-digit Philippine phone number (+63 9XX XXX XXXX).');
+      return;
+    }
+
     setIsSaving(true);
     try {
       await updateProfile({
-        fullName,
-        phone,
-        emergencyContact,
-        medicalHistory,
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        emergencyContact: emergencyContact.trim(),
+        medicalHistory: medicalHistory.trim(),
       });
       toast.success('Profile details updated successfully!');
     } catch (err) {
@@ -136,11 +149,14 @@ export function PatientProfile() {
               required
             />
             <Input
-              label="Phone Number"
+              label="Phone Number (PH)"
               type="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => handlePhoneChange(e.target.value)}
+              placeholder="+63 917 555 0101"
               leftIcon={Phone}
+              helperText="12 numbers maximum (PH format: +63 9XX XXX XXXX)"
+              maxLength={17}
               required
             />
           </div>

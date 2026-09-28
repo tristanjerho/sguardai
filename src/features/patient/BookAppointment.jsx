@@ -20,6 +20,7 @@ import { authService } from '../../services/authService';
 import { Stepper } from '../../components/ui/Stepper';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import { Mascot } from '../../components/mascot/Mascot';
 import { SERVICES, TIME_SLOTS } from '../../lib/constants';
@@ -363,20 +364,17 @@ export function BookAppointment() {
       {currentStep === 2 && (
         <div className="space-y-6">
           <Card className="p-6 space-y-5">
-            <div className="space-y-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-ink-secondary">
-                Select Desired Date (Monday - Saturday)
-              </label>
-              <input
+            <div>
+              <Input
+                label="Select Desired Date (Monday - Saturday)"
                 type="date"
                 min={minDateString}
                 value={selectedDate}
                 onChange={handleDateChange}
-                className="w-full bg-surface-base border border-surface-border rounded-xl p-3 text-sm text-ink-primary font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                leftIcon={Calendar}
+                helperText="Note: The clinic is closed on Sundays. Only future dates are permitted."
+                required
               />
-              <p className="text-[11px] text-ink-muted">
-                Note: The clinic is closed on Sundays. Only future dates are permitted.
-              </p>
             </div>
 
             {selectedDate && (

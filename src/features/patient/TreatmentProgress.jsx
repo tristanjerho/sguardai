@@ -92,7 +92,7 @@ export function TreatmentProgress() {
       </div>
 
       {/* Progress Overview Hero Card */}
-      <Card className="p-6 sm:p-8 bg-gradient-to-br from-surface-card to-teal-50/40 dark:to-teal-950/20 shadow-soft-sm">
+      <Card className="p-6 sm:p-8 bg-gradient-to-br from-surface-card to-teal-50/40 dark:from-[#0D1E4C] dark:to-[#26415E]/40 shadow-soft-sm">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <div className="flex justify-center md:justify-start">
             <ProgressRing
@@ -106,28 +106,28 @@ export function TreatmentProgress() {
 
           <div className="md:col-span-2 space-y-4">
             <div className="space-y-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-[#C48CB3]">
                 Active Phase
               </span>
-              <h3 className="text-xl font-heading font-bold text-ink-primary">
+              <h3 className="text-xl font-heading font-bold text-ink-primary dark:text-[#F8FAFC]">
                 {treatment.stages?.[treatment.stageNumber - 1]?.name || treatment.stage}
               </h3>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-ink-secondary">
-              <div className="p-3 rounded-xl bg-surface-50 dark:bg-surface-100/50 space-y-0.5">
-                <span className="text-ink-muted">Start Date:</span>
-                <p className="font-semibold text-ink-primary">{formatDate(treatment.startDate)}</p>
+              <div className="p-3 rounded-xl bg-surface-50 dark:bg-[#0B1B32]/75 border border-transparent dark:border-[#26415E]/80 space-y-0.5">
+                <span className="text-ink-muted dark:text-[#83A6CE]">Start Date:</span>
+                <p className="font-semibold text-ink-primary dark:text-[#E5C9D7]">{formatDate(treatment.startDate)}</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-surface-50 dark:bg-surface-100/50 space-y-0.5">
-                <span className="text-ink-muted">Estimated Completion:</span>
-                <p className="font-semibold text-ink-primary">{formatDate(treatment.estimatedCompletionDate)}</p>
+              <div className="p-3 rounded-xl bg-surface-50 dark:bg-[#0B1B32]/75 border border-transparent dark:border-[#26415E]/80 space-y-0.5">
+                <span className="text-ink-muted dark:text-[#83A6CE]">Estimated Completion:</span>
+                <p className="font-semibold text-ink-primary dark:text-[#E5C9D7]">{formatDate(treatment.estimatedCompletionDate)}</p>
               </div>
 
-              <div className="p-3 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 space-y-0.5 sm:col-span-2">
-                <span className="text-teal-800 dark:text-teal-300 font-bold">Next Target Adjustment:</span>
-                <p className="font-bold text-teal-900 dark:text-teal-100 text-sm">
+              <div className="p-3 rounded-xl bg-teal-50 dark:bg-[#0B1B32]/90 border border-teal-200 dark:border-[#83A6CE]/35 space-y-0.5 sm:col-span-2">
+                <span className="text-teal-800 dark:text-[#C48CB3] font-bold">Next Target Adjustment:</span>
+                <p className="font-bold text-teal-900 dark:text-[#E5C9D7] text-sm">
                   {formatDate(treatment.nextAdjustmentDate)} with {treatment.dentistName}
                 </p>
               </div>
@@ -140,7 +140,7 @@ export function TreatmentProgress() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <Sparkles className="w-5 h-5 text-teal-600 dark:text-[#C48CB3]" />
             <CardTitle>Treatment Stage Roadmap</CardTitle>
           </div>
           <Badge variant="primary">
@@ -148,7 +148,7 @@ export function TreatmentProgress() {
           </Badge>
         </CardHeader>
         <CardContent className="space-y-6 pt-4">
-          <div className="space-y-6 relative before:absolute before:inset-0 before:left-5 before:w-0.5 before:bg-surface-200 dark:before:bg-surface-300">
+          <div className="space-y-6 relative before:absolute before:inset-0 before:left-5 before:w-0.5 before:bg-surface-200 dark:before:bg-[#26415E]">
             {treatment.stages?.map((stg) => {
               const isDone = stg.status === 'COMPLETED';
               const isCurrent = stg.status === 'IN_PROGRESS';
@@ -158,16 +158,16 @@ export function TreatmentProgress() {
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm z-10 flex-shrink-0 border-2 ${
                       isDone
-                        ? 'bg-teal-600 border-teal-600 text-white shadow-soft'
+                        ? 'bg-teal-600 border-teal-600 text-white shadow-soft dark:bg-[#83A6CE] dark:border-[#83A6CE] dark:text-[#0B1B32]'
                         : isCurrent
-                        ? 'bg-surface-card border-teal-500 text-teal-600 ring-4 ring-teal-100 dark:ring-teal-950 shadow-glow'
-                        : 'bg-surface-card border-surface-border text-ink-muted'
+                        ? 'bg-surface-card border-teal-500 text-teal-600 dark:bg-[#0D1E4C] dark:border-[#C48CB3] dark:text-[#E5C9D7] ring-4 ring-teal-100 dark:ring-[#C48CB3]/20 shadow-glow'
+                        : 'bg-surface-card border-surface-border dark:bg-[#0B1B32] dark:border-[#26415E] text-ink-muted dark:text-[#83A6CE]'
                     }`}
                   >
                     {isDone ? <CheckCircle2 className="w-5 h-5" /> : stg.number}
                   </div>
 
-                  <div className="flex-1 p-4 rounded-2xl border border-surface-border bg-surface-50/50 dark:bg-surface-100/30 space-y-1">
+                  <div className="flex-1 p-4 rounded-2xl border border-surface-border dark:border-[#26415E]/80 bg-surface-50/50 dark:bg-[#0B1B32]/75 space-y-1">
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <h4 className="font-heading font-bold text-sm text-ink-primary">
                         {stg.name}

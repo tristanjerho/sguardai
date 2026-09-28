@@ -16,8 +16,9 @@ export function Card({
       className={twMerge(
         clsx(
           'rounded-2xl border border-surface-border bg-surface-card transition-all duration-200',
+          'dark:border-[#26415E]/80 dark:bg-[#0D1E4C]/90 dark:shadow-[0_6px_25px_-4px_rgba(11,27,50,0.7),inset_0_1px_0_0_rgba(131,166,206,0.1)]',
           glass ? 'glass-panel' : 'shadow-soft-sm',
-          hoverEffect && 'hover:shadow-soft hover:border-teal-300 dark:hover:border-teal-700/60 hover:-translate-y-0.5 cursor-pointer',
+          hoverEffect && 'hover:shadow-soft hover:border-teal-300 dark:hover:border-[#83A6CE]/60 hover:-translate-y-0.5 cursor-pointer',
           className
         )
       )}
@@ -30,7 +31,7 @@ export function Card({
 
 export function CardHeader({ children, className = '', ...props }) {
   return (
-    <div className={twMerge(clsx('p-5 pb-3 border-b border-surface-border/60 flex items-center justify-between', className))} {...props}>
+    <div className={twMerge(clsx('p-5 pb-3 border-b border-surface-border/60 dark:border-[#26415E]/80 flex items-center justify-between', className))} {...props}>
       {children}
     </div>
   );
@@ -62,7 +63,7 @@ export function CardContent({ children, className = '', ...props }) {
 
 export function CardFooter({ children, className = '', ...props }) {
   return (
-    <div className={twMerge(clsx('p-5 pt-3 border-t border-surface-border/60 bg-surface-50/50 dark:bg-surface-100/30 rounded-b-2xl', className))} {...props}>
+    <div className={twMerge(clsx('p-5 pt-3 border-t border-surface-border/60 dark:border-[#26415E]/80 bg-surface-50/50 dark:bg-[#0B1B32]/70 rounded-b-2xl', className))} {...props}>
       {children}
     </div>
   );

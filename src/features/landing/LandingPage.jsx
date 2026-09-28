@@ -162,7 +162,7 @@ export function LandingPage() {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
-                  <span><strong>Brush Streak & Rewards:</strong> Check in morning and night to unlock milestone badges with Sparky cheering you on.</span>
+                  <span><strong>Encrypted Dental Records:</strong> Securely view diagnostic summaries, radiographs, and verified clinician notes in one hub.</span>
                 </li>
               </ul>
 

@@ -7,20 +7,73 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Logo } from '../../components/common/Logo';
+import { formatPhPhone, isValidPhPhone } from '../../lib/formatters';
 
 export function Onboarding() {
   const { user, completeOnboarding } = useAuth();
   const [fullName, setFullName] = useState(user?.fullName || '');
-  const [phone, setPhone] = useState(user?.phone || '+63 9');
+  const [phone, setPhone] = useState(user?.phone ? formatPhPhone(user.phone) : '+63 9');
   const [dateOfBirth, setDateOfBirth] = useState(user?.dateOfBirth || '');
   const [medicalHistory, setMedicalHistory] = useState(user?.medicalHistory || '');
-  const [emergencyContact, setEmergencyContact] = useState(user?.emergencyContact || '');
+
+  // Parse initial emergency contact name and phone if present
+  const parseInitialEmergency = () => {
+    const raw = user?.emergencyContact || '';
+    if (!raw) return { name: '', phone: '+63 9' };
+    const parts = raw.split(' - ');
+    if (parts.length >= 2) {
+      const p = parts[parts.length - 1];
+      const n = parts.slice(0, parts.length - 1).join(' - ');
+      return { name: n, phone: formatPhPhone(p) || '+63 9' };
+    }
+    return { name: raw, phone: '+63 9' };
+  };
+
+  const initialEmergency = parseInitialEmergency();
+  const [emergencyName, setEmergencyName] = useState(initialEmergency.name);
+  const [emergencyPhone, setEmergencyPhone] = useState(initialEmergency.phone);
   const [hasPrivacyConsent, setHasPrivacyConsent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const toast = useToast();
   const navigate = useNavigate();
+
+  // Maximum date of birth: 4 years ago from today
+  const getMaxDateOfBirth = () => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 4);
+    return d.toISOString().split('T')[0];
+  };
+  const maxDateOfBirth = getMaxDateOfBirth();
+
+  const calculateAge = (dobString) => {
+    if (!dobString) return 0;
+    const dob = new Date(dobString);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const handlePhoneChange = (val) => {
+    if (!val || val.trim() === '+' || val.trim() === '+63') {
+      setPhone(val.trim() === '' ? '' : '+63 ');
+      return;
+    }
+    setPhone(formatPhPhone(val));
+  };
+
+  const handleEmergencyPhoneChange = (val) => {
+    if (!val || val.trim() === '+' || val.trim() === '+63') {
+      setEmergencyPhone(val.trim() === '' ? '' : '+63 ');
+      return;
+    }
+    setEmergencyPhone(formatPhPhone(val));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,16 +83,24 @@ export function Onboarding() {
       setError('Please provide your full legal name.');
       return;
     }
-    if (!phone || phone.length < 8) {
-      setError('Please enter a valid mobile number.');
-      return;
-    }
     if (!dateOfBirth) {
       setError('Please select your date of birth.');
       return;
     }
-    if (!emergencyContact.trim()) {
-      setError('Please specify an emergency contact person and phone number.');
+    if (calculateAge(dateOfBirth) < 4) {
+      setError('Patient must be at least 4 years old or older to register.');
+      return;
+    }
+    if (!isValidPhPhone(phone)) {
+      setError('Please enter a valid 12-digit Philippine mobile contact number (+63 9XX XXX XXXX).');
+      return;
+    }
+    if (!emergencyName.trim()) {
+      setError('Please specify the emergency contact person & relationship.');
+      return;
+    }
+    if (!isValidPhPhone(emergencyPhone)) {
+      setError('Please enter a valid 12-digit Philippine emergency contact number (+63 9XX XXX XXXX).');
       return;
     }
     if (!hasPrivacyConsent) {
@@ -47,14 +108,16 @@ export function Onboarding() {
       return;
     }
 
+    const combinedEmergencyContact = `${emergencyName.trim()} - ${emergencyPhone.trim()}`;
+
     setIsLoading(true);
     try {
       await completeOnboarding({
-        fullName,
-        phone,
+        fullName: fullName.trim(),
+        phone: phone.trim(),
         dateOfBirth,
-        medicalHistory,
-        emergencyContact,
+        medicalHistory: medicalHistory.trim(),
+        emergencyContact: combinedEmergencyContact,
       });
       toast.success('Medical profile & privacy consent recorded successfully!');
       navigate('/patient');
@@ -89,6 +152,7 @@ export function Onboarding() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Name and Date of Birth */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label="Full Legal Name"
@@ -100,35 +164,65 @@ export function Onboarding() {
               />
 
               <Input
-                label="Mobile Contact"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+63 917 555 0101"
-                leftIcon={Phone}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
                 label="Date of Birth"
                 type="date"
                 value={dateOfBirth}
                 onChange={(e) => setDateOfBirth(e.target.value)}
+                max={maxDateOfBirth}
+                min="1900-01-01"
                 leftIcon={Calendar}
+                helperText="Must be 4 years old or older"
                 required
               />
+            </div>
 
+            {/* Mobile Contact (PH) */}
+            <div>
               <Input
-                label="Emergency Contact & Phone"
-                type="text"
-                value={emergencyContact}
-                onChange={(e) => setEmergencyContact(e.target.value)}
-                placeholder="e.g. Jose Santos (Father) - +63 917 555 0199"
-                leftIcon={UserCheck}
+                label="Mobile Contact (PH)"
+                type="tel"
+                value={phone}
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                placeholder="+63 917 555 0101"
+                leftIcon={Phone}
+                helperText="12 numbers maximum (PH format: +63 9XX XXX XXXX)"
+                maxLength={17}
                 required
               />
+            </div>
+
+            {/* Emergency Contact Information */}
+            <div className="p-4 rounded-xl bg-surface-50 dark:bg-slate-900/40 border border-surface-border space-y-4">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                <span className="text-xs font-heading font-bold uppercase tracking-wider text-ink-primary">
+                  Emergency Contact Details
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  label="Contact Person & Relation"
+                  type="text"
+                  value={emergencyName}
+                  onChange={(e) => setEmergencyName(e.target.value)}
+                  placeholder="e.g. Jose Santos (Father)"
+                  leftIcon={UserCheck}
+                  required
+                />
+
+                <Input
+                  label="Emergency Phone Number (PH)"
+                  type="tel"
+                  value={emergencyPhone}
+                  onChange={(e) => handleEmergencyPhoneChange(e.target.value)}
+                  placeholder="+63 917 555 0199"
+                  leftIcon={Phone}
+                  helperText="12 numbers max (+63 9XX XXX XXXX)"
+                  maxLength={17}
+                  required
+                />
+              </div>
             </div>
 
             {/* Medical History */}
@@ -195,3 +289,4 @@ export function Onboarding() {
     </div>
   );
 }
+

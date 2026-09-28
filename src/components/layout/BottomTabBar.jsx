@@ -5,7 +5,7 @@ import {
   CalendarPlus,
   CalendarCheck,
   Activity,
-  Flame,
+  FolderArchive,
 } from 'lucide-react';
 
 export function BottomTabBar() {
@@ -14,7 +14,7 @@ export function BottomTabBar() {
     { to: '/patient/appointments', label: 'Visits', icon: CalendarCheck },
     { to: '/patient/book', label: 'Book', icon: CalendarPlus, primary: true },
     { to: '/patient/treatment', label: 'Progress', icon: Activity },
-    { to: '/patient/brush-streak', label: 'Streak', icon: Flame },
+    { to: '/patient/records', label: 'Records', icon: FolderArchive },
   ];
 
   return (

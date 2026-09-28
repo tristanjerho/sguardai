@@ -14,8 +14,8 @@ export function Tabs({
       className={twMerge(
         clsx(
           'flex space-x-1 overflow-x-auto p-1 scrollbar-none',
-          variant === 'pills' && 'bg-surface-100/80 dark:bg-surface-200/50 p-1.5 rounded-2xl border border-surface-border/50',
-          variant === 'underline' && 'border-b border-surface-border gap-6',
+          variant === 'pills' && 'bg-surface-100/80 dark:bg-[#0B1B32]/90 p-1.5 rounded-2xl border border-surface-border/50 dark:border-[#26415E]/80',
+          variant === 'underline' && 'border-b border-surface-border dark:border-[#26415E]/80 gap-6',
           className
         )
       )}
@@ -35,8 +35,8 @@ export function Tabs({
               className={clsx(
                 'flex items-center gap-2 py-3 px-1 text-sm font-semibold border-b-2 transition-all duration-150 whitespace-nowrap',
                 isActive
-                  ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400'
-                  : 'border-transparent text-ink-secondary hover:text-ink-primary hover:border-surface-300'
+                  ? 'border-teal-600 text-teal-600 dark:border-[#83A6CE] dark:text-[#E5C9D7] font-bold'
+                  : 'border-transparent text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-[#F8FAFC] hover:border-surface-300 dark:hover:border-[#26415E]'
               )}
             >
               {Icon && <Icon className="w-4 h-4" />}
@@ -46,8 +46,8 @@ export function Tabs({
                   className={clsx(
                     'text-[10px] px-2 py-0.5 rounded-full font-bold',
                     isActive
-                      ? 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300'
-                      : 'bg-surface-200 text-ink-muted'
+                      ? 'bg-teal-100 text-teal-800 dark:bg-[#83A6CE]/20 dark:text-[#E5C9D7]'
+                      : 'bg-surface-200 dark:bg-[#26415E] text-ink-muted dark:text-[#83A6CE]'
                   )}
                 >
                   {tab.badge}
@@ -66,8 +66,8 @@ export function Tabs({
             className={clsx(
               'flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-200 whitespace-nowrap',
               isActive
-                ? 'bg-surface-card text-teal-700 dark:text-teal-300 shadow-soft-sm font-bold'
-                : 'text-ink-secondary hover:text-ink-primary hover:bg-surface-50 dark:hover:bg-surface-300/30'
+                ? 'bg-surface-card dark:bg-[#26415E]/90 text-teal-700 dark:text-[#E5C9D7] shadow-soft-sm dark:shadow-[0_2px_8px_rgba(11,27,50,0.6)] dark:border dark:border-[#83A6CE]/40 font-bold'
+                : 'text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-[#F8FAFC] hover:bg-surface-50 dark:hover:bg-[#26415E]/40'
             )}
           >
             {Icon && <Icon className="w-4 h-4" />}
@@ -77,8 +77,8 @@ export function Tabs({
                 className={clsx(
                   'text-[11px] px-1.5 py-0.5 rounded-full font-bold',
                   isActive
-                    ? 'bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300'
-                    : 'bg-surface-200 dark:bg-surface-300 text-ink-secondary'
+                    ? 'bg-teal-100 text-teal-800 dark:bg-[#83A6CE]/20 dark:text-[#E5C9D7]'
+                    : 'bg-surface-200 dark:bg-[#26415E] text-ink-secondary dark:text-[#83A6CE]'
                 )}
               >
                 {tab.badge}

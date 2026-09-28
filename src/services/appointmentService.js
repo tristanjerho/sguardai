@@ -250,6 +250,11 @@ export const appointmentService = {
   async reschedule(id, newDate, newSlot, dentistId = null, userId = 'system') {
     if (!db || !id) throw new Error('Firestore is not initialized.');
 
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (newDate && newDate < todayStr) {
+      throw new Error('Cannot reschedule an appointment to a past date. Please select today or a future date.');
+    }
+
     // Support both (id, newDate, newSlot, userId) and (id, newDate, newSlot, dentistId, userId)
     let effectiveDentistId = dentistId;
     let effectiveUserId = userId;
