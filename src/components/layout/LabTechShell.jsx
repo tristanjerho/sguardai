@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Topbar } from './Topbar';
 import { Sidebar } from './Sidebar';
+import { BottomTabBar } from './BottomTabBar';
 import { ROLES } from '../../lib/roles';
 import { LAB_ORDER_STATUS } from '../../lib/constants';
 import { useAuth } from '../../hooks/useAuth';
@@ -16,7 +17,6 @@ import {
 export function LabTechShell() {
   const { user } = useAuth();
   const toast = useToast();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 
@@ -87,22 +87,20 @@ export function LabTechShell() {
     <div className="min-h-screen bg-surface-base text-ink-primary">
       <Topbar
         title={getPageTitle()}
-        showMenuButton={true}
-        onMenuToggle={() => setIsSidebarOpen(true)}
+        showMenuButton={false}
         unreadCount={unreadCount}
       />
 
-      <Sidebar
-        role={user?.role || ROLES.LAB_TECH}
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-      />
+      <div className="hidden lg:block">
+        <Sidebar role={user?.role || ROLES.LAB_TECH} isOpen={false} />
+      </div>
 
-      <main className="lg:pl-64 p-4 sm:p-5 lg:p-6 min-h-[calc(100vh-4rem)] transition-all overflow-x-hidden">
+      <main className="lg:pl-64 p-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:p-5 sm:pb-[calc(7rem+env(safe-area-inset-bottom,0px))] lg:p-6 lg:pb-6 min-h-[calc(100vh-4rem)] transition-all overflow-x-hidden">
         <div className="w-full max-w-[1680px] mx-auto">
           <Outlet />
         </div>
       </main>
+      <BottomTabBar role={user?.role || ROLES.LAB_TECH} />
     </div>
   );
 }

@@ -52,26 +52,26 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full h-16 border-b border-surface-border dark:border-[#26415E]/80 bg-surface-card/90 dark:bg-[#0B1B32]/90 backdrop-blur-xl px-4 sm:px-6 flex items-center justify-between transition-colors shadow-xs">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-40 w-full border-b border-surface-border dark:border-[#26415E]/80 bg-surface-card/90 dark:bg-[#0B1B32]/90 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between transition-colors shadow-xs pt-[env(safe-area-inset-top,0px)] h-[calc(4rem+env(safe-area-inset-top,0px))]">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
         {showMenuButton && (
           <button
             type="button"
             onClick={onMenuToggle}
-            className="p-2 rounded-xl text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-[#F8FAFC] hover:bg-surface-100 dark:hover:bg-[#26415E]/60 lg:hidden"
+            className="p-2 rounded-xl text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-[#F8FAFC] hover:bg-surface-100 dark:hover:bg-[#26415E]/60 lg:hidden shrink-0"
             aria-label="Toggle navigation menu"
           >
             <Menu className="w-5 h-5" />
           </button>
         )}
 
-        <div className="flex items-center gap-2.5">
-          <Logo size="md" />
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+          <Logo size="md" iconClassName="w-9 h-9 sm:w-10 sm:h-10" />
 
           {title && (
             <>
               <span className="hidden sm:inline-block text-surface-300 dark:text-[#26415E] font-light">/</span>
-              <h1 className="hidden sm:inline-block text-sm font-heading font-semibold text-ink-secondary dark:text-[#E5C9D7] truncate max-w-[200px] lg:max-w-xs">
+              <h1 className="hidden sm:inline-block text-sm font-heading font-semibold text-ink-secondary dark:text-[#E5C9D7] truncate max-w-[160px] lg:max-w-xs">
                 {title}
               </h1>
             </>
@@ -79,14 +79,14 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 sm:gap-3">
-        {/* Gardy Mascot toggle for patients only */}
+      <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
+        {/* Gardy Mascot toggle for patients only (hidden on mobile to prevent topbar overflow & brand collision) */}
         {isPatient && (
           <button
             type="button"
             onClick={toggleSparky}
             title={showSparky ? 'Hide Gardy Mascot' : 'Show Gardy Mascot'}
-            className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            className={`hidden md:flex p-2 rounded-xl text-xs font-semibold items-center gap-1.5 transition-all ${
               showSparky
                 ? 'bg-teal-50 text-teal-700 dark:bg-[#83A6CE]/20 dark:text-[#E5C9D7] border border-teal-200 dark:border-[#83A6CE]/30'
                 : 'text-ink-muted dark:text-[#83A6CE] hover:bg-surface-100 dark:hover:bg-[#26415E]/60'

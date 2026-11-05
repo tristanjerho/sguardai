@@ -494,7 +494,7 @@ export function LabIntakePage() {
       </div>
 
       {/* Phase 4 — 6 Live Database Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-6">
         <StatCard
           title="Pending Review"
           value={dashboardCounts.pendingReview}
@@ -541,11 +541,16 @@ export function LabIntakePage() {
 
       {/* Request Tabs + Search + Multi-Filter Drawer */}
       <div className="space-y-4">
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
-          <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+        <div className="space-y-3">
+          <Tabs
+            tabs={tabs}
+            activeTab={activeTab}
+            onChange={setActiveTab}
+            className="w-full min-w-0 flex-nowrap overflow-x-auto"
+          />
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative w-full sm:w-72">
+          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <div className="relative w-full sm:w-72 sm:flex-none">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
               <input
                 type="text"

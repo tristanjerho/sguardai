@@ -22,7 +22,7 @@ export function StatCard({
     <Card className="p-5">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+          <p className="min-h-8 text-xs font-semibold uppercase leading-4 tracking-wider text-ink-muted">
             {title}
           </p>
           <p className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">

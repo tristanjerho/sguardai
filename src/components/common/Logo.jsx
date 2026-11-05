@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { twMerge } from 'tailwind-merge';
 import { SmileGuardMascot } from './SmileGuardMascot';
 
 /**
@@ -12,6 +13,7 @@ import { SmileGuardMascot } from './SmileGuardMascot';
  * @param {boolean} [props.useMascot=true]
  * @param {string} [props.to='/']
  * @param {string} [props.className='']
+ * @param {string} [props.iconClassName='']
  * @param {string} [props.textClassName='']
  */
 export function Logo({
@@ -22,27 +24,29 @@ export function Logo({
   useMascot = true,
   to = '/',
   className = '',
+  iconClassName = '',
   textClassName = '',
 }) {
   const sizeMap = {
-    xs: { icon: 'w-7 h-7', text: 'text-sm font-bold', gap: 'gap-1.5' },
-    sm: { icon: 'w-8 h-8 sm:w-9 sm:h-9', text: 'text-base font-bold', gap: 'gap-2' },
-    md: { icon: 'w-10 h-10 sm:w-11 sm:h-11', text: 'text-lg sm:text-xl font-bold', gap: 'gap-2.5' },
-    lg: { icon: 'w-12 h-12 sm:w-14 sm:h-14', text: 'text-2xl sm:text-3xl font-bold', gap: 'gap-3' },
+    xs: { icon: 'w-6 h-6', text: 'text-xs font-bold', gap: 'gap-1.5' },
+    sm: { icon: 'w-7 h-7 sm:w-8 sm:h-8', text: 'text-sm font-bold', gap: 'gap-2' },
+    md: { icon: 'w-8 h-8 sm:w-9 sm:h-9', text: 'text-lg sm:text-xl font-bold', gap: 'gap-2.5' },
+    lg: { icon: 'w-11 h-11 sm:w-12 sm:h-12', text: 'text-2xl sm:text-3xl font-bold', gap: 'gap-3' },
     xl: { icon: 'w-16 h-16 sm:w-20 sm:h-20', text: 'text-3xl sm:text-4xl font-bold', gap: 'gap-3.5' },
   };
 
   const currentSize = sizeMap[size] || sizeMap.md;
+  const iconClasses = twMerge(currentSize.icon, iconClassName);
 
   const iconElement = useMascot ? (
-    <div className={`${currentSize.icon} flex items-center justify-center group-hover:scale-105 transition-transform duration-200`}>
-      <SmileGuardMascot className="w-full h-full object-contain" showShadow={false} />
+    <div className={`${iconClasses} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200`}>
+      <SmileGuardMascot className="w-full h-full object-contain" showShadow={false} size={null} />
     </div>
   ) : (
     <img
       src="/logo-icon.png"
       alt="SmileGuard Logo"
-      className={`${currentSize.icon} object-contain rounded-xl shadow-soft group-hover:scale-105 transition-transform duration-200`}
+      className={`${iconClasses} object-contain rounded-xl shadow-soft shrink-0 group-hover:scale-105 transition-transform duration-200`}
     />
   );
 
@@ -51,7 +55,7 @@ export function Logo({
       {iconElement}
       {!iconOnly && showText && (
         <span
-          className={`font-heading font-extrabold tracking-tight text-teal-700 dark:text-teal-400 ${currentSize.text} ${textClassName}`}
+          className={`font-heading font-extrabold tracking-tight text-teal-700 dark:text-teal-400 ${currentSize.text} ${textClassName} truncate max-w-[125px] xs:max-w-none`}
         >
           SmileGuard
         </span>

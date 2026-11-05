@@ -13,7 +13,7 @@ import React from 'react';
  * @param {string} [props.className=''] - Additional CSS classes
  */
 export function SmileGuardMascot({
-  size = 80,
+  size,
   animated = false,
   showBackground = false,
   showShadow = true,
@@ -24,7 +24,18 @@ export function SmileGuardMascot({
   ...props
 }) {
   const isNumeric = typeof size === 'number';
-  const style = isNumeric ? { width: size, height: size } : undefined;
+  const hasStringSize = typeof size === 'string' && (size.endsWith('px') || size.endsWith('%') || size.endsWith('rem') || size.endsWith('em'));
+
+  // Only apply inline style if an explicit size is provided or if no sizing class exists in className
+  const style = isNumeric
+    ? { width: size, height: size }
+    : hasStringSize
+    ? { width: size, height: size }
+    : (size === null || size === false || size === 'auto')
+    ? undefined
+    : (size === undefined && !className.includes('w-') && !className.includes('h-'))
+    ? { width: 80, height: 80 }
+    : undefined;
 
   // Compute tight viewBox to eliminate excess whitespace around the character
   let computedViewBox = '0 0 800 800';
@@ -34,9 +45,9 @@ export function SmileGuardMascot({
     computedViewBox = '0 0 800 800';
   } else if (tight) {
     if (showShadow) {
-      computedViewBox = '210 105 380 595';
+      computedViewBox = '210 125 380 590';
     } else {
-      computedViewBox = '220 110 360 540';
+      computedViewBox = '220 125 360 560';
     }
   }
 

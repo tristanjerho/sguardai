@@ -12,7 +12,6 @@ import { triggerDeviceNotification, requestNotificationPermission } from '../../
 export function PatientShell() {
   const { user } = useAuth();
   const toast = useToast();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 
@@ -67,24 +66,26 @@ export function PatientShell() {
     <div className="min-h-screen bg-surface-base text-ink-primary">
       <Topbar
         title={getPageTitle()}
-        showMenuButton={true}
-        onMenuToggle={() => setIsSidebarOpen(true)}
+        showMenuButton={false}
         unreadCount={unreadCount}
       />
 
-      <Sidebar
-        role={ROLES.PATIENT}
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-      />
+      <div className="hidden lg:block">
+        <Sidebar role={ROLES.PATIENT} isOpen={false} />
+      </div>
 
-      <main className="lg:pl-64 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 min-h-[calc(100vh-4rem)] transition-all">
+      <main
+        className="lg:pl-64 p-3.5 sm:p-6 lg:p-8 lg:pb-8 min-h-[calc(100vh-4rem)] transition-all"
+        style={{
+          paddingBottom: 'max(7.5rem, calc(6rem + env(safe-area-inset-bottom, 0px)))',
+        }}
+      >
         <div className="max-w-6xl mx-auto">
           <Outlet />
         </div>
       </main>
 
-      <BottomTabBar />
+      <BottomTabBar role={ROLES.PATIENT} />
     </div>
   );
 }
