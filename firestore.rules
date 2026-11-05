@@ -160,5 +160,16 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update, delete: if false;
     }
+
+    // =========================================================================
+    // CHAT SESSIONS COLLECTION (SmileGuard Assistant History)
+    // =========================================================================
+    match /chatSessions/{sessionId} {
+      allow read, write: if isAuthenticated() && (
+        resource == null || resource.data.userId == request.auth.uid
+      );
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
   }
 }
+

@@ -312,12 +312,12 @@ export function PatientDashboard() {
           </CardContent>
         </Card>
 
-        {/* Sparky Tooth Trivia & Care Tips Widget */}
+        {/* Gardy Tooth Trivia & Care Tips Widget */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <Lightbulb className="w-5 h-5 text-[#C48CB3]" />
-              <CardTitle>Sparky&apos;s Daily Care Tip</CardTitle>
+              <CardTitle>Gardy&apos;s Daily Care Tip</CardTitle>
             </div>
             <button
               onClick={handleNextTip}
@@ -370,9 +370,8 @@ export function PatientDashboard() {
               <div
                 key={n.id}
                 onClick={() => handleOpenNotification(n)}
-                className={`p-4 flex items-start justify-between gap-4 transition-all cursor-pointer hover:bg-surface-50 dark:hover:bg-[#26415E]/40 ${
-                  !n.read ? 'bg-teal-50/40 dark:bg-[#83A6CE]/10' : ''
-                }`}
+                className={`p-4 flex items-start justify-between gap-4 transition-all cursor-pointer hover:bg-surface-50 dark:hover:bg-[#26415E]/40 ${!n.read ? 'bg-teal-50/40 dark:bg-[#83A6CE]/10' : ''
+                  }`}
               >
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center gap-2">

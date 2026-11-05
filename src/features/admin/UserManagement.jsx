@@ -168,9 +168,8 @@ export function UserManagement() {
                 {filteredUsers.map((u) => (
                   <tr
                     key={u.id}
-                    className={`hover:bg-surface-50/60 dark:hover:bg-surface-100/30 transition-colors ${
-                      u.deactivated ? 'opacity-50 bg-slate-50 dark:bg-slate-900/40' : ''
-                    }`}
+                    className={`hover:bg-surface-50/60 dark:hover:bg-surface-100/30 transition-colors ${u.deactivated ? 'opacity-50 bg-slate-50 dark:bg-slate-900/40' : ''
+                      }`}
                   >
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-3">
@@ -192,10 +191,14 @@ export function UserManagement() {
                     <td className="p-4">
                       <span
                         className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
-                          u.role === ROLES.ADMIN
+                          u.role === ROLES.SUPERADMIN
+                            ? 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300'
+                            : u.role === ROLES.ADMIN
                             ? 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950 dark:text-purple-300'
                             : u.role === ROLES.DENTIST
                             ? 'bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-950 dark:text-teal-300'
+                            : u.role === ROLES.LAB_TECH
+                            ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300'
                             : 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-200'
                         }`}
                       >
@@ -282,7 +285,7 @@ export function UserManagement() {
               onChange={(e) => setNewRole(e.target.value)}
               options={[
                 { value: ROLES.DENTIST, label: 'DENTIST (Clinical Access)' },
-                { value: ROLES.LAB_TECH, label: 'LAB_TECH (Laboratory Pipeline)' },
+                { value: ROLES.LAB_TECH, label: 'LAB_TECH (Laboratory Admin & CAD/CAM Portal)' },
                 { value: ROLES.ADMIN, label: 'ADMIN (Clinic Management)' },
                 { value: ROLES.SUPERADMIN, label: 'SUPERADMIN (Full Platform Access)' },
               ]}

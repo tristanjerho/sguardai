@@ -12,7 +12,7 @@ export const ROLES = {
 export const ROLE_LABELS = {
   [ROLES.PATIENT]: 'Patient',
   [ROLES.DENTIST]: 'Dentist / Specialist',
-  [ROLES.LAB_TECH]: 'Lab Technician',
+  [ROLES.LAB_TECH]: 'Laboratory Admin / Specialist',
   [ROLES.ADMIN]: 'Clinic Administrator',
   [ROLES.SUPERADMIN]: 'Super Administrator',
 };

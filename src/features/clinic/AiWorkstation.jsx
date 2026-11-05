@@ -433,6 +433,18 @@ export function AiWorkstation() {
     toast.success('Grad-CAM Attention Map downloaded to device.', 'Image Downloaded');
   };
 
+  const handleAskAssistant = (result) => {
+    if (!result) return;
+    const predClass = result.prediction?.class || 'Pathology';
+    const conf = result.prediction?.confidence_percentage || '';
+    const query = `Can you explain the clinical significance, radiographical indicators, and differential considerations for ${predClass} (${conf}% confidence) on a dental panoramic radiograph?`;
+    window.dispatchEvent(
+      new CustomEvent('smileguard-ask-assistant', {
+        detail: { query, finding: result }
+      })
+    );
+  };
+
   // Determine current active display image
   const displayImageUrl = inputMode === 'upload' ? uploadedFilePreview : selectedImageUrl;
 
@@ -835,6 +847,16 @@ export function AiWorkstation() {
                           {analysisResult.observations}
                         </p>
                       )}
+
+                      {/* Ask Gardy Assistant Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleAskAssistant(analysisResult)}
+                        className="w-full mt-2 py-2 px-3 rounded-xl bg-teal-600/10 hover:bg-teal-600/20 border border-teal-500/30 text-teal-800 dark:text-teal-200 text-xs font-heading font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 shadow-xs"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                        <span>Ask Gardy Assistant About These Findings</span>
+                      </button>
                     </div>
 
                     {/* Complete Softmax Class Probabilities Breakdown */}

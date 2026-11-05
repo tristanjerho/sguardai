@@ -5,15 +5,16 @@ Tests the complete end-to-end pipeline:
 - Validates that non-OPG images (photos, documents, screenshots, objects) are REJECTED by Stage 1 with NO pathology predictions or Grad-CAM.
 """
 
-import os
 import sys
 import glob
 from pathlib import Path
 from PIL import Image
-import numpy as np
 import requests
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
 API_URL = "http://127.0.0.1:8000/api/predict"
 
 def run_tests():
@@ -21,13 +22,29 @@ def run_tests():
     print("SMILEGUARD AI - TWO-STAGE AI DEFENSE VERIFICATION SUITE")
     print("=" * 65)
 
-    # 1. Health check
+    # 1. Health check & execution mode detection
+    live_api = False
     try:
-        r_health = requests.get("http://127.0.0.1:8000/api/health", timeout=5)
-        print(f"[*] API Health: {r_health.status_code} - {r_health.json()}")
-    except Exception as e:
-        print(f"[!] Error connecting to API: {e}")
-        return False
+        r_health = requests.get("http://127.0.0.1:8000/api/health", timeout=2)
+        if r_health.status_code == 200:
+            live_api = True
+            print(f"[*] API Health: {r_health.status_code} - Live server operational ({r_health.json()})")
+        else:
+            print(f"[*] API Health: {r_health.status_code} (Non-200, using in-process engine)")
+    except Exception:
+        print("[*] Live API server not running on port 8000. Using direct in-process AI pipeline engine.")
+
+    def run_inference(image_path: str):
+        if live_api:
+            with open(image_path, "rb") as f:
+                r = requests.post(API_URL, files={"file": (Path(image_path).name, f, "image/jpeg")})
+            return r.status_code, r.json()
+        else:
+            from main import process_and_infer
+            pil_img = Image.open(image_path)
+            res = process_and_infer(pil_img, source_name=Path(image_path).name)
+            status_code = 200 if res.get("success", False) else 400
+            return status_code, res
 
     # Find sample test images
     opg_test_samples = glob.glob(str(BACKEND_DIR / "dataset" / "processed" / "test" / "*" / "*.jpg"))
@@ -51,13 +68,10 @@ def run_tests():
     print("TEST 1: Real Dental Panoramic OPG Radiograph")
     print("-" * 65)
     sample_opg = opg_test_samples[0]
-    print(f"Uploading OPG: {Path(sample_opg).name}...")
+    print(f"Testing OPG: {Path(sample_opg).name}...")
 
-    with open(sample_opg, "rb") as f:
-        r = requests.post(API_URL, files={"file": (Path(sample_opg).name, f, "image/jpeg")})
-
-    res = r.json()
-    print(f"Response Status: {r.status_code}")
+    status_code, res = run_inference(sample_opg)
+    print(f"Response Status: {status_code}")
     print(f"Stage 1 Validation: is_valid = {res.get('xray_validation', {}).get('is_valid')} (OPG Prob: {res.get('xray_validation', {}).get('opg_probability')})")
     
     if res.get("xray_validation", {}).get("is_valid") is True:
@@ -82,13 +96,10 @@ def run_tests():
     print("TEST 2: Real Non-OPG Photograph / Screenshot / Document")
     print("-" * 65)
     sample_non_opg = non_opg_test_samples[0]
-    print(f"Uploading Non-OPG: {Path(sample_non_opg).name}...")
+    print(f"Testing Non-OPG: {Path(sample_non_opg).name}...")
 
-    with open(sample_non_opg, "rb") as f:
-        r = requests.post(API_URL, files={"file": (Path(sample_non_opg).name, f, "image/jpeg")})
-
-    res = r.json()
-    print(f"Response Status: {r.status_code}")
+    status_code, res = run_inference(sample_non_opg)
+    print(f"Response Status: {status_code}")
     print(f"Stage 1 Validation: is_valid = {res.get('xray_validation', {}).get('is_valid')} (Confidence: {res.get('xray_validation', {}).get('confidence')}%)")
     print(f"Error Code: {res.get('error')} | Message: {res.get('message')}")
 
@@ -116,14 +127,11 @@ def run_tests():
         print("TEST 3: Second Non-OPG Test Image")
         print("-" * 65)
         sample_non_opg_2 = non_opg_test_samples[1]
-        print(f"Uploading Non-OPG: {Path(sample_non_opg_2).name}...")
+        print(f"Testing Non-OPG: {Path(sample_non_opg_2).name}...")
 
-        with open(sample_non_opg_2, "rb") as f:
-            r = requests.post(API_URL, files={"file": (Path(sample_non_opg_2).name, f, "image/jpeg")})
-
-        res = r.json()
-        print(f"Stage 1 Validation: is_valid = {res.get('xray_validation', {}).get('is_valid')}")
-        if res.get("xray_validation", {}).get("is_valid") is False:
+        status_code_2, res_2 = run_inference(sample_non_opg_2)
+        print(f"Stage 1 Validation: is_valid = {res_2.get('xray_validation', {}).get('is_valid')}")
+        if res_2.get("xray_validation", {}).get("is_valid") is False:
             print("  -> Non-OPG Blocked: PASS [CORRECT]")
         else:
             print("  -> Non-OPG Blocked: FAIL [CRITICAL BUG]")

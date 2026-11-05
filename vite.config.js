@@ -6,10 +6,64 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+function devChatApiPlugin() {
+  return {
+    name: 'dev-chat-api-plugin',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        const url = req.url || '';
+        if (url === '/api/chat' || url.startsWith('/api/chat?') || url === '/api/chat/status') {
+          try {
+            const chatModule = await import('./api/chat.js');
+            const chatHandler = chatModule.default;
+            let body = '';
+            req.on('data', (chunk) => { body += chunk; });
+            req.on('end', async () => {
+              try {
+                req.body = body ? JSON.parse(body) : {};
+              } catch {
+                req.body = {};
+              }
+              const mockRes = {
+                statusCode: 200,
+                headers: {},
+                setHeader(name, value) {
+                  this.headers[name] = value;
+                  res.setHeader(name, value);
+                },
+                status(code) {
+                  this.statusCode = code;
+                  res.statusCode = code;
+                  return this;
+                },
+                json(data) {
+                  res.setHeader('Content-Type', 'application/json');
+                  res.statusCode = this.statusCode;
+                  res.end(JSON.stringify(data));
+                },
+                end(data) {
+                  res.statusCode = this.statusCode;
+                  res.end(data || '');
+                }
+              };
+              await chatHandler(req, mockRes);
+            });
+            return;
+          } catch (e) {
+            console.error('Error in dev chat API middleware:', e);
+          }
+        }
+        next();
+      });
+    }
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    devChatApiPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],

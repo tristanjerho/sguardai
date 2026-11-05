@@ -21,7 +21,7 @@ import numpy as np
 from PIL import Image
 import cv2
 
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, status
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, status, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import tensorflow as tf
@@ -32,6 +32,8 @@ tf.config.threading.set_inter_op_parallelism_threads(1)
 tf.config.threading.set_intra_op_parallelism_threads(1)
 
 from scripts.gradcam import generate_spatial_activation_map, create_gradcam_overlay
+from chat_engine import process_chat_message
+
 
 
 BACKEND_DIR = Path(__file__).resolve().parent
@@ -445,6 +447,66 @@ async def health_check():
         "validator_loaded": validator_interpreter is not None or validator_model is not None,
         "pathology_loaded": pathology_interpreter is not None or pathology_model is not None,
         "classes_count": len(pathology_classes)
+    }
+
+class ChatMessageModel(BaseModel):
+    role: str
+    content: str
+    timestamp: Optional[int] = None
+
+class ChatRequestBody(BaseModel):
+    messages: List[ChatMessageModel]
+    role: Optional[str] = "GUEST"
+    context: Optional[Dict[str, Any]] = None
+
+@app.post("/api/chat")
+async def chat_endpoint(
+    body: ChatRequestBody,
+    request: Request,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    SmileGuard Assistant Narrow AI Conversational Endpoint.
+    Authenticates requests, enforces rate limits, checks role boundaries,
+    and returns clinical decision support assistance.
+    """
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    client_id = client_ip
+
+    # If Firebase Bearer token provided, extract subject or token snippet for rate limiting & identity
+    if authorization and authorization.startswith("Bearer "):
+        token_str = authorization.split("Bearer ", 1)[1].strip()
+        if token_str:
+            client_id = f"auth_{token_str[:20]}"
+
+    messages_data = [{"role": m.role, "content": m.content} for m in body.messages]
+    result = process_chat_message(
+        messages=messages_data,
+        role=body.role or "GUEST",
+        context=body.context,
+        client_id=client_id
+    )
+
+    if not result.get("success", False) and result.get("error") == "RATE_LIMIT_EXCEEDED":
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={"code": "RATE_LIMIT_EXCEEDED", "message": result["message"]["content"]}
+        )
+
+    return result
+
+@app.get("/api/chat/status")
+async def chat_status():
+    gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    ai_model = os.environ.get("AI_CHAT_MODEL", os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")).strip()
+    return {
+        "status": "ready",
+        "assistant": "Gardy Assistant",
+        "version": "2.0.0",
+        "mode": "Gemini 1.5 Flash (Generative)" if gemini_key else "SmileGuard Clinical Decision Engine",
+        "model": ai_model if gemini_key else "smileguard-clinical-engine-v2",
+        "disclaimer_required": True,
+        "scope": "Dental practice management, clinical decision support, dental education, and SmileGuard AI system guidance"
     }
 
 

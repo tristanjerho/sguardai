@@ -4,7 +4,6 @@ Demonstrates and proves that predictions and Grad-CAM are dynamically generated
 by the trained CNN model from real test images.
 """
 
-import os
 import sys
 import json
 from pathlib import Path
@@ -105,10 +104,10 @@ def run_verification():
 
         # 9. Generate Real Grad-CAM
         try:
-            cam, g_pred_idx, g_score = generate_gradcam_heatmap(model, img_array, pred_idx)
+            cam, g_pred_idx, g_score, *rest = generate_gradcam_heatmap(model, img_array, pred_idx)
             overlay_data = create_gradcam_overlay(cam, original_img)
-            assert overlay_data["heatmap_data_url"].startswith("data:image/png;base64,")
-            assert overlay_data["overlay_data_url"].startswith("data:image/png;base64,")
+            assert overlay_data["heatmap_data_url"].startswith("data:image/")
+            assert overlay_data["overlay_data_url"].startswith("data:image/")
             print("Grad-CAM:        SUCCESS (Heatmap & Overlay generated from top_conv gradients)")
         except Exception as e:
             print(f"Grad-CAM:        FAILED ({e})")

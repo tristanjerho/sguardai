@@ -625,9 +625,8 @@ export function PatientDetail() {
               style={{
                 touchAction: zoom > 1 ? 'none' : 'pan-y',
               }}
-              className={`relative rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 h-[45vh] sm:h-[60vh] flex items-center justify-center select-none ${
-                zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
-              }`}
+              className={`relative rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 h-[45vh] sm:h-[60vh] flex items-center justify-center select-none ${zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
+                }`}
             >
               <div
                 style={{

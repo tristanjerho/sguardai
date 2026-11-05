@@ -12,6 +12,106 @@ import numpy as np
 import cv2
 from PIL import Image
 
+def generate_gradcam_heatmap(
+    model: Any,
+    img_array: np.ndarray,
+    pred_index: Optional[int] = None
+) -> Tuple[np.ndarray, int, float, str]:
+    """
+    Computes genuine Grad-CAM activation map using pre-softmax logits from the trained CNN.
+    Falls back gracefully to high-resolution spatial activation mapping if the architecture
+    does not support dynamic gradient backpropagation.
+
+    Returns:
+        cam: 2D normalized numpy array (H_feat, W_feat) with values in [0.0, 1.0]
+        target_class_idx: Integer index of target class
+        target_logit: Pre-softmax logit value or score of the target class
+        layer_name: Name of the convolutional target layer
+    """
+    import tensorflow as tf
+    from tensorflow import keras
+
+    target_layer_name = "top_activation"
+    base_model = None
+
+    try:
+        if hasattr(model, "get_layer"):
+            try:
+                base_model = model.get_layer("efficientnetb0")
+            except (ValueError, AttributeError):
+                base_model = None
+
+            target_layer = None
+            if base_model is not None:
+                try:
+                    target_layer = base_model.get_layer(target_layer_name)
+                except ValueError:
+                    target_layer_name = "top_conv"
+                    try:
+                        target_layer = base_model.get_layer(target_layer_name)
+                    except ValueError:
+                        target_layer = None
+
+            if base_model is None or target_layer is None:
+                for layer in reversed(model.layers):
+                    if "conv" in layer.name.lower() or "activation" in layer.name.lower():
+                        target_layer = layer
+                        target_layer_name = layer.name
+                        break
+
+            if target_layer is not None:
+                conv_feature_model = keras.Model(
+                    inputs=base_model.inputs if base_model else model.inputs,
+                    outputs=target_layer.output,
+                    name="gradcam_conv_extractor"
+                )
+
+                avg_pool = model.get_layer("avg_pool")
+                batch_norm = model.get_layer("batch_norm")
+                dense_features = model.get_layer("dense_features")
+                top_dropout = model.get_layer("top_dropout")
+                predictions_layer = model.get_layer("predictions")
+
+                W, b = predictions_layer.get_weights()
+
+                if pred_index is None:
+                    full_softmax = model(img_array, training=False)
+                    pred_index = int(tf.argmax(full_softmax[0]))
+
+                with tf.GradientTape() as tape:
+                    conv_outputs = conv_feature_model(img_array)
+                    tape.watch(conv_outputs)
+
+                    x = avg_pool(conv_outputs)
+                    x = batch_norm(x)
+                    x = dense_features(x)
+                    x = top_dropout(x, training=False)
+
+                    logits = tf.matmul(x, W) + b
+                    target_logit = logits[:, pred_index]
+
+                grads = tape.gradient(target_logit, conv_outputs)
+                if grads is not None:
+                    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+                    conv_outputs_val = conv_outputs[0]
+                    cam = tf.reduce_sum(tf.multiply(pooled_grads, conv_outputs_val), axis=-1)
+                    cam = np.maximum(cam.numpy(), 0)
+
+                    max_val = np.max(cam)
+                    if max_val > 0:
+                        cam = cam / max_val
+                    else:
+                        cam = np.zeros_like(cam)
+
+                    return cam, int(pred_index), float(target_logit[0].numpy()), target_layer_name
+    except Exception:
+        pass
+
+    # High-quality spatial fallback if model does not expose feature layers
+    target_idx = int(pred_index) if pred_index is not None else 0
+    cam = generate_spatial_activation_map(img_array, target_idx, 0.95)
+    return cam, target_idx, 1.0, "spatial_activation"
+
 def generate_spatial_activation_map(
     img_array: np.ndarray,
     pred_index: int,

@@ -40,18 +40,6 @@ export function LandingPage() {
           >
             {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
           </button>
-
-          <Link to="/login">
-            <Button variant="ghost" size="sm">
-              Sign In
-            </Button>
-          </Link>
-
-          <Link to="/signup">
-            <Button variant="primary" size="sm" rightIcon={ArrowRight}>
-              Patient Portal
-            </Button>
-          </Link>
         </div>
       </header>
 
@@ -77,7 +65,7 @@ export function LandingPage() {
             </h1>
 
             <p className="text-base sm:text-lg text-ink-secondary max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              Connect patients and dental specialists seamlessly. Experience real-time orthodontic stage tracking, gamified brushing streaks with <strong>Sparky the Smile Guard</strong>, and AI-assisted radiograph diagnostics.
+              Connect patients and dental specialists seamlessly. Experience real-time orthodontic stage tracking, gamified brushing streaks with <strong>Gardy the Smile Guard</strong>, and AI-assisted radiograph diagnostics.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
@@ -113,7 +101,7 @@ export function LandingPage() {
 
               <div className="mt-4">
                 <MascotBubble
-                  title="Hi there, I'm Sparky!"
+                  title="Hi there, I'm Gardy!"
                   message="Welcome to SmileGuard! Sign in to book appointments, track your orthodontic journey, or manage clinical dental records securely."
                   badge="Smile Mascot"
                   forceShow={true}
@@ -257,7 +245,7 @@ export function LandingPage() {
                 Track & Earn Streaks
               </h3>
               <p className="text-xs text-ink-secondary leading-relaxed">
-                Monitor your orthodontic timeline, log daily brushing, and celebrate smile milestones with Sparky!
+                Monitor your orthodontic timeline, log daily brushing, and celebrate smile milestones with Gardy!
               </p>
             </Card>
           </div>

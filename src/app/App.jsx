@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AppProviders } from './providers';
 import { AppRoutes } from './routes';
 import { PwaInstallPrompt } from '../components/common/PwaInstallPrompt';
+import { SmileGuardAssistant } from '../components/chat/SmileGuardAssistant';
 
 export function App() {
   return (
@@ -10,6 +11,7 @@ export function App() {
       <AppProviders>
         <AppRoutes />
         <PwaInstallPrompt />
+        <SmileGuardAssistant />
       </AppProviders>
     </BrowserRouter>
   );

@@ -31,9 +31,23 @@ export function PatientProfile() {
   const { showSparky, toggleSparky } = useMascot();
   const toast = useToast();
 
+  const parseInitialEmergency = () => {
+    const raw = user?.emergencyContact || '';
+    if (!raw) return { name: '', phone: '' };
+    const parts = raw.split(' - ');
+    if (parts.length >= 2) {
+      const p = parts[parts.length - 1];
+      const n = parts.slice(0, parts.length - 1).join(' - ');
+      return { name: n, phone: formatPhPhone(p) };
+    }
+    return { name: '', phone: formatPhPhone(raw) };
+  };
+
+  const initialEmergency = parseInitialEmergency();
+  const [emergencyName] = useState(initialEmergency.name);
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.phone ? formatPhPhone(user.phone) : '');
-  const [emergencyContact, setEmergencyContact] = useState(user?.emergencyContact || '');
+  const [emergencyContact, setEmergencyContact] = useState(initialEmergency.phone);
   const [medicalHistory, setMedicalHistory] = useState(user?.medicalHistory || '');
 
   const [isSaving, setIsSaving] = useState(false);
@@ -52,6 +66,14 @@ export function PatientProfile() {
     setPhone(formatPhPhone(val));
   };
 
+  const handleEmergencyContactChange = (val) => {
+    if (!val || val.trim() === '+' || val.trim() === '+63') {
+      setEmergencyContact(val.trim() === '' ? '' : '+63 ');
+      return;
+    }
+    setEmergencyContact(formatPhPhone(val));
+  };
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     if (phone && !isValidPhPhone(phone)) {
@@ -59,12 +81,21 @@ export function PatientProfile() {
       return;
     }
 
+    if (emergencyContact && !isValidPhPhone(emergencyContact)) {
+      toast.error('Please enter a valid 12-digit Philippine emergency contact number (+63 9XX XXX XXXX).');
+      return;
+    }
+
+    const savedEmergency = emergencyName?.trim()
+      ? `${emergencyName.trim()} - ${emergencyContact.trim()}`
+      : emergencyContact.trim();
+
     setIsSaving(true);
     try {
       await updateProfile({
         fullName: fullName.trim(),
         phone: phone.trim(),
-        emergencyContact: emergencyContact.trim(),
+        emergencyContact: savedEmergency,
         medicalHistory: medicalHistory.trim(),
       });
       toast.success('Profile details updated successfully!');
@@ -171,11 +202,14 @@ export function PatientProfile() {
               helperText="Date of birth is locked for clinical integrity."
             />
             <Input
-              label="Emergency Contact & Relationship"
-              type="text"
+              label="Emergency Contact (PH)"
+              type="tel"
               value={emergencyContact}
-              onChange={(e) => setEmergencyContact(e.target.value)}
-              leftIcon={UserCheck}
+              onChange={(e) => handleEmergencyContactChange(e.target.value)}
+              placeholder="+63 917 555 0199"
+              leftIcon={Phone}
+              helperText="12 numbers maximum (PH format: +63 9XX XXX XXXX)"
+              maxLength={17}
               required
             />
           </div>
@@ -235,7 +269,7 @@ export function PatientProfile() {
             <div className="space-y-0.5">
               <span className="font-heading font-bold text-sm text-ink-primary flex items-center gap-2">
                 <Smile className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                Show &ldquo;Sparky the Smile Guard&rdquo; Mascot
+                Show &ldquo;Gardy the Smile Guard&rdquo; Mascot
               </span>
               <p className="text-xs text-ink-secondary">
                 Toggle animated companion guidance, brushing cheers, and daily tips.

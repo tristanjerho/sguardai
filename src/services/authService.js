@@ -525,6 +525,14 @@ export const authService = {
   async ensureDefaultDentists() {
     if (!db) return;
     try {
+      const currentUid = auth?.currentUser?.uid;
+      if (!currentUid) return;
+
+      const profile = await this.getUserProfile(currentUid);
+      if (profile?.role !== ROLES.ADMIN && profile?.role !== ROLES.SUPERADMIN) {
+        return;
+      }
+
       const users = await this.listUsers();
       const existingDentists = users.filter((u) => (u.role || '').toUpperCase() === 'DENTIST');
       if (existingDentists.length === 0) {

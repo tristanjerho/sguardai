@@ -1,5 +1,5 @@
 /**
- * Dental wisdom, reminders, cheer dialogues and trivia for Sparky the Smile Guard
+ * Dental wisdom, reminders, cheer dialogues and trivia for Gardy the Smile Guard
  */
 
 export function getTimeOfDay() {
@@ -18,7 +18,7 @@ export function getGreeting(name = 'Friend') {
     morning: [
       `Good morning, ${firstName}! Ready to brighten your smile today? Don't forget your 2-minute morning brush! ✨`,
       `Rise and shine, ${firstName}! A clean set of teeth makes every morning better! ☀️`,
-      `Morning, ${firstName}! Sparky here to help you guard that champion smile today! 🪥`,
+      `Morning, ${firstName}! Gardy here to help you guard that champion smile today! 🪥`,
     ],
     afternoon: [
       `Good afternoon, ${firstName}! Remember to rinse with water after lunch to keep plaque away! 💧`,
@@ -31,9 +31,9 @@ export function getGreeting(name = 'Friend') {
       `Relax and protect your smile tonight, ${firstName}! You did great today! ✨`,
     ],
     night: [
-      `Bedtime already, ${firstName}? Never sleep with unbrushed teeth—Sparky needs nighttime defense! 😴`,
+      `Bedtime already, ${firstName}? Never sleep with unbrushed teeth—Gardy needs nighttime defense! 😴`,
       `Sweet dreams, ${firstName}! Make sure nighttime brushing and retainers/elastics are in place! 🌙`,
-      `Night night, ${firstName}! Sparky will guard your smile while you dream! 🌟`,
+      `Night night, ${firstName}! Gardy will guard your smile while you dream! 🌟`,
     ],
   };
 
@@ -60,7 +60,7 @@ export const MASCOT_MESSAGES = {
   milestoneCelebration: [
     "Woohoo! You're on a roll with your oral care streak! Your enamel thanks you! 🎉",
     "Brilliant work! Consistent daily habits create the healthiest lifelong smiles! 🏆",
-    "Sparky is cheering for you! Another milestone achieved in your smile journey! 🌟",
+    "Gardy is cheering for you! Another milestone achieved in your smile journey! 🌟",
   ],
   encouragement: [
     "Every day you care for your teeth brings you closer to your dream smile!",

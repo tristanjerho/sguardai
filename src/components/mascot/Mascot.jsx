@@ -80,7 +80,7 @@ export function Mascot({
       style={{ width, height }}
       whileHover={{ scale: prefersReducedMotion ? 1 : 1.05 }}
       whileTap={{ scale: 0.95 }}
-      aria-label={`Sparky the Smile Guard (${mood} mood)`}
+      aria-label={`Gardy the Smile Guard (${mood} mood)`}
       role="img"
     >
       <svg

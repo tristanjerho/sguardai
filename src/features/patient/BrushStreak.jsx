@@ -267,7 +267,7 @@ export function BrushStreak() {
             <HelpCircle className="w-6 h-6 text-teal-600 dark:text-teal-400" />
             <div>
               <h3 className="text-lg font-heading font-bold text-ink-primary">
-                Sparky&apos;s Dental IQ Mini-Quiz
+                Gardy&apos;s Dental IQ Mini-Quiz
               </h3>
               <p className="text-xs text-ink-secondary">
                 Answer 3 fun questions to test your oral health knowledge!
@@ -366,7 +366,7 @@ export function BrushStreak() {
               Quiz Completed!
             </h4>
             <p className="text-sm text-ink-secondary">
-              You scored <strong className="text-teal-600 dark:text-teal-400 text-base">{quizScore} out of {TRIVIA_QUIZ_QUESTIONS.length}</strong>! Sparky gives you two thumbs up!
+              You scored <strong className="text-teal-600 dark:text-teal-400 text-base">{quizScore} out of {TRIVIA_QUIZ_QUESTIONS.length}</strong>! Gardy gives you two thumbs up!
             </p>
             <Button
               variant="outline"

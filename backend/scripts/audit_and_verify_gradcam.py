@@ -156,10 +156,11 @@ def run_audit():
         axes[i, 1].axis('off')
 
         # Plot 3: Composite Overlay
-        orig_np = np.array(orig_img)
         h_u8 = np.uint8(255 * overlay_dict["raw_heatmap"])
         colored_h = cv2.applyColorMap(h_u8, cv2.COLORMAP_JET)
         colored_h_rgb = cv2.cvtColor(colored_h, cv2.COLOR_BGR2RGB)
+        orig_resized = orig_img.convert("RGB").resize((colored_h_rgb.shape[1], colored_h_rgb.shape[0]), Image.Resampling.BILINEAR)
+        orig_np = np.array(orig_resized)
         blended = cv2.addWeighted(orig_np, 0.55, colored_h_rgb, 0.45, 0)
 
         axes[i, 2].imshow(blended)

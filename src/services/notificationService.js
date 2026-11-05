@@ -105,7 +105,7 @@ export const notificationService = {
   subscribeForUser(userId, callback) {
     if (!db || !userId) {
       callback([]);
-      return () => {};
+      return () => { };
     }
     const q = query(collection(db, 'notifications'), where('userId', '==', userId));
     return onSnapshot(

@@ -874,7 +874,7 @@ export function SuperAdminDashboard() {
             onChange={(e) => setNewRole(e.target.value)}
             options={[
               { value: ROLES.DENTIST, label: 'DENTIST (Chairside Clinic & Diagnostics)' },
-              { value: ROLES.LAB_TECH, label: 'LAB_TECH (Dental Appliance Fabrication)' },
+              { value: ROLES.LAB_TECH, label: 'LAB_TECH (Laboratory Admin & CAD/CAM Portal)' },
               { value: ROLES.ADMIN, label: 'ADMIN (Clinic Operations & Staff Management)' },
               { value: ROLES.SUPERADMIN, label: 'SUPERADMIN (Full Platform Access)' },
             ]}

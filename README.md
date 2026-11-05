@@ -21,10 +21,21 @@
   - Orthodontic stage manager and clinical notes tracker
   - Dental Laboratory appliance order tracking (retainers, expanders, crowns)
   - **AI Diagnostic Workstation** with Grad-CAM activation heatmap overlay & confidence bars
+- **SmileGuard Assistant (Narrow Conversational AI)**:
+  - Role-aware clinical dental decision support assistant (Dentist, Receptionist, Administrator, Patient)
+  - Dental radiograph AI diagnostic guidance (Stage 1 MobileNetV2 OPG Validator + Stage 2 EfficientNetB0 Pathology Classifier)
+  - Explanations for Dental Caries, Impacted Teeth, Periapical Lesions / Infection, and Periodontal Bone Loss
+  - 32-Tooth adult odontogram surface charting guidance and CAD/CAM dental lab tracking
+  - Strict domain guardrails with polite out-of-scope redirection
+  - Clinical decision support disclaimer: *"AI-generated results are intended for clinical decision support only and must be reviewed and validated by a qualified dental professional."*
+  - Floating responsive dental-themed chat widget with Framer Motion animations
+  - Dual backend deployment: Vercel Serverless Functions (`api/chat.js`) and FastAPI (`backend/main.py`)
+  - Configurable model (Google Gemini 1.5 Flash via `GEMINI_API_KEY` with automatic clinical fallback engine)
 - **Admin Portal**:
   - Staff account provisioning (Dentist / Admin)
   - Role management & account activation toggles
   - Auditable immutable activity & security logs
+
 
 ---
 
@@ -70,3 +81,44 @@ Refer to the [Next Steps Action Plan & Operator Guide](file:///c:/Users/My%20Com
 3. Bootstrapping the first Superadmin account and provisioning clinical staff
 4. Testing PWA standalone installation on Android and iOS devices
 5. Configuring the trusted AI backend service boundary
+
+---
+
+## ☁️ Deployment Instructions for Vercel
+
+SmileGuard AI is pre-configured for one-click deployment on **Vercel** with full support for frontend single-page application routing and serverless backend API endpoints (`/api/chat`).
+
+### 1. Connect Repository to Vercel
+1. Log in to [Vercel](https://vercel.com) and click **"Add New Project"**.
+2. Import your SmileGuard AI repository.
+3. Vercel automatically detects the framework preset as **Vite**.
+
+### 2. Configure Environment Variables
+In the Vercel project settings under **Settings > Environment Variables**, add:
+
+| Variable Name | Value Description | Scope |
+| :--- | :--- | :--- |
+| `VITE_FIREBASE_API_KEY` | Firebase Web API Key | Client-Safe |
+| `VITE_FIREBASE_AUTH_DOMAIN` | `sguardai-7d893.firebaseapp.com` | Client-Safe |
+| `VITE_FIREBASE_PROJECT_ID` | `sguardai-7d893` | Client-Safe |
+| `VITE_FIREBASE_STORAGE_BUCKET` | `sguardai-7d893.firebasestorage.app` | Client-Safe |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | `551256402483` | Client-Safe |
+| `VITE_FIREBASE_APP_ID` | `1:551256402483:web:...` | Client-Safe |
+| `VITE_FIREBASE_MEASUREMENT_ID` | `G-SXQPXL9KR0` | Client-Safe |
+| `VITE_CLOUDINARY_CLOUD_NAME` | Cloudinary Cloud Name (`irmjysgg`) | Client-Safe |
+| `VITE_CLOUDINARY_UPLOAD_PRESET` | Cloudinary Unsigned Preset (`smileguard_uploads`) | Client-Safe |
+| `VITE_AI_SERVICE_URL` | `https://sguardai.onrender.com/api/predict` | Client-Safe |
+| `VITE_AI_MODEL_INFO_URL` | `https://sguardai.onrender.com/api/model-info` | Client-Safe |
+| `GEMINI_API_KEY` | Google Gemini API Key | **Server-Side Only (Never prefix with VITE_)** |
+| `AI_CHAT_MODEL` | `gemini-1.5-flash` | **Server-Side Only** |
+
+> 🔒 **Security Notice**: `GEMINI_API_KEY` is kept strictly on the server side in `api/chat.js` and is never exposed to the client bundle.
+
+### 3. Build & Output Settings
+- **Framework Preset**: `Vite`
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- **Install Command**: `npm install`
+
+The included `vercel.json` automatically maps `/api/(.*)` to Vercel Serverless Functions and rewrites single-page application routes to `/index.html`.
+

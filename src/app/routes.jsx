@@ -40,6 +40,7 @@ import { LabOrdersManager } from '../features/clinic/LabOrders';
 import { AiWorkstation } from '../features/clinic/AiWorkstation';
 
 // Lab Pages
+import { LabIntakePage } from '../features/lab/LabIntakePage';
 import { LabOrdersQueue } from '../features/lab/LabOrdersQueue';
 
 // Admin Pages
@@ -191,17 +192,18 @@ export function AppRoutes() {
         <Route path="ai-workstation" element={<AiWorkstation />} />
       </Route>
 
-      {/* Lab Technician Portal Routes (LAB_TECH, SUPERADMIN) */}
+      {/* Laboratory Admin & CAD/CAM Portal Routes (LAB_TECH, ADMIN, SUPERADMIN) */}
       <Route
         path="/lab"
         element={
-          <ProtectedRoute allowedRoles={[ROLES.LAB_TECH, ROLES.SUPERADMIN]}>
+          <ProtectedRoute allowedRoles={[ROLES.LAB_TECH, ROLES.ADMIN, ROLES.SUPERADMIN]}>
             <LabTechShell />
           </ProtectedRoute>
         }
       >
-        <Route index element={<LabOrdersQueue />} />
-        <Route path="orders" element={<LabOrdersQueue />} />
+        <Route index element={<LabIntakePage />} />
+        <Route path="board" element={<LabOrdersQueue />} />
+        <Route path="orders" element={<Navigate to="/lab" replace />} />
       </Route>
 
       {/* Admin Portal Routes (ADMIN, SUPERADMIN) */}

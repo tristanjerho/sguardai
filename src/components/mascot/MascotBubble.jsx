@@ -10,7 +10,7 @@ export function MascotBubble({
   onAction,
   onClose,
   className = '',
-  badge = 'Sparky Tip',
+  badge = 'Gardy Tip',
   forceShow = false,
 }) {
   const { showSparky } = useMascot();

@@ -61,17 +61,24 @@ export function getStatusColor(status) {
     case 'COMPLETED':
     case 'READY':
     case 'DELIVERED':
+    case 'DISPATCHED':
       return {
         badge: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/25',
         dot: 'bg-emerald-500',
       };
     case 'PENDING':
+    case 'PENDING_REVIEW':
     case 'ORDERED':
     case 'INITIAL':
+    case 'GLAZING':
       return {
         badge: 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300 border-amber-200 dark:border-amber-500/25',
         dot: 'bg-amber-500',
       };
+    case 'RECEIVED':
+    case 'DESIGN':
+    case 'MILLING':
+    case 'QA':
     case 'IN_PROGRESS':
     case 'ALIGNMENT':
     case 'RETENTION':
@@ -80,6 +87,7 @@ export function getStatusColor(status) {
         dot: 'bg-teal-500',
       };
     case 'REJECTED':
+    case 'REVISION_NEEDED':
     case 'CANCELLED':
       return {
         badge: 'bg-rose-50 text-rose-800 dark:bg-rose-500/10 dark:text-rose-300 border-rose-200 dark:border-rose-500/25',
@@ -99,28 +107,28 @@ export function getStatusColor(status) {
  */
 export function formatPhPhone(value) {
   if (!value) return '';
-  
+
   // Extract all digits
   let digits = String(value).replace(/\D/g, '');
-  
+
   // Strip leading zero if user entered 09...
   if (digits.startsWith('0')) {
     digits = digits.slice(1);
   }
-  
+
   // Strip country code if present at the beginning
   if (digits.startsWith('63')) {
     digits = digits.slice(2);
   }
-  
+
   // Keep maximum 10 digits (national part of PH mobile number: 9XXXXXXXXX)
   // Total digits with 63 = 12 digits max
   digits = digits.slice(0, 10);
-  
+
   if (digits.length === 0) {
     return '+63 ';
   }
-  
+
   let formatted = '+63 ';
   if (digits.length <= 3) {
     formatted += digits;
@@ -139,22 +147,22 @@ export function formatPhPhone(value) {
 export function isValidPhPhone(value) {
   if (!value) return false;
   const digits = String(value).replace(/\D/g, '');
-  
+
   // Formatted with country code: 639XXXXXXXXX (12 digits)
   if (digits.length === 12 && digits.startsWith('639')) {
     return true;
   }
-  
+
   // Formatted local: 09XXXXXXXXX (11 digits)
   if (digits.length === 11 && digits.startsWith('09')) {
     return true;
   }
-  
+
   // National only: 9XXXXXXXXX (10 digits)
   if (digits.length === 10 && digits.startsWith('9')) {
     return true;
   }
-  
+
   return false;
 }
 

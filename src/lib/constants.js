@@ -19,17 +19,20 @@ export const TREATMENT_STAGE = {
 };
 
 export const LAB_ORDER_STATUS = {
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  REVISION_NEEDED: 'REVISION_NEEDED',
   RECEIVED: 'RECEIVED',
   DESIGN: 'DESIGN',
   MILLING: 'MILLING',
   GLAZING: 'GLAZING',
   QA: 'QA',
   DISPATCHED: 'DISPATCHED',
+  COMPLETED: 'COMPLETED',
   // Backward compatibility aliases
-  ORDERED: 'RECEIVED',
+  ORDERED: 'PENDING_REVIEW',
   IN_PROGRESS: 'DESIGN',
   READY: 'QA',
-  DELIVERED: 'DISPATCHED',
+  DELIVERED: 'COMPLETED',
 };
 
 export const LAB_ORDER_STAGES = [
@@ -41,48 +44,84 @@ export const LAB_ORDER_STAGES = [
   'DISPATCHED',
 ];
 
+export const LAB_MATERIALS = [
+  'Multilayer Zirconia',
+  'Lithium Disilicate (IPS e.max)',
+  'Porcelain-Fused-to-Metal (PFM)',
+  'PMMA / Orthodontic Acrylic',
+  'Thermoformed Clear PETG',
+  'Flexible Polyamide (Valplast)',
+  '3D Printed Surgical / Model Resin',
+];
+
+export const VITA_SHADES = [
+  'BL1', 'BL2', 'A1', 'A2', 'A3', 'A3.5', 'A4',
+  'B1', 'B2', 'B3', 'C1', 'C2', 'D2', 'D3', 'Clear / N/A',
+];
+
 export const SERVICES = [
   {
-    id: 'consultation',
-    name: 'Consultation & Oral Exam',
-    duration: '30 mins',
-    price: '₱500',
-    description: 'Comprehensive dental examination, oral assessment, and treatment planning.',
+    id: 'oral-prophylaxis',
+    name: 'Oral Prophylaxis (Cleaning)',
+    duration: '30-45 mins',
+    description: 'Comprehensive dental scaling, plaque and tartar removal, stain removal, and polishing.',
+    pricingNote: 'Fee depends on the extent of calculus buildup and gum health',
   },
   {
-    id: 'cleaning',
-    name: 'Prophylaxis (Cleaning)',
-    duration: '45 mins',
-    price: '₱1,200',
-    description: 'Deep dental scaling, plaque and tartar removal, and polishing.',
+    id: 'dental-fillings',
+    name: 'Dental Fillings (Pasta)',
+    duration: '30-60 mins',
+    description: 'Tooth-colored composite restoration to repair dental caries, cavities, or fractured surfaces.',
+    pricingNote: 'Fee depends on whether tooth damage is slight, moderate, or severe',
   },
   {
-    id: 'braces-adj',
-    name: 'Braces Adjustment & Wire Tightening',
-    duration: '30 mins',
-    price: '₱1,000',
-    description: 'Monthly wire adjustment, bracket check, and orthodontic progression.',
+    id: 'crowns-bridges',
+    name: 'Crowns & Bridges',
+    duration: '60-90 mins',
+    description: 'Fixed prosthetic restorations to reinforce badly damaged teeth or replace missing teeth.',
+    pricingNote: 'Fee depends on remaining tooth structure, material, and number of units',
   },
   {
-    id: 'braces-install',
-    name: 'Braces Installation (Full Arch)',
-    duration: '90 mins',
-    price: '₱35,000',
-    description: 'Direct bonding of ceramic or metal brackets and initial archwire placement.',
+    id: 'root-canal',
+    name: 'Root Canal Treatment',
+    duration: '60-90 mins',
+    description: 'Endodontic procedure to clean infected pulp tissue, relieve toothache, and save the natural tooth.',
+    pricingNote: 'Fee depends on canal anatomy and degree of pulpal infection/damage',
   },
   {
-    id: 'extraction',
+    id: 'partial-denture',
+    name: 'Removable Partial Denture',
+    duration: '45-60 mins',
+    description: 'Removable prosthetic appliance designed to replace several missing teeth and restore bite function.',
+    pricingNote: 'Fee depends on the number of missing teeth and framework material',
+  },
+  {
+    id: 'complete-denture',
+    name: 'Complete Denture',
+    duration: '60 mins',
+    description: 'Full arch prosthetic replacement for completely edentulous upper or lower arches.',
+    pricingNote: 'Fee depends on arch condition and prosthetic specifications',
+  },
+  {
+    id: 'flexible-denture',
+    name: 'Flexible Denture',
+    duration: '45-60 mins',
+    description: 'Nylon-based flexible partial denture offering enhanced comfort, aesthetics, and metal-free fit.',
+    pricingNote: 'Fee depends on span of missing teeth and clinical impression',
+  },
+  {
+    id: 'ortho-braces',
+    name: 'Ortho Braces',
+    duration: '45-60 mins',
+    description: 'Orthodontic assessment, bracket bonding, or alignment adjustments for malocclusion and spacing.',
+    pricingNote: 'Fee depends on case complexity and malocclusion severity',
+  },
+  {
+    id: 'tooth-extraction',
     name: 'Tooth Extraction',
-    duration: '45 mins',
-    price: '₱1,500',
-    description: 'Gentle routine or surgical extraction with local anesthesia.',
-  },
-  {
-    id: 'emergency',
-    name: 'Emergency Dental Relief',
-    duration: '30 mins',
-    price: '₱800',
-    description: 'Urgent pain relief, broken bracket repair, or trauma management.',
+    duration: '30-45 mins',
+    description: 'Gentle routine or surgical extraction of severely compromised, decayed, or impacted teeth.',
+    pricingNote: 'Fee depends on tooth condition, root curvature, and surgical complexity',
   },
 ];
 

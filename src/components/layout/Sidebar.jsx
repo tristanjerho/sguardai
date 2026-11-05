@@ -7,6 +7,7 @@ import {
   Activity,
   FolderArchive,
   Flame,
+  Inbox,
   User,
   Users,
   Clock,
@@ -34,8 +35,8 @@ export function Sidebar({ role, isOpen = true, onClose }) {
     ];
   } else if (role === ROLES.LAB_TECH) {
     navItems = [
-      { to: '/lab', label: 'Lab Production Board', icon: FlaskConical, end: true },
-      { to: '/lab/orders', label: 'All Lab Orders', icon: ClipboardList },
+      { to: '/lab', label: 'Order Intake & Admin', icon: Inbox, end: true },
+      { to: '/lab/board', label: 'CAD/CAM Production Board', icon: FlaskConical },
     ];
   } else if (role === ROLES.DENTIST || role === ROLES.ADMIN || role === ROLES.SUPERADMIN) {
     const clinicItems = [
@@ -43,7 +44,7 @@ export function Sidebar({ role, isOpen = true, onClose }) {
       { to: '/clinic/queue', label: 'Appointments Queue', icon: Clock },
       { to: '/clinic/patients', label: 'Patient Directory', icon: Users },
       { to: '/clinic/treatments', label: 'Treatment Plans', icon: ClipboardList },
-      { to: '/clinic/lab-orders', label: 'Lab Orders', icon: FlaskConical },
+      { to: '/clinic/lab-orders', label: 'Lab Prescriptions', icon: FlaskConical },
       { to: '/clinic/ai-workstation', label: 'AI Workstation', icon: BrainCircuit, badge: 'AI' },
     ];
 
@@ -52,17 +53,19 @@ export function Sidebar({ role, isOpen = true, onClose }) {
         { to: '/admin/super', label: 'Command Center', icon: ShieldCheck, badge: 'ROOT', end: true },
         { to: '/admin/users', label: 'User Registry & Roles', icon: Users },
         { to: '/admin/logs', label: 'Security & Audit Stream', icon: ShieldAlert },
-        { to: '/lab', label: 'CAD/CAM Laboratory', icon: FlaskConical },
         { type: 'divider', label: 'Operational Portals' },
         { to: '/clinic', label: 'Chairside Clinic Portal', icon: LayoutDashboard },
+        { to: '/lab', label: 'Lab Order Intake', icon: Inbox, end: true },
+        { to: '/lab/board', label: 'CAD/CAM Lab Board', icon: FlaskConical },
       ];
     } else if (role === ROLES.ADMIN) {
       navItems = [
         { to: '/admin/users', label: 'User Management', icon: Users, end: true },
         { to: '/admin/logs', label: 'Activity Logs', icon: ShieldAlert },
-        { to: '/lab', label: 'Laboratory Pipeline', icon: FlaskConical },
         { type: 'divider', label: 'Operational Portals' },
         { to: '/clinic', label: 'Chairside Clinic Portal', icon: LayoutDashboard },
+        { to: '/lab', label: 'Lab Order Intake', icon: Inbox, end: true },
+        { to: '/lab/board', label: 'CAD/CAM Lab Board', icon: FlaskConical },
       ];
     } else {
       navItems = clinicItems;
@@ -82,9 +85,8 @@ export function Sidebar({ role, isOpen = true, onClose }) {
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface-card dark:bg-[#0B1B32]/95 dark:backdrop-blur-xl border-r border-surface-border dark:border-[#26415E]/80 flex flex-col transition-transform duration-200 ease-in-out lg:fixed lg:top-16 lg:bottom-0 lg:left-0 lg:z-30 lg:w-64 lg:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface-card dark:bg-[#0B1B32]/95 dark:backdrop-blur-xl border-r border-surface-border dark:border-[#26415E]/80 flex flex-col transition-transform duration-200 ease-in-out lg:fixed lg:top-16 lg:bottom-0 lg:left-0 lg:z-30 lg:w-64 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          }`}
       >
         <div className="h-16 px-4 flex items-center justify-between border-b border-surface-border dark:border-[#26415E]/80 lg:hidden">
           <div className="flex items-center gap-2">
@@ -126,10 +128,9 @@ export function Sidebar({ role, isOpen = true, onClose }) {
                 end={item.end}
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 ${
-                    isActive
-                      ? 'bg-teal-600 text-white shadow-soft dark:bg-[#83A6CE]/20 dark:text-[#E5C9D7] dark:border dark:border-[#83A6CE]/35 dark:shadow-[0_0_15px_rgba(131,166,206,0.18)]'
-                      : 'text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-[#F8FAFC] hover:bg-surface-100 dark:hover:bg-[#26415E]/50'
+                  `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-150 ${isActive
+                    ? 'bg-teal-600 text-white shadow-soft dark:bg-[#83A6CE]/20 dark:text-[#E5C9D7] dark:border dark:border-[#83A6CE]/35 dark:shadow-[0_0_15px_rgba(131,166,206,0.18)]'
+                    : 'text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-[#F8FAFC] hover:bg-surface-100 dark:hover:bg-[#26415E]/50'
                   }`
                 }
               >
@@ -137,23 +138,21 @@ export function Sidebar({ role, isOpen = true, onClose }) {
                   <>
                     <div className="flex items-center gap-3">
                       <Icon
-                        className={`w-4 h-4 transition-colors ${
-                          isActive
+                        className={`w-4 h-4 transition-colors ${isActive
                             ? 'text-white dark:text-[#C48CB3]'
                             : item.highlight
-                            ? 'text-orange-500 dark:text-[#C48CB3]'
-                            : 'text-teal-600 dark:text-[#83A6CE] group-hover:dark:text-[#E5C9D7]'
-                        }`}
+                              ? 'text-orange-500 dark:text-[#C48CB3]'
+                              : 'text-teal-600 dark:text-[#83A6CE] group-hover:dark:text-[#E5C9D7]'
+                          }`}
                       />
                       <span>{item.label}</span>
                     </div>
                     {item.badge && (
                       <span
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
-                          isActive
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${isActive
                             ? 'bg-white/20 text-white dark:bg-[#C48CB3]/30 dark:text-[#E5C9D7]'
                             : 'bg-orange-100 text-orange-700 dark:bg-[#C48CB3]/20 dark:text-[#E5C9D7] dark:border dark:border-[#C48CB3]/30'
-                        }`}
+                          }`}
                       >
                         {item.badge}
                       </span>

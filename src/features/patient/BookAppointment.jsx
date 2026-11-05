@@ -42,7 +42,7 @@ export function BookAppointment() {
   const [existingAppointments, setExistingAppointments] = useState([]);
 
   // Form selections
-  const [selectedServiceId, setSelectedServiceId] = useState('braces-adj');
+  const [selectedServiceId, setSelectedServiceId] = useState(SERVICES[0]?.id || 'oral-prophylaxis');
   const [selectedDentistId, setSelectedDentistId] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState('');
@@ -186,7 +186,7 @@ export function BookAppointment() {
               <span>Appointment Request Received!</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary">
-              Sparky is Cheering for You!
+              Gardy is Cheering for You!
             </h2>
             <p className="text-sm text-ink-secondary max-w-md mx-auto">
               Your appointment request is marked as <strong>PENDING</strong> and has been queued for review by {bookedAppointment.dentistName}.
@@ -271,36 +271,48 @@ export function BookAppointment() {
         <div className="space-y-6">
           {/* Services Selection Grid */}
           <div className="space-y-3">
-            <h3 className="text-sm font-heading font-bold uppercase tracking-wider text-ink-secondary">
-              1. Select Dental Service
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-1">
+              <h3 className="text-sm font-heading font-bold uppercase tracking-wider text-ink-secondary">
+                1. Select Dental Service
+              </h3>
+              <span className="text-[11px] text-teal-700 dark:text-teal-400 font-medium">
+                * Procedure fees depend on whether the tooth is slightly or badly damaged and are finalized upon clinical evaluation.
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {SERVICES.map((srv) => {
                 const isSelected = selectedServiceId === srv.id;
                 return (
                   <div
                     key={srv.id}
                     onClick={() => setSelectedServiceId(srv.id)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
                       isSelected
                         ? 'border-teal-500 bg-teal-50/70 dark:bg-teal-950/40 ring-2 ring-teal-500/20 shadow-soft-sm'
                         : 'border-surface-border bg-surface-card hover:border-surface-300 dark:hover:border-surface-200'
                     }`}
                   >
-                    <div className="flex items-start justify-between">
-                      <p className="font-heading font-bold text-sm text-ink-primary">
-                        {srv.name}
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-heading font-bold text-sm text-ink-primary">
+                          {srv.name}
+                        </p>
+                        <span className="text-[10px] font-bold text-teal-700 dark:text-teal-300 bg-teal-100 dark:bg-teal-900/60 px-2 py-0.5 rounded-full shrink-0">
+                          Evaluation-Based
+                        </span>
+                      </div>
+                      <p className="text-xs text-ink-secondary mt-1.5 line-clamp-2">
+                        {srv.description}
                       </p>
-                      <span className="text-xs font-bold text-teal-600 dark:text-teal-400 bg-teal-100 dark:bg-teal-900/60 px-2 py-0.5 rounded-md">
-                        {srv.price}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-surface-border/60 text-[11px] text-ink-muted">
+                      <span>Duration: {srv.duration}</span>
+                      <span className="text-[10px] text-teal-700 dark:text-teal-400 font-medium">
+                        Based on tooth damage
                       </span>
                     </div>
-                    <p className="text-xs text-ink-secondary mt-1.5 line-clamp-2">
-                      {srv.description}
-                    </p>
-                    <span className="block text-[11px] text-ink-muted mt-2">
-                      Duration: {srv.duration}
-                    </span>
                   </div>
                 );
               })}
@@ -454,8 +466,11 @@ export function BookAppointment() {
                   {selectedService?.name}
                 </p>
                 <p className="text-xs text-teal-700 dark:text-teal-300 font-semibold">
-                  Estimated Fee: {selectedService?.price} ({selectedService?.duration})
+                  Fee: Determined upon clinical examination (based on tooth damage severity)
                 </p>
+                <span className="text-[11px] text-ink-muted block">
+                  Estimated Duration: {selectedService?.duration}
+                </span>
               </div>
 
               <div className="p-4 rounded-2xl bg-surface-50 dark:bg-surface-100/40 space-y-1">

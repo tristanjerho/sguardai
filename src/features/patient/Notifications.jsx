@@ -143,11 +143,10 @@ export function Notifications() {
             <Card
               key={n.id}
               onClick={() => handleOpenNotification(n)}
-              className={`p-4 sm:p-5 transition-all cursor-pointer hover:border-teal-400 hover:shadow-soft ${
-                !n.read
+              className={`p-4 sm:p-5 transition-all cursor-pointer hover:border-teal-400 hover:shadow-soft ${!n.read
                   ? 'border-teal-300 bg-teal-50/40 dark:bg-teal-950/20 shadow-soft-sm ring-1 ring-teal-400/20'
                   : 'opacity-90 hover:opacity-100'
-              }`}
+                }`}
             >
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-2xl bg-surface-card border border-surface-border flex items-center justify-center flex-shrink-0 shadow-soft-sm">
