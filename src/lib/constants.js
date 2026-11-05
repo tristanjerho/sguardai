@@ -20,43 +20,54 @@ export const TREATMENT_STAGE = {
 
 export const LAB_ORDER_STATUS = {
   PENDING_REVIEW: 'PENDING_REVIEW',
-  REVISION_NEEDED: 'REVISION_NEEDED',
-  RECEIVED: 'RECEIVED',
-  DESIGN: 'DESIGN',
-  MILLING: 'MILLING',
-  GLAZING: 'GLAZING',
-  QA: 'QA',
+  CLARIFICATION_REQUESTED: 'CLARIFICATION_REQUESTED',
+  DECLINED: 'DECLINED',
+  ACCEPTED: 'ACCEPTED',
+  IN_PRODUCTION: 'IN_PRODUCTION',
+  QUALITY_CHECK: 'QUALITY_CHECK',
+  READY_FOR_DISPATCH: 'READY_FOR_DISPATCH',
   DISPATCHED: 'DISPATCHED',
+  ISSUE_REPORTED: 'ISSUE_REPORTED',
   COMPLETED: 'COMPLETED',
   // Backward compatibility aliases
+  REVISION_NEEDED: 'CLARIFICATION_REQUESTED',
+  RECEIVED: 'ACCEPTED',
+  DESIGN: 'IN_PRODUCTION',
+  MILLING: 'IN_PRODUCTION',
+  GLAZING: 'IN_PRODUCTION',
+  QA: 'QUALITY_CHECK',
   ORDERED: 'PENDING_REVIEW',
-  IN_PROGRESS: 'DESIGN',
-  READY: 'QA',
+  IN_PROGRESS: 'IN_PRODUCTION',
+  READY: 'READY_FOR_DISPATCH',
   DELIVERED: 'COMPLETED',
 };
 
 export const LAB_ORDER_STAGES = [
-  'RECEIVED',
-  'DESIGN',
-  'MILLING',
-  'GLAZING',
-  'QA',
-  'DISPATCHED',
+  'CASE_PREPARATION',
+  'CAD_DESIGN',
+  'CAM_MILLING_PRINT',
+  'FINISHING_STAIN_GLAZE',
+  'QUALITY_CHECK',
+  'READY_FOR_DISPATCH',
 ];
 
 export const LAB_MATERIALS = [
   'Multilayer Zirconia',
   'Lithium Disilicate (IPS e.max)',
   'Porcelain-Fused-to-Metal (PFM)',
-  'PMMA / Orthodontic Acrylic',
-  'Thermoformed Clear PETG',
+  'PMMA Orthodontic Acrylic + .028 SS Wire',
+  'Thermoformed Clear PETG (1.0mm)',
+  'High-Impact Heat-Cured Denture Acrylic',
   'Flexible Polyamide (Valplast)',
+  'Autopolymerizing Repair Acrylic / Wrought Wire',
+  'Dual-Laminate Hard/Soft Splint Material',
   '3D Printed Surgical / Model Resin',
 ];
 
 export const VITA_SHADES = [
   'BL1', 'BL2', 'A1', 'A2', 'A3', 'A3.5', 'A4',
-  'B1', 'B2', 'B3', 'C1', 'C2', 'D2', 'D3', 'Clear / N/A',
+  'B1', 'B2', 'B3', 'C1', 'C2', 'D2', 'D3',
+  'Clear / Pink Acrylic', 'Match Existing', 'Clear / N/A',
 ];
 
 export const SERVICES = [

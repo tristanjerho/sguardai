@@ -51,7 +51,9 @@ export const Select = React.forwardRef(function Select(
           )}
           {...props}
         >
-          {placeholder && <option value="">{placeholder}</option>}
+          {placeholder && !options.some((opt) => String(opt.value) === '') && (
+            <option value="">{placeholder}</option>
+          )}
           {options.length > 0
             ? options.map((opt) => (
                 <option key={opt.value} value={opt.value}>

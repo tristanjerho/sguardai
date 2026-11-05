@@ -176,7 +176,7 @@ export function SuperAdminDashboard() {
       : 0;
 
     const inProductionOrders = Array.isArray(labOrders)
-      ? labOrders.filter((o) => o?.status !== 'DISPATCHED' && o?.status !== 'COMPLETED').length
+      ? labOrders.filter((o) => o?.status !== 'COMPLETED' && o?.status !== 'DECLINED').length
       : 0;
 
     return {
@@ -544,9 +544,9 @@ export function SuperAdminDashboard() {
           color="blue"
         />
         <StatCard
-          title="CAD/CAM Lab Orders"
+          title="Laboratory Requests"
           value={metrics.totalLabOrders}
-          subtitle={`${metrics.inProductionOrders} In Fabrication Pipeline`}
+          subtitle={`${metrics.inProductionOrders} Active / In Pipeline`}
           icon={FlaskConical}
           color="purple"
         />
@@ -594,10 +594,10 @@ export function SuperAdminDashboard() {
                 <FlaskConical className="w-5 h-5" />
               </div>
               <h3 className="font-heading font-bold text-sm text-ink-primary group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                Dental Laboratory Board
+                Laboratory Production Board
               </h3>
               <p className="text-xs text-ink-muted mt-1">
-                6-stage CAD/CAM Kanban from Milling to Dispatch.
+                Service-specific orthodontic, crown/bridge, denture &amp; repair workflows.
               </p>
             </div>
             <div className="flex items-center text-xs font-semibold text-purple-600 dark:text-purple-400 mt-4">

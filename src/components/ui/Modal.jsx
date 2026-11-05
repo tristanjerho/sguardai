@@ -4,23 +4,35 @@ import { X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+const SIZE_MAP = {
+  sm: 'max-w-md',
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+};
+
 export function Modal({
   isOpen,
+  open,
   onClose,
   title,
   description,
   children,
-  maxWidth = 'max-w-lg',
+  size,
+  maxWidth,
   showCloseButton = true,
   className = '',
 }) {
+  const modalOpen = Boolean(isOpen ?? open);
+  const resolvedMaxWidth = maxWidth || (size && SIZE_MAP[size]) || 'max-w-lg';
+
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
+      if (e.key === 'Escape' && modalOpen) {
+        onClose?.();
       }
     };
-    if (isOpen) {
+    if (modalOpen) {
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
     }
@@ -28,11 +40,11 @@ export function Modal({
       document.body.style.overflow = 'unset';
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [modalOpen, onClose]);
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
           {/* Backdrop */}
           <motion.div
@@ -56,14 +68,14 @@ export function Modal({
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
             className={twMerge(
               clsx(
-                'relative w-full z-10 bg-surface-card border border-surface-border rounded-3xl shadow-soft-lg overflow-hidden my-8',
-                maxWidth,
+                'relative w-full z-10 bg-surface-card border border-surface-border rounded-3xl shadow-soft-lg overflow-hidden my-8 max-h-[90vh] flex flex-col',
+                resolvedMaxWidth,
                 className
               )
             )}
           >
             {(title || showCloseButton) && (
-              <div className="flex items-start justify-between p-6 pb-4 border-b border-surface-border">
+              <div className="flex items-start justify-between p-6 pb-4 border-b border-surface-border shrink-0">
                 <div>
                   {title && (
                     <h3 id="modal-title" className="text-xl font-heading font-bold text-ink-primary">
@@ -87,7 +99,7 @@ export function Modal({
               </div>
             )}
 
-            <div className="p-6">{children}</div>
+            <div className="p-6 overflow-y-auto">{children}</div>
           </motion.div>
         </div>
       )}

@@ -41,16 +41,16 @@ export function LabTechShell() {
 
         newlySubmitted.forEach((ord) => {
           const rushPrefix = ord.priority === 'RUSH' ? '🚨 RUSH ' : '🧪 New ';
-          const msg = `Dr. ${ord.dentistName || 'Dentist'} ordered ${ord.applianceType} for ${ord.patientName}.`;
-          toast.info(`${rushPrefix}Lab Prescription!\n${msg}`);
-          triggerDeviceNotification(`${rushPrefix}Dentist Lab Order`, msg, {
+          const msg = `Dr. ${ord.dentistName || 'Dentist'} submitted ${ord.applianceType} (${ord.caseReference || 'New Case'}).`;
+          toast.info(`${rushPrefix}Lab Request!\n${msg}`);
+          triggerDeviceNotification(`${rushPrefix}Dentist Lab Request`, msg, {
             vibrate: [200, 100, 200],
           });
         });
       }
 
       previousOrderIds = new Set(orders.map((o) => o.id));
-    });
+    }, user);
 
     const unsubNotifs = notificationService.subscribeForUser(userId, (notifs) => {
       const unread = notifs.filter((n) => !n.read).length;
@@ -78,7 +78,8 @@ export function LabTechShell() {
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === '/lab') return 'Laboratory Order Intake & Admin';
-    if (path.includes('/board')) return 'CAD/CAM Production Board';
+    if (path.includes('/board')) return 'Laboratory Production Board';
+    if (path.includes('/requests/')) return 'Laboratory Request Details';
     return 'Dental Laboratory Portal';
   };
 
@@ -97,8 +98,8 @@ export function LabTechShell() {
         onClose={() => setIsSidebarOpen(false)}
       />
 
-      <main className="lg:pl-64 p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-4rem)] transition-all">
-        <div className="max-w-7xl mx-auto">
+      <main className="lg:pl-64 p-4 sm:p-5 lg:p-6 min-h-[calc(100vh-4rem)] transition-all overflow-x-hidden">
+        <div className="w-full max-w-[1680px] mx-auto">
           <Outlet />
         </div>
       </main>

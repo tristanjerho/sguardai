@@ -36,7 +36,7 @@ export function Sidebar({ role, isOpen = true, onClose }) {
   } else if (role === ROLES.LAB_TECH) {
     navItems = [
       { to: '/lab', label: 'Order Intake & Admin', icon: Inbox, end: true },
-      { to: '/lab/board', label: 'CAD/CAM Production Board', icon: FlaskConical },
+      { to: '/lab/board', label: 'Laboratory Production Board', icon: FlaskConical },
     ];
   } else if (role === ROLES.DENTIST || role === ROLES.ADMIN || role === ROLES.SUPERADMIN) {
     const clinicItems = [
@@ -56,7 +56,7 @@ export function Sidebar({ role, isOpen = true, onClose }) {
         { type: 'divider', label: 'Operational Portals' },
         { to: '/clinic', label: 'Chairside Clinic Portal', icon: LayoutDashboard },
         { to: '/lab', label: 'Lab Order Intake', icon: Inbox, end: true },
-        { to: '/lab/board', label: 'CAD/CAM Lab Board', icon: FlaskConical },
+        { to: '/lab/board', label: 'Laboratory Production Board', icon: FlaskConical },
       ];
     } else if (role === ROLES.ADMIN) {
       navItems = [
@@ -65,7 +65,7 @@ export function Sidebar({ role, isOpen = true, onClose }) {
         { type: 'divider', label: 'Operational Portals' },
         { to: '/clinic', label: 'Chairside Clinic Portal', icon: LayoutDashboard },
         { to: '/lab', label: 'Lab Order Intake', icon: Inbox, end: true },
-        { to: '/lab/board', label: 'CAD/CAM Lab Board', icon: FlaskConical },
+        { to: '/lab/board', label: 'Laboratory Production Board', icon: FlaskConical },
       ];
     } else {
       navItems = clinicItems;

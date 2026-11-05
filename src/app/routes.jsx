@@ -42,6 +42,7 @@ import { AiWorkstation } from '../features/clinic/AiWorkstation';
 // Lab Pages
 import { LabIntakePage } from '../features/lab/LabIntakePage';
 import { LabOrdersQueue } from '../features/lab/LabOrdersQueue';
+import { LabRequestDetails } from '../features/lab/LabRequestDetails';
 
 // Admin Pages
 import { SuperAdminDashboard } from '../features/admin/SuperAdminDashboard';
@@ -189,10 +190,11 @@ export function AppRoutes() {
         <Route path="patients/:id" element={<PatientDetail />} />
         <Route path="treatments" element={<TreatmentsManager />} />
         <Route path="lab-orders" element={<LabOrdersManager />} />
+        <Route path="lab-orders/:id" element={<LabRequestDetails />} />
         <Route path="ai-workstation" element={<AiWorkstation />} />
       </Route>
 
-      {/* Laboratory Admin & CAD/CAM Portal Routes (LAB_TECH, ADMIN, SUPERADMIN) */}
+      {/* Laboratory Order Intake & Production Portal Routes (LAB_TECH, ADMIN, SUPERADMIN) */}
       <Route
         path="/lab"
         element={
@@ -203,6 +205,7 @@ export function AppRoutes() {
       >
         <Route index element={<LabIntakePage />} />
         <Route path="board" element={<LabOrdersQueue />} />
+        <Route path="requests/:id" element={<LabRequestDetails />} />
         <Route path="orders" element={<Navigate to="/lab" replace />} />
       </Route>
 

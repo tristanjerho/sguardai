@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  FlaskConical,
   Plus,
   CheckCircle2,
   AlertTriangle,
   RotateCcw,
-  FileText,
-  Image as ImageIcon,
-  ExternalLink,
+  Eye,
   Truck,
   Clock,
-  Zap,
+  ShieldAlert,
+  Sparkles,
+  FlaskConical,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
@@ -26,71 +26,84 @@ import { Select } from '../../components/ui/Select';
 import { Tabs } from '../../components/ui/Tabs';
 import { TableSkeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { formatDate, formatDateTime } from '../../lib/formatters';
-import { LAB_ORDER_STATUS, LAB_MATERIALS, VITA_SHADES } from '../../lib/constants';
+import { formatDate } from '../../lib/formatters';
+import { LAB_MATERIALS, VITA_SHADES } from '../../lib/constants';
+import {
+  LAB_ORDER_STATUS,
+  STATUS_DISPLAY_LABELS,
+  MATERIALS_DISPLAY_LABELS,
+  DISPATCH_SUB_LABELS,
+  INPUT_SUBMISSION_TYPES,
+  APPLIANCE_CATEGORIES,
+  APPLIANCE_CATEGORY_LABELS,
+  DENTAL_ARCHES,
+  DEFAULT_WORKFLOW_TEMPLATES,
+  APPLIANCE_CATALOG_PRESETS,
+  formatArchAndTeeth,
+} from '../../lib/labWorkflows';
 
-const APPLIANCE_PRESETS = [
-  'Monolithic Zirconia Crown',
-  '3-Unit Anterior Bridge',
-  'Upper & Lower Hawley Retainers',
-  'Clear Orthodontic Retainer (Essix)',
-  'Hard/Soft Occlusal Nightguard',
-  'Flexible Partial Denture',
-];
-
-const PIPELINE_STEPS = [
-  { key: 'PENDING_REVIEW', label: 'Sent to Lab' },
-  { key: 'RECEIVED', label: 'Accepted' },
-  { key: 'DESIGN', label: 'CAD Design' },
-  { key: 'MILLING', label: 'CAM Milling' },
-  { key: 'GLAZING', label: 'Glazing' },
-  { key: 'QA', label: 'Lab QA' },
-  { key: 'DISPATCHED', label: 'Dispatched' },
-  { key: 'COMPLETED', label: 'Fitted' },
-];
-
-const STATUS_LABELS = {
-  PENDING_REVIEW: 'Sent • Awaiting Lab Intake',
-  REVISION_NEEDED: 'Action Required • Lab Revision',
-  RECEIVED: 'Accepted by Lab',
-  DESIGN: 'CAD Design',
-  MILLING: 'CAM Milling',
-  GLAZING: 'Glazing & Sintering',
-  QA: 'Quality Assurance',
-  DISPATCHED: 'Dispatched • Ready for Fitting',
-  COMPLETED: 'Fitted & Completed',
-};
+function getDefaultDueDate(daysAhead = 5) {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 export function LabOrdersManager() {
   const { user } = useAuth();
   const toast = useToast();
+  const navigate = useNavigate();
 
   const [orders, setOrders] = useState([]);
+  const [templatesMap, setTemplatesMap] = useState(DEFAULT_WORKFLOW_TEMPLATES);
   const [patients, setPatients] = useState([]);
   const [patientImages, setPatientImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [busyId, setBusyId] = useState(null);
 
-  // Create / Revise Modal State
+  // Create / Clarification Resubmit Modal State
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingRevisionOrder, setEditingRevisionOrder] = useState(null);
+  const [editingOrder, setEditingOrder] = useState(null);
   const [patientId, setPatientId] = useState('');
+  const [manualPatientName, setManualPatientName] = useState('');
   const [applianceType, setApplianceType] = useState('');
+  const [category, setCategory] = useState(APPLIANCE_CATEGORIES.CROWNS_BRIDGES);
+  const [workflowId, setWorkflowId] = useState('CROWNS_BRIDGES_DIGITAL');
+  const [retainerSubtype, setRetainerSubtype] = useState('');
+  const [requiresTryIn, setRequiresTryIn] = useState(false);
+  const [inputType, setInputType] = useState('DIGITAL_SCAN');
   const [material, setMaterial] = useState(LAB_MATERIALS[0]);
   const [shade, setShade] = useState('A2');
-  const [priority, setPriority] = useState('STANDARD');
+  const [arch, setArch] = useState('NOT_SPECIFIED');
   const [toothNumbersInput, setToothNumbersInput] = useState('');
-  const [vendor, setVendor] = useState('SmileGuard In-House CAD/CAM Lab');
-  const [targetDeliveryDate, setTargetDeliveryDate] = useState('');
+  const [priority, setPriority] = useState('STANDARD');
+  const [vendor, setVendor] = useState('SmileGuard In-House Dental Lab');
+  const [estimatedCompletionDate, setEstimatedCompletionDate] = useState(() => getDefaultDueDate(5));
   const [cost, setCost] = useState('₱3,500');
   const [selectedAttachmentId, setSelectedAttachmentId] = useState('');
   const [cadFileUrl, setCadFileUrl] = useState('');
   const [notes, setNotes] = useState('');
+  const [clarificationReply, setClarificationReply] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Tracking & Detail Modal State
-  const [trackingOrder, setTrackingOrder] = useState(null);
-  const [completingId, setCompletingId] = useState(null);
+  // Clinic Physical Receipt Confirmation Modal (Phase 2.6)
+  const [receiptModalOrder, setReceiptModalOrder] = useState(null);
+  const [receivedBy, setReceivedBy] = useState('');
+  const [receiptCondition, setReceiptCondition] = useState('Intact & Matches Prescription');
+  const [receiptRemarks, setReceiptRemarks] = useState('');
+
+  // Clinic Delivery / Specification Issue Modal (Phase 2.6 & Scenario F)
+  const [issueModalOrder, setIssueModalOrder] = useState(null);
+  const [issueType, setIssueType] = useState('Incorrect Specifications / Fit');
+  const [issueDescription, setIssueDescription] = useState('');
+
+  // Clinic Wax Try-In Review Modal (Phase 3 Workflow C)
+  const [tryInModalOrder, setTryInModalOrder] = useState(null);
+  const [tryInApproved, setTryInApproved] = useState(true);
+  const [tryInNotes, setTryInNotes] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -100,28 +113,39 @@ export function LabOrdersManager() {
       .listPatients()
       .then((patList) => {
         if (mounted) {
-          setPatients(patList);
-          if (patList.length > 0) setPatientId((prev) => prev || patList[0].id);
+          setPatients(patList || []);
+          if (patList && patList.length > 0) {
+            setPatientId((prev) => prev || patList[0].id);
+          } else {
+            setPatientId('WALK_IN');
+          }
         }
       })
-      .catch((err) => console.error('Failed to load patients for lab order form:', err));
+      .catch((err) => {
+        console.error('Failed to load patients for lab request form:', err);
+        if (mounted) setPatientId('WALK_IN');
+      });
+
+    const unsubTemplates = laboratoryService.subscribeWorkflowTemplates((map) => {
+      if (mounted) setTemplatesMap(map);
+    });
 
     const unsubOrders = laboratoryService.subscribeToOrders((liveOrders) => {
       if (mounted) {
         setOrders(liveOrders);
         setLoading(false);
       }
-    });
+    }, user);
 
     return () => {
       mounted = false;
+      unsubTemplates();
       unsubOrders();
     };
-  }, []);
+  }, [user?.id, user?.uid, user?.role]);
 
-  // Load selected patient's radiographs/scans when form is open
   useEffect(() => {
-    if (!isFormOpen || !patientId) {
+    if (!isFormOpen || !patientId || patientId === 'WALK_IN') {
       setPatientImages([]);
       return;
     }
@@ -131,169 +155,346 @@ export function LabOrdersManager() {
       .catch(() => setPatientImages([]));
   }, [isFormOpen, patientId]);
 
+  const applyPreset = (preset) => {
+    setApplianceType(preset.label);
+    setCategory(preset.category);
+    setWorkflowId(preset.workflowId);
+    setMaterial(preset.defaultMaterial || LAB_MATERIALS[0]);
+    setShade(preset.defaultShade || 'A2');
+    setInputType(preset.defaultInputType || 'DIGITAL_SCAN');
+    setRetainerSubtype(preset.retainerSubtype || '');
+    setRequiresTryIn(Boolean(preset.requiresTryIn));
+    if (
+      preset.category === APPLIANCE_CATEGORIES.ORTHO_RETAINERS ||
+      preset.category === APPLIANCE_CATEGORIES.DENTURES
+    ) {
+      setArch((prev) => (prev === 'NOT_SPECIFIED' ? 'UPPER_ARCH' : prev));
+    }
+  };
+
   const openCreateModal = () => {
-    setEditingRevisionOrder(null);
-    if (patients.length > 0 && !patientId) setPatientId(patients[0].id);
+    setEditingOrder(null);
+    if (patients.length > 0) {
+      setPatientId((prev) => (prev && prev !== 'WALK_IN' ? prev : patients[0].id));
+    } else {
+      setPatientId('WALK_IN');
+    }
+    setManualPatientName('');
     setApplianceType('');
+    setCategory(APPLIANCE_CATEGORIES.CROWNS_BRIDGES);
+    setWorkflowId('CROWNS_BRIDGES_DIGITAL');
+    setRetainerSubtype('');
+    setRequiresTryIn(false);
+    setInputType('DIGITAL_SCAN');
     setMaterial(LAB_MATERIALS[0]);
     setShade('A2');
-    setPriority('STANDARD');
+    setArch('NOT_SPECIFIED');
     setToothNumbersInput('');
-    setVendor('SmileGuard In-House CAD/CAM Lab');
-    setTargetDeliveryDate('');
+    setPriority('STANDARD');
+    setVendor('SmileGuard In-House Dental Lab');
+    setEstimatedCompletionDate(getDefaultDueDate(5));
     setCost('₱3,500');
     setSelectedAttachmentId('');
     setCadFileUrl('');
     setNotes('');
+    setClarificationReply('');
     setIsFormOpen(true);
   };
 
-  const openRevisionModal = (order) => {
-    setEditingRevisionOrder(order);
-    setPatientId(order.patientId || '');
+  const openClarificationModal = (order) => {
+    setEditingOrder(order);
+    setPatientId(order.patientId || 'WALK_IN');
+    setManualPatientName(order.patientName || '');
     setApplianceType(order.applianceType || '');
+    setCategory(order.category || APPLIANCE_CATEGORIES.CROWNS_BRIDGES);
+    setWorkflowId(order.workflowId || 'CROWNS_BRIDGES_DIGITAL');
+    setRetainerSubtype(order.retainerSubtype || '');
+    setRequiresTryIn(Boolean(order.requiresTryIn));
+    setInputType(order.inputType || 'DIGITAL_SCAN');
     setMaterial(order.material || LAB_MATERIALS[0]);
     setShade(order.shade || 'A2');
-    setPriority(order.priority || 'STANDARD');
+    setArch(order.arch || 'NOT_SPECIFIED');
     setToothNumbersInput((order.toothNumbers || []).join(', '));
-    setVendor(order.vendor || 'SmileGuard In-House CAD/CAM Lab');
-    setTargetDeliveryDate(order.targetDeliveryDate || '');
-    setCost(order.cost || '₱3,500');
+    setPriority(order.priority || 'STANDARD');
+    setVendor(order.vendor || 'SmileGuard In-House Dental Lab');
+    setEstimatedCompletionDate(
+      order.estimatedCompletionDate || order.targetDeliveryDate || getDefaultDueDate(5)
+    );
+    setCost(order.cost || '');
     setSelectedAttachmentId('');
     setCadFileUrl(order.cadFileUrl || '');
     setNotes(order.notes || '');
+    setClarificationReply('');
     setIsFormOpen(true);
   };
 
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
+    if (!applianceType.trim()) {
+      toast.error('Please enter or choose an Appliance / Service Requested.');
+      return;
+    }
+
     const selectedPat = patients.find((p) => p.id === patientId);
+    const resolvedPatientName =
+      patientId === 'WALK_IN'
+        ? manualPatientName.trim() || 'Clinic Case Patient'
+        : selectedPat?.fullName || manualPatientName.trim() || 'Patient';
+    const resolvedPatientId =
+      patientId === 'WALK_IN' ? `walkin_${Date.now().toString(36)}` : patientId || '';
     const chosenImg = patientImages.find((img) => img.id === selectedAttachmentId);
 
     setIsSubmitting(true);
     try {
       const actorName = user?.fullName || user?.name || 'Dentist';
 
-      if (editingRevisionOrder) {
-        await laboratoryService.resubmitOrder(
-          editingRevisionOrder.id,
+      if (editingOrder) {
+        await laboratoryService.respondToClarification(
+          editingOrder.id,
           {
-            applianceType,
+            applianceType: applianceType.trim(),
             material,
             shade,
+            arch,
             priority,
             toothNumbers: toothNumbersInput,
-            targetDeliveryDate,
+            estimatedCompletionDate,
             cadFileUrl,
-            attachmentUrl: chosenImg ? chosenImg.secureUrl || chosenImg.imageUrl : editingRevisionOrder.attachmentUrl,
-            attachmentTitle: chosenImg ? chosenImg.title : editingRevisionOrder.attachmentTitle,
+            attachmentUrl: chosenImg
+              ? chosenImg.secureUrl || chosenImg.imageUrl
+              : editingOrder.attachmentUrl,
+            attachmentTitle: chosenImg ? chosenImg.title : editingOrder.attachmentTitle,
             notes,
+            responseMessage: clarificationReply || notes,
           },
-          actorName
+          user
         );
-        toast.success('Updated prescription resubmitted to the Laboratory!');
+        toast.success('Clarification response submitted — returned to Laboratory Pending Review!');
       } else {
         await laboratoryService.create(
           {
-            patientId,
-            patientName: selectedPat ? selectedPat.fullName : 'Patient',
+            patientId: resolvedPatientId,
+            patientName: resolvedPatientName,
             dentistId: user?.id || user?.uid || '',
             dentistName: actorName,
-            applianceType,
+            applianceType: applianceType.trim(),
+            category,
+            workflowId,
+            retainerSubtype,
+            requiresTryIn,
+            inputType,
             material,
             shade,
+            arch,
             priority,
             toothNumbers: toothNumbersInput,
             vendor,
-            targetDeliveryDate,
+            estimatedCompletionDate,
+            targetDeliveryDate: estimatedCompletionDate,
             cost,
             cadFileUrl,
             attachmentUrl: chosenImg ? chosenImg.secureUrl || chosenImg.imageUrl : '',
             attachmentTitle: chosenImg ? chosenImg.title : '',
             notes,
           },
-          actorName
+          user
         );
-        toast.success('Digital lab prescription sent to the Laboratory Intake desk!');
+        toast.success('Laboratory prescription submitted to Laboratory Pending Review!');
       }
 
       setIsFormOpen(false);
-      setEditingRevisionOrder(null);
+      setEditingOrder(null);
     } catch (err) {
-      console.error(err);
-      toast.error('Failed to dispatch laboratory prescription.');
+      toast.error(err.message || 'Failed to submit laboratory prescription.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleConfirmFitted = async (order) => {
-    setCompletingId(order.id);
+  const openReceiptModal = (order) => {
+    setReceiptModalOrder(order);
+    setReceivedBy(user?.fullName || user?.name || 'Clinic Staff');
+    setReceiptCondition('Intact & Matches Prescription');
+    setReceiptRemarks('');
+  };
+
+  const submitClinicReceipt = async (e) => {
+    e.preventDefault();
+    if (!receiptModalOrder) return;
+    setBusyId(receiptModalOrder.id);
     try {
-      await laboratoryService.updateStatus(
-        order.id,
-        LAB_ORDER_STATUS.COMPLETED,
-        user?.fullName || user?.name || 'Dentist'
+      await laboratoryService.confirmClinicReceipt(
+        receiptModalOrder.id,
+        {
+          receivedBy,
+          receivedAt: new Date().toISOString(),
+          condition: receiptCondition,
+          remarks: receiptRemarks,
+        },
+        user
       );
-      toast.success(`Marked ${order.applianceType} (${order.patientName}) as fitted & completed!`);
-      if (trackingOrder?.id === order.id) {
-        setTrackingOrder(null);
-      }
+      toast.success(
+        `Confirmed physical receipt of ${receiptModalOrder.requestCode} — Marked Completed!`
+      );
+      setReceiptModalOrder(null);
     } catch (err) {
-      toast.error('Failed to mark order as completed.');
+      toast.error(err.message || 'Failed to confirm clinic receipt.');
     } finally {
-      setCompletingId(null);
+      setBusyId(null);
     }
   };
 
-  const revisionOrders = useMemo(
-    () => orders.filter((o) => o.status === LAB_ORDER_STATUS.REVISION_NEEDED),
+  const openIssueModal = (order) => {
+    setIssueModalOrder(order);
+    setIssueType('Incorrect Specifications / Fit');
+    setIssueDescription('');
+  };
+
+  const submitClinicIssue = async (e) => {
+    e.preventDefault();
+    if (!issueModalOrder) return;
+    setBusyId(issueModalOrder.id);
+    try {
+      await laboratoryService.reportClinicIssue(
+        issueModalOrder.id,
+        {
+          issueType,
+          description: issueDescription,
+        },
+        user
+      );
+      toast.info(
+        `Issue reported on ${issueModalOrder.requestCode}. Laboratory notified for resolution.`
+      );
+      setIssueModalOrder(null);
+    } catch (err) {
+      toast.error(err.message || 'Failed to report delivery issue.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const openTryInModal = (order) => {
+    setTryInModalOrder(order);
+    setTryInApproved(true);
+    setTryInNotes('');
+  };
+
+  const submitTryInDecision = async (e) => {
+    e.preventDefault();
+    if (!tryInModalOrder) return;
+    setBusyId(tryInModalOrder.id);
+    try {
+      await laboratoryService.respondToClinicTryIn(
+        tryInModalOrder.id,
+        {
+          approved: tryInApproved,
+          dentistNotes: tryInNotes,
+        },
+        user
+      );
+      toast.success(
+        tryInApproved
+          ? `Approved Wax Try-In for ${tryInModalOrder.requestCode} — Laboratory resuming final processing!`
+          : `Requested Wax-Up adjustment on ${tryInModalOrder.requestCode}.`
+      );
+      setTryInModalOrder(null);
+    } catch (err) {
+      toast.error(err.message || 'Failed to record try-in decision.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  // Filtered Lists
+  const clarificationOrders = useMemo(
+    () => orders.filter((o) => o.status === LAB_ORDER_STATUS.CLARIFICATION_REQUESTED),
     [orders]
   );
 
-  const dispatchedOrders = useMemo(
-    () => orders.filter((o) => o.status === LAB_ORDER_STATUS.DISPATCHED),
+  const tryInOrders = useMemo(
+    () =>
+      orders.filter(
+        (o) => o.status === LAB_ORDER_STATUS.IN_PRODUCTION && o.tryInStatus === 'SENT_TO_CLINIC'
+      ),
+    [orders]
+  );
+
+  const awaitingReceiptOrders = useMemo(
+    () =>
+      orders.filter((o) =>
+        [LAB_ORDER_STATUS.READY_FOR_DISPATCH, LAB_ORDER_STATUS.DISPATCHED].includes(o.status)
+      ),
     [orders]
   );
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
       if (statusFilter === 'ALL') return true;
-      if (statusFilter === 'IN_PRODUCTION') {
-        return ['RECEIVED', 'DESIGN', 'MILLING', 'GLAZING', 'QA'].includes(o.status);
+      if (statusFilter === 'IN_FABRICATION') {
+        return [
+          LAB_ORDER_STATUS.ACCEPTED,
+          LAB_ORDER_STATUS.IN_PRODUCTION,
+          LAB_ORDER_STATUS.QUALITY_CHECK,
+        ].includes(o.status);
+      }
+      if (statusFilter === 'AWAITING_RECEIPT') {
+        return [LAB_ORDER_STATUS.READY_FOR_DISPATCH, LAB_ORDER_STATUS.DISPATCHED].includes(
+          o.status
+        );
       }
       return o.status === statusFilter;
     });
   }, [orders, statusFilter]);
 
   const tabs = [
-    { id: 'ALL', label: 'All Prescriptions', badge: orders.length },
+    { id: 'ALL', label: 'All Requests', badge: orders.length },
     {
       id: LAB_ORDER_STATUS.PENDING_REVIEW,
-      label: 'Sent to Lab',
+      label: 'Pending Review',
       badge: orders.filter((o) => o.status === LAB_ORDER_STATUS.PENDING_REVIEW).length,
     },
     {
-      id: LAB_ORDER_STATUS.REVISION_NEEDED,
-      label: 'Needs Revision',
-      badge: revisionOrders.length,
+      id: LAB_ORDER_STATUS.CLARIFICATION_REQUESTED,
+      label: 'Needs Clarification',
+      badge: clarificationOrders.length,
     },
     {
-      id: 'IN_PRODUCTION',
-      label: 'In Fabrication',
+      id: 'IN_FABRICATION',
+      label: 'Accepted / In Production',
       badge: orders.filter((o) =>
-        ['RECEIVED', 'DESIGN', 'MILLING', 'GLAZING', 'QA'].includes(o.status)
+        [
+          LAB_ORDER_STATUS.ACCEPTED,
+          LAB_ORDER_STATUS.IN_PRODUCTION,
+          LAB_ORDER_STATUS.QUALITY_CHECK,
+        ].includes(o.status)
       ).length,
     },
     {
-      id: LAB_ORDER_STATUS.DISPATCHED,
-      label: 'Ready for Fitting',
-      badge: dispatchedOrders.length,
+      id: 'AWAITING_RECEIPT',
+      label: 'Ready / Confirm Receipt',
+      badge: awaitingReceiptOrders.length,
+    },
+    {
+      id: LAB_ORDER_STATUS.ISSUE_REPORTED,
+      label: 'Issues',
+      badge: orders.filter((o) => o.status === LAB_ORDER_STATUS.ISSUE_REPORTED).length,
     },
     {
       id: LAB_ORDER_STATUS.COMPLETED,
-      label: 'Fitted / Completed',
+      label: 'Completed',
+      badge: orders.filter((o) => o.status === LAB_ORDER_STATUS.COMPLETED).length,
     },
+  ];
+
+  const selectedWorkflowObj = templatesMap[workflowId] || DEFAULT_WORKFLOW_TEMPLATES.OTHER_CUSTOM;
+
+  const patientOptions = [
+    ...patients.map((p) => ({
+      value: p.id,
+      label: p.fullName || p.email || p.id,
+    })),
+    { value: 'WALK_IN', label: '+ Walk-In / Enter Patient Name Manually' },
   ];
 
   return (
@@ -304,552 +505,748 @@ export function LabOrdersManager() {
           <div className="flex items-center gap-2 mb-1">
             <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Connected to Laboratory Portal
+              Live Laboratory Synchronization
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
             Dental Laboratory Prescriptions
           </h2>
           <p className="text-sm text-ink-secondary">
-            Send digital appliance orders directly to the Laboratory Admin intake queue and track live CAD/CAM progress.
+            Submit orthodontic, prosthetic, denture, and repair prescriptions to the Laboratory Portal, monitor fabrication stages, and confirm physical clinic receipt.
           </p>
         </div>
 
         <Button
+          type="button"
           variant="primary"
           size="md"
           onClick={openCreateModal}
           leftIcon={Plus}
         >
-          New Lab Prescription
+          New Lab Request
         </Button>
       </div>
 
-      {/* Alert Banner if Laboratory returned any prescription for revision */}
-      {revisionOrders.length > 0 && (
-        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-start gap-3 text-xs sm:text-sm text-rose-900 dark:text-rose-200">
-            <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+      {/* Action Banner 1: Clarification Requested */}
+      {clarificationOrders.length > 0 && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
             <div>
               <strong>
-                {revisionOrders.length} lab {revisionOrders.length === 1 ? 'prescription requires' : 'prescriptions require'} clinical revision
+                {clarificationOrders.length} laboratory{' '}
+                {clarificationOrders.length === 1 ? 'request needs' : 'requests need'} dentist clarification
               </strong>
-              <p className="text-xs text-rose-800/80 dark:text-rose-300/80 mt-0.5">
-                Latest feedback on {revisionOrders[0].patientName} ({revisionOrders[0].applianceType}): &ldquo;{revisionOrders[0].revisionReason}&rdquo;
+              <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                {clarificationOrders[0].requestCode} ({clarificationOrders[0].applianceType}): &ldquo;
+                {clarificationOrders[0].revisionReason}&rdquo;
               </p>
             </div>
           </div>
           <Button
-            variant="danger"
+            type="button"
+            variant="primary"
             size="sm"
             leftIcon={RotateCcw}
-            onClick={() => openRevisionModal(revisionOrders[0])}
+            onClick={() => openClarificationModal(clarificationOrders[0])}
             className="shrink-0"
           >
-            Revise &amp; Resubmit
+            Respond &amp; Resubmit
           </Button>
         </div>
       )}
 
-      {/* Ready for Chairside Fitting Banner */}
-      {dispatchedOrders.length > 0 && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3 text-xs sm:text-sm text-emerald-900 dark:text-emerald-200">
-            <Truck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+      {/* Action Banner 2: Wax Try-In Waiting for Chairside Dentist Approval */}
+      {tryInOrders.length > 0 && (
+        <div className="p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3 text-xs sm:text-sm text-sky-900 dark:text-sky-200">
+            <Sparkles className="w-5 h-5 text-sky-500 shrink-0 mt-0.5" />
             <div>
               <strong>
-                {dispatchedOrders.length} completed {dispatchedOrders.length === 1 ? 'appliance has' : 'appliances have'} been dispatched from the Laboratory!
+                {tryInOrders.length} case {tryInOrders.length === 1 ? 'is' : 'are'} awaiting chairside Try-In approval
               </strong>
-              <p className="text-xs text-emerald-800/80 dark:text-emerald-300/80">
-                Ready for chairside try-in and patient delivery.
+              <p className="text-xs text-sky-800/80 dark:text-sky-300/80 mt-0.5">
+                Evaluate {tryInOrders[0].requestCode} ({tryInOrders[0].applianceType} •{' '}
+                {tryInOrders[0].patientName}) and approve final processing.
               </p>
             </div>
           </div>
           <Button
-            variant="outline"
+            type="button"
+            variant="primary"
             size="sm"
-            onClick={() => setStatusFilter(LAB_ORDER_STATUS.DISPATCHED)}
+            onClick={() => openTryInModal(tryInOrders[0])}
             className="shrink-0"
           >
-            View Dispatched
+            Review Try-In
           </Button>
         </div>
       )}
 
+      {/* Action Banner 3: Ready / Dispatched Appliances Awaiting Physical Clinic Receipt */}
+      {awaitingReceiptOrders.length > 0 && (
+        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3 text-xs sm:text-sm text-emerald-900 dark:text-emerald-200">
+            <Truck className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+            <div>
+              <strong>
+                {awaitingReceiptOrders.length}{' '}
+                {awaitingReceiptOrders.length === 1 ? 'appliance is' : 'appliances are'} Ready or Dispatched — awaiting Clinic Receipt confirmation
+              </strong>
+              <p className="text-xs text-emerald-800/80 dark:text-emerald-300/80 mt-0.5">
+                Inspect incoming appliances and confirm physical receipt to mark requests Completed, or report any transit/specification issues.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            leftIcon={CheckCircle2}
+            onClick={() => openReceiptModal(awaitingReceiptOrders[0])}
+            className="shrink-0"
+          >
+            Confirm Receipt
+          </Button>
+        </div>
+      )}
+
+      {/* Filter Tabs */}
       <Tabs tabs={tabs} activeTab={statusFilter} onChange={setStatusFilter} />
 
+      {/* Orders List */}
       {loading ? (
         <TableSkeleton rows={5} />
       ) : filteredOrders.length === 0 ? (
         <EmptyState
-          title="No Lab Prescriptions Found"
-          description="Send a digital prescription to the Dental Laboratory to start appliance fabrication."
           icon={FlaskConical}
-          actionLabel="New Lab Prescription"
+          title="No laboratory prescriptions in this view"
+          description="Submit a new laboratory request above to send prescriptions directly to the Laboratory Portal."
+          actionLabel="New Lab Request"
           onAction={openCreateModal}
         />
       ) : (
-        <Card className="overflow-hidden shadow-soft-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-surface-border bg-surface-50/80 dark:bg-surface-100/60 text-[11px] font-bold uppercase tracking-wider text-ink-secondary">
-                  <th className="p-4 pl-6">Rx &amp; Patient</th>
-                  <th className="p-4">Appliance &amp; Specifications</th>
-                  <th className="p-4">Receiving Laboratory</th>
-                  <th className="p-4">Target Delivery &amp; Fee</th>
-                  <th className="p-4">Live Lab Status</th>
-                  <th className="p-4 pr-6 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-border/60 text-xs sm:text-sm">
-                {filteredOrders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-surface-50/60 dark:hover:bg-surface-100/30 transition-colors"
-                  >
-                    <td className="p-4 pl-6">
-                      <div className="flex items-center gap-2">
-                        <p className="font-heading font-bold text-ink-primary">
-                          {order.patientName}
-                        </p>
-                        {order.priority === 'RUSH' && (
-                          <Badge variant="danger" size="sm">
-                            RUSH
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-[11px] font-mono text-ink-muted">
-                        Rx #{order.id.slice(0, 8)}
-                      </p>
-                    </td>
+        <div className="grid grid-cols-1 gap-4">
+          {filteredOrders.map((order) => {
+            const currentStageObj = (order.workflowStages || []).find(
+              (s) => s.key === order.productionStage
+            );
+            const canConfirmReceipt = [
+              LAB_ORDER_STATUS.READY_FOR_DISPATCH,
+              LAB_ORDER_STATUS.DISPATCHED,
+            ].includes(order.status);
 
-                    <td className="p-4">
-                      <p className="font-semibold text-ink-primary">{order.applianceType}</p>
-                      <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-ink-secondary mt-0.5">
-                        {order.material && <span>{order.material}</span>}
-                        {order.shade && <span>• Shade {order.shade}</span>}
-                        {order.toothNumbers?.length > 0 && (
-                          <span className="font-mono text-teal-700 dark:text-teal-400">
-                            • #{order.toothNumbers.join(', #')}
-                          </span>
-                        )}
-                      </div>
-                      {order.revisionReason && (
-                        <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium mt-1">
-                          Lab feedback: &ldquo;{order.revisionReason}&rdquo;
-                        </p>
-                      )}
-                    </td>
-
-                    <td className="p-4 text-ink-secondary">
-                      <p className="font-medium text-ink-primary">{order.vendor}</p>
-                      {order.assignedTech && (
-                        <p className="text-[11px] text-teal-600 dark:text-teal-400">
-                          Assigned: {order.assignedTech}
-                        </p>
-                      )}
-                    </td>
-
-                    <td className="p-4 text-ink-secondary">
-                      <p className="font-medium text-ink-primary">
-                        {formatDate(order.targetDeliveryDate)}
-                      </p>
-                      <p className="text-[11px] text-ink-muted">{order.cost || '—'}</p>
-                    </td>
-
-                    <td className="p-4">
-                      <Badge status={order.status} size="sm" showDot>
-                        {STATUS_LABELS[order.status] || order.status}
+            return (
+              <Card
+                key={order.id}
+                className="p-5 hover:border-teal-500/50 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+              >
+                <div className="space-y-2 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-teal-600 dark:text-teal-400">
+                      {order.requestCode}
+                    </span>
+                    <Badge status={order.status} size="sm" showDot>
+                      {STATUS_DISPLAY_LABELS[order.status] || order.status}
+                    </Badge>
+                    {order.status === LAB_ORDER_STATUS.ACCEPTED && order.materialsStatus && (
+                      <Badge status={order.materialsStatus} size="sm">
+                        {MATERIALS_DISPLAY_LABELS[order.materialsStatus]}
                       </Badge>
-                    </td>
+                    )}
+                    {order.status === LAB_ORDER_STATUS.IN_PRODUCTION && currentStageObj && (
+                      <Badge variant="primary" size="sm">
+                        Stage: {currentStageObj.label}
+                      </Badge>
+                    )}
+                    {order.tryInStatus === 'SENT_TO_CLINIC' && (
+                      <Badge status="SENT_TO_CLINIC" size="sm">
+                        Wax Try-In at Clinic
+                      </Badge>
+                    )}
+                    {canConfirmReceipt && order.dispatchSubStatus && (
+                      <Badge status={order.dispatchSubStatus} size="sm">
+                        {DISPATCH_SUB_LABELS[order.dispatchSubStatus]}
+                      </Badge>
+                    )}
+                    {order.priority === 'RUSH' && (
+                      <Badge variant="danger" size="sm">
+                        RUSH
+                      </Badge>
+                    )}
+                    {order.isOverdue && (
+                      <Badge status="OVERDUE" size="sm">
+                        Overdue
+                      </Badge>
+                    )}
+                  </div>
 
-                    <td className="p-4 pr-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setTrackingOrder(order)}
-                        >
-                          Track Order
-                        </Button>
+                  <div>
+                    <h3 className="font-heading font-bold text-base text-ink-primary">
+                      {order.applianceType}{' '}
+                      <span className="text-sm font-medium text-ink-secondary">
+                        • Patient: {order.patientName} ({order.caseReference})
+                      </span>
+                    </h3>
+                    <p className="text-xs text-ink-secondary mt-0.5">
+                      Workflow: <strong>{order.workflowShortName}</strong> • Material: {order.material}
+                      {order.shade ? ` • Shade ${order.shade}` : ''} •{' '}
+                      <span className="font-mono text-teal-700 dark:text-teal-400">
+                        {formatArchAndTeeth(order)}
+                      </span>
+                    </p>
+                  </div>
 
-                        {order.status === LAB_ORDER_STATUS.REVISION_NEEDED && (
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => openRevisionModal(order)}
-                          >
-                            Revise Rx
-                          </Button>
-                        )}
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-ink-muted">
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      Requested: {formatDate(order.createdAt)}
+                    </span>
+                    <span>
+                      Expected Completion:{' '}
+                      <strong className="text-ink-primary">
+                        {order.estimatedCompletionDate
+                          ? formatDate(order.estimatedCompletionDate)
+                          : 'TBD'}
+                      </strong>
+                    </span>
+                    {order.assignedTech && (
+                      <span>
+                        Technician: <strong className="text-ink-primary">{order.assignedTech}</strong>
+                      </span>
+                    )}
+                    {order.clinicReceipt?.receivedAt && (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                        Received by {order.clinicReceipt.receivedBy} on{' '}
+                        {formatDate(order.clinicReceipt.receivedAt)}
+                      </span>
+                    )}
+                  </div>
 
-                        {order.status === LAB_ORDER_STATUS.DISPATCHED && (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            leftIcon={CheckCircle2}
-                            isLoading={completingId === order.id}
-                            onClick={() => handleConfirmFitted(order)}
-                          >
-                            Confirm Fitted
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+                  {order.status === LAB_ORDER_STATUS.DECLINED && order.declineReason && (
+                    <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-800 dark:text-rose-200">
+                      <strong>Declined by Laboratory:</strong> {order.declineReason}
+                    </div>
+                  )}
+                </div>
+
+                {/* Clinic Actions */}
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  {order.status === LAB_ORDER_STATUS.CLARIFICATION_REQUESTED && (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      leftIcon={RotateCcw}
+                      onClick={() => openClarificationModal(order)}
+                    >
+                      Provide Clarification
+                    </Button>
+                  )}
+
+                  {order.status === LAB_ORDER_STATUS.IN_PRODUCTION &&
+                    order.tryInStatus === 'SENT_TO_CLINIC' && (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        leftIcon={Sparkles}
+                        onClick={() => openTryInModal(order)}
+                      >
+                        Approve / Review Try-In
+                      </Button>
+                    )}
+
+                  {canConfirmReceipt && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        leftIcon={CheckCircle2}
+                        isLoading={busyId === order.id}
+                        onClick={() => openReceiptModal(order)}
+                      >
+                        Confirm Receipt
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        leftIcon={ShieldAlert}
+                        isLoading={busyId === order.id}
+                        onClick={() => openIssueModal(order)}
+                      >
+                        Report Issue
+                      </Button>
+                    </>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    leftIcon={Eye}
+                    onClick={() => navigate(`/clinic/lab-orders/${order.id}`)}
+                  >
+                    View Details
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       )}
 
-      {/* MODAL 1: Create / Revise Digital Lab Prescription */}
+      {/* Modal 1: Create / Respond to Clarification */}
       <Modal
         isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          setEditingRevisionOrder(null);
-        }}
+        onClose={() => setIsFormOpen(false)}
         title={
-          editingRevisionOrder
-            ? `Revise & Resubmit Rx #${editingRevisionOrder.id.slice(0, 8)}`
-            : 'New Digital Dental Lab Prescription (Rx)'
+          editingOrder
+            ? `Respond to Lab Clarification (${editingOrder.requestCode})`
+            : 'Submit Dental Laboratory Prescription'
         }
-        description="Submit appliance specifications directly to the Laboratory Admin intake portal."
+        maxWidth="max-w-2xl"
       >
         <form onSubmit={handleSubmitOrder} className="space-y-4">
-          {editingRevisionOrder?.revisionReason && (
-            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs text-rose-800 dark:text-rose-200">
-              <strong className="block uppercase text-[10px] tracking-wider mb-0.5">
-                Laboratory Revision Request:
-              </strong>
-              &ldquo;{editingRevisionOrder.revisionReason}&rdquo;
+          {editingOrder?.revisionReason && (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-900 dark:text-amber-200">
+              <strong>Laboratory Clarification Question:</strong> &ldquo;{editingOrder.revisionReason}&rdquo;
+            </div>
+          )}
+
+          {!editingOrder && (
+            <div>
+              <label className="block text-xs font-semibold text-ink-secondary mb-1.5">
+                Quick Appliance Presets (Auto-selects Service Workflow)
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {APPLIANCE_CATALOG_PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => applyPreset(preset)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
+                      applianceType === preset.label
+                        ? 'bg-teal-600 text-white border-teal-500'
+                        : 'bg-surface-subtle text-ink-secondary border-surface-border hover:border-teal-500/50'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select
+              label="Patient"
+              placeholder=""
+              value={patientId}
+              onChange={(e) => setPatientId(e.target.value)}
+              disabled={Boolean(editingOrder)}
+              options={patientOptions}
+            />
+
+            <Input
+              label="Appliance / Service Requested"
+              value={applianceType}
+              onChange={(e) => setApplianceType(e.target.value)}
+              placeholder="e.g., Hawley Retainer, Monolithic Zirconia Crown, Complete Denture"
+              required
+            />
+          </div>
+
+          {patientId === 'WALK_IN' && !editingOrder && (
+            <Input
+              label="Patient Name / Case Identifier"
+              value={manualPatientName}
+              onChange={(e) => setManualPatientName(e.target.value)}
+              placeholder="Enter patient full name or clinic chart reference"
+              required
+            />
+          )}
+
+          {!editingOrder && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Select
+                label="Appliance Category"
+                placeholder=""
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                options={Object.entries(APPLIANCE_CATEGORY_LABELS).map(([val, lbl]) => ({
+                  value: val,
+                  label: lbl,
+                }))}
+              />
+
+              <Select
+                label="Fabrication Workflow"
+                placeholder=""
+                value={workflowId}
+                onChange={(e) => setWorkflowId(e.target.value)}
+                options={Object.values(templatesMap).map((tpl) => ({
+                  value: tpl.id,
+                  label: tpl.shortName || tpl.name,
+                }))}
+              />
+            </div>
+          )}
+
+          {!editingOrder && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Select
+                label="Case Input / Impression Submission"
+                placeholder=""
+                value={inputType}
+                onChange={(e) => setInputType(e.target.value)}
+                options={INPUT_SUBMISSION_TYPES.map((it) => ({
+                  value: it.value,
+                  label: it.label,
+                }))}
+              />
+
+              <Select
+                label="Assigned Laboratory"
+                placeholder=""
+                value={vendor}
+                onChange={(e) => setVendor(e.target.value)}
+                options={[
+                  {
+                    value: 'SmileGuard In-House Dental Lab',
+                    label: 'SmileGuard In-House Dental Lab',
+                  },
+                  {
+                    value: 'Metro Prosthodontic Partner Lab',
+                    label: 'Metro Prosthodontic Partner Lab',
+                  },
+                  {
+                    value: 'OrthoPrecision Appliance Lab',
+                    label: 'OrthoPrecision Appliance Lab',
+                  },
+                ]}
+              />
             </div>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2">
-              <Select
-                label="Patient"
-                value={patientId}
-                disabled={Boolean(editingRevisionOrder)}
-                onChange={(e) => setPatientId(e.target.value)}
-                options={
-                  patients.length > 0
-                    ? patients.map((p) => ({
-                        value: p.id,
-                        label: `${p.fullName} (${p.phone || p.email || 'Patient'})`,
-                      }))
-                    : [{ value: '', label: 'No registered patients yet' }]
-                }
-                required
-              />
-            </div>
-
             <Select
-              label="Turnaround Priority"
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              options={[
-                { value: 'STANDARD', label: 'Standard' },
-                { value: 'RUSH', label: '🚨 Rush Case' },
-              ]}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Input
-              label="Appliance / Prosthesis Prescription"
-              placeholder="e.g. Monolithic Zirconia Crown or Upper Hawley Retainer"
-              value={applianceType}
-              onChange={(e) => setApplianceType(e.target.value)}
-              required
-            />
-            <div className="flex flex-wrap gap-1.5">
-              {APPLIANCE_PRESETS.map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => setApplianceType(preset)}
-                  className="text-[11px] px-2.5 py-1 rounded-lg bg-surface-subtle hover:bg-teal-50 dark:hover:bg-teal-950/40 border border-surface-border text-ink-secondary hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
-                >
-                  + {preset}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Select
-              label="Material"
+              label="Material Specification"
+              placeholder=""
               value={material}
               onChange={(e) => setMaterial(e.target.value)}
               options={LAB_MATERIALS.map((m) => ({ value: m, label: m }))}
             />
 
             <Select
-              label="Vita Shade"
+              label="Shade / Finish"
+              placeholder=""
               value={shade}
               onChange={(e) => setShade(e.target.value)}
               options={VITA_SHADES.map((s) => ({ value: s, label: s }))}
             />
 
+            <Select
+              label="Priority"
+              placeholder=""
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              options={[
+                { value: 'STANDARD', label: 'Standard Turnaround' },
+                { value: 'RUSH', label: 'RUSH / Urgent Case' },
+              ]}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Select
+              label="Dental Arch"
+              placeholder=""
+              value={arch}
+              onChange={(e) => setArch(e.target.value)}
+              options={DENTAL_ARCHES}
+            />
+
             <Input
-              label="Tooth Numbers (FDI)"
-              placeholder="e.g. 11, 12, 21"
+              label="Tooth Numbers (FDI, Optional)"
               value={toothNumbersInput}
               onChange={(e) => setToothNumbersInput(e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Select
-              label="Receiving Dental Laboratory"
-              value={vendor}
-              disabled={Boolean(editingRevisionOrder)}
-              onChange={(e) => setVendor(e.target.value)}
-              options={[
-                { value: 'SmileGuard In-House CAD/CAM Lab', label: 'SmileGuard In-House CAD/CAM Lab' },
-                { value: 'CrownCraft Precision Dental Lab', label: 'CrownCraft Precision Dental Lab' },
-                { value: 'Apex Dental Technologies', label: 'Apex Dental Technologies' },
-                { value: 'SmileArtisan Dental Studio', label: 'SmileArtisan Dental Studio' },
-              ]}
-              required
+              placeholder="e.g., 11, 21 or 36"
             />
 
             <Input
-              label="Requested Delivery Date"
+              label="Requested Completion Date"
               type="date"
-              value={targetDeliveryDate}
-              onChange={(e) => setTargetDeliveryDate(e.target.value)}
+              value={estimatedCompletionDate}
+              onChange={(e) => setEstimatedCompletionDate(e.target.value)}
               required
             />
           </div>
 
-          {/* Optional Patient Radiograph / Scan Attachment */}
+          {!editingOrder && selectedWorkflowObj?.supportsTryIn && (
+            <label className="flex items-center gap-2.5 p-3 rounded-xl bg-surface-subtle border border-surface-border text-xs text-ink-primary cursor-pointer">
+              <input
+                type="checkbox"
+                checked={requiresTryIn}
+                onChange={(e) => setRequiresTryIn(e.target.checked)}
+                className="rounded border-surface-border text-teal-600 focus:ring-teal-500"
+              />
+              <span>
+                <strong>Request Chairside Try-In / Approval Before Final Processing</strong>{' '}
+                (Recommended for complete/partial dentures and complex frameworks)
+              </span>
+            </label>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
-              label="Attach Patient Radiograph / Scan"
+              label="Attach Patient Radiograph / Clinical Photo (Optional)"
+              placeholder=""
               value={selectedAttachmentId}
               onChange={(e) => setSelectedAttachmentId(e.target.value)}
               options={[
-                {
-                  value: '',
-                  label:
-                    patientImages.length > 0
-                      ? `Optional (${patientImages.length} patient scans available)`
-                      : 'No uploaded scans for this patient',
-                },
+                { value: '', label: 'No patient radiograph attached' },
                 ...patientImages.map((img) => ({
                   value: img.id,
-                  label: `${img.title} (${formatDate(img.createdAt)})`,
+                  label: img.title || 'Clinical Radiograph / Scan',
                 })),
               ]}
             />
 
             <Input
-              label="Digital STL / CAD Scan Link (Optional)"
-              placeholder="https://..."
+              label="Digital Intraoral Scan / STL Link (Optional)"
               value={cadFileUrl}
               onChange={(e) => setCadFileUrl(e.target.value)}
+              placeholder="https://..."
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-ink-secondary">
-              Margin Design, Occlusion &amp; Special Instructions
+          <div>
+            <label className="block text-xs font-semibold text-ink-secondary mb-1">
+              Dentist Prescription Instructions &amp; Clinical Design Notes
             </label>
             <textarea
+              rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              placeholder="e.g. Chamfer margin #11, light anterior contact, high glaze cervical third..."
-              className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm outline-none focus:border-teal-500 resize-none"
+              placeholder="Specify clasp design, pontic ridge lap, occlusal clearance, labial bow loop placement, or repair details..."
+              className="w-full rounded-xl bg-surface-subtle border border-surface-border px-3.5 py-2.5 text-sm text-ink-primary focus:outline-none focus:border-teal-500"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-surface-border">
-            <Button
-              type="button"
-              variant="ghost"
-              size="md"
-              onClick={() => {
-                setIsFormOpen(false);
-                setEditingRevisionOrder(null);
-              }}
-            >
+          {editingOrder && (
+            <Input
+              label="Direct Clarification Reply to Laboratory"
+              value={clarificationReply}
+              onChange={(e) => setClarificationReply(e.target.value)}
+              placeholder="Summarize the updated clinical specification or answer..."
+              required
+            />
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" type="button" onClick={() => setIsFormOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" size="md" isLoading={isSubmitting}>
-              {editingRevisionOrder ? 'Resubmit to Laboratory' : 'Send Order to Laboratory'}
+            <Button variant="primary" type="submit" isLoading={isSubmitting}>
+              {editingOrder ? 'Submit Clarification & Resubmit' : 'Send Prescription to Laboratory'}
             </Button>
           </div>
         </form>
       </Modal>
 
-      {/* MODAL 2: Live Order Tracking & Digital Slip */}
+      {/* Modal 2: Confirm Physical Clinic Receipt (Phase 2.6) */}
       <Modal
-        isOpen={Boolean(trackingOrder)}
-        onClose={() => setTrackingOrder(null)}
-        title="Live Laboratory Order Tracker"
-        description={
-          trackingOrder
-            ? `Rx #${trackingOrder.id.slice(0, 8)} • ${trackingOrder.applianceType} (${trackingOrder.patientName})`
-            : ''
-        }
+        isOpen={Boolean(receiptModalOrder)}
+        onClose={() => setReceiptModalOrder(null)}
+        title="Confirm Physical Clinic Receipt"
+        maxWidth="max-w-lg"
       >
-        {trackingOrder && (
-          <div className="space-y-5 text-xs">
-            {/* Visual Step Progress */}
-            {trackingOrder.status === LAB_ORDER_STATUS.REVISION_NEEDED ? (
-              <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 space-y-2">
-                <p className="font-bold flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-rose-500" />
-                  Returned by Laboratory for Clinical Revision
-                </p>
-                <p>&ldquo;{trackingOrder.revisionReason}&rdquo;</p>
-                <Button
-                  size="sm"
-                  variant="danger"
-                  onClick={() => {
-                    const ord = trackingOrder;
-                    setTrackingOrder(null);
-                    openRevisionModal(ord);
-                  }}
-                >
-                  Update &amp; Resubmit Prescription
-                </Button>
-              </div>
-            ) : (
-              <div className="p-4 rounded-2xl bg-surface-subtle border border-surface-border space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
-                    Fabrication Pipeline
-                  </span>
-                  <Badge status={trackingOrder.status} size="sm" showDot>
-                    {STATUS_LABELS[trackingOrder.status] || trackingOrder.status}
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
-                  {PIPELINE_STEPS.map((step, idx) => {
-                    const currentIdx = PIPELINE_STEPS.findIndex(
-                      (s) => s.key === trackingOrder.status
-                    );
-                    const done = currentIdx >= idx;
-                    const active = currentIdx === idx;
-                    return (
-                      <div key={step.key} className="space-y-1 text-center">
-                        <div
-                          className={`h-2 rounded-full transition-all ${
-                            active
-                              ? 'bg-teal-500 ring-2 ring-teal-400/40'
-                              : done
-                              ? 'bg-emerald-500'
-                              : 'bg-surface-border'
-                          }`}
-                        />
-                        <p
-                          className={`text-[9px] leading-tight ${
-                            active
-                              ? 'font-extrabold text-teal-700 dark:text-teal-300'
-                              : done
-                              ? 'font-semibold text-ink-primary'
-                              : 'text-ink-muted'
-                          }`}
-                        >
-                          {step.label}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Prescription Metadata */}
-            <div className="grid grid-cols-2 gap-3 p-3.5 rounded-2xl border border-surface-border">
-              <div>
-                <p className="text-ink-muted">Patient</p>
-                <p className="font-bold text-ink-primary">{trackingOrder.patientName}</p>
-              </div>
-              <div>
-                <p className="text-ink-muted">Laboratory</p>
-                <p className="font-bold text-ink-primary">{trackingOrder.vendor}</p>
-              </div>
-              <div>
-                <p className="text-ink-muted">Material &amp; Shade</p>
-                <p className="font-bold text-ink-primary">
-                  {trackingOrder.material || 'Standard'} • Shade {trackingOrder.shade || 'A2'}
-                </p>
-              </div>
-              <div>
-                <p className="text-ink-muted">Target Date &amp; Fee</p>
-                <p className="font-bold text-ink-primary">
-                  {formatDate(trackingOrder.targetDeliveryDate)} ({trackingOrder.cost || '—'})
-                </p>
-              </div>
-              {trackingOrder.toothNumbers?.length > 0 && (
-                <div>
-                  <p className="text-ink-muted">Tooth Numbers</p>
-                  <p className="font-mono font-bold text-teal-700 dark:text-teal-400">
-                    #{trackingOrder.toothNumbers.join(', #')}
-                  </p>
-                </div>
-              )}
-              {trackingOrder.assignedTech && (
-                <div>
-                  <p className="text-ink-muted">Assigned Lab Specialist</p>
-                  <p className="font-bold text-teal-700 dark:text-teal-400">
-                    {trackingOrder.assignedTech}
-                  </p>
-                </div>
-              )}
+        {receiptModalOrder && (
+          <form onSubmit={submitClinicReceipt} className="space-y-4">
+            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-900 dark:text-emerald-200">
+              Confirming physical receipt verifies the appliance arrived safely at the clinic and marks{' '}
+              <strong>{receiptModalOrder.requestCode}</strong> ({receiptModalOrder.applianceType}) as{' '}
+              <strong>Completed</strong>. If damaged or incorrect, click Cancel and use{' '}
+              <strong>Report Issue</strong> instead.
             </div>
 
-            {trackingOrder.labNotes && (
-              <div className="p-3 rounded-xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 mb-0.5">
-                  Laboratory Intake Notes ({trackingOrder.receivedBy || 'Lab Admin'})
-                </p>
-                <p className="text-ink-primary">{trackingOrder.labNotes}</p>
-              </div>
-            )}
+            <Input
+              label="Receiving Authorized Clinic Staff / Dentist"
+              value={receivedBy}
+              onChange={(e) => setReceivedBy(e.target.value)}
+              required
+            />
 
-            {trackingOrder.attachmentUrl && (
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-                  Attached Patient Scan ({trackingOrder.attachmentTitle || 'Radiograph'})
-                </p>
-                <img
-                  src={trackingOrder.attachmentUrl}
-                  alt="Attached Dental Scan"
-                  className="w-full max-h-48 object-contain rounded-xl bg-slate-950 border border-surface-border"
-                />
-              </div>
-            )}
+            <Select
+              label="Physical Receipt Condition"
+              placeholder=""
+              value={receiptCondition}
+              onChange={(e) => setReceiptCondition(e.target.value)}
+              options={[
+                { value: 'Intact & Matches Prescription', label: 'Intact & Matches Prescription' },
+                {
+                  value: 'Intact — Minor Chairside Adjustment Planned',
+                  label: 'Intact — Minor Chairside Adjustment Planned',
+                },
+                {
+                  value: 'Sealed & Sanitized Packaging Verified',
+                  label: 'Sealed & Sanitized Packaging Verified',
+                },
+              ]}
+            />
 
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-surface-border">
-              {trackingOrder.status === LAB_ORDER_STATUS.DISPATCHED && (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  leftIcon={CheckCircle2}
-                  isLoading={completingId === trackingOrder.id}
-                  onClick={() => handleConfirmFitted(trackingOrder)}
-                >
-                  Confirm Received &amp; Fitted
-                </Button>
-              )}
-              <Button variant="ghost" size="sm" onClick={() => setTrackingOrder(null)}>
-                Close
+            <Input
+              label="Optional Clinical Receipt Remarks"
+              value={receiptRemarks}
+              onChange={(e) => setReceiptRemarks(e.target.value)}
+              placeholder="e.g., Ready for patient's 2:00 PM delivery appointment"
+            />
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" type="button" onClick={() => setReceiptModalOrder(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                type="submit"
+                isLoading={busyId === receiptModalOrder.id}
+              >
+                Confirm Receipt &amp; Complete
               </Button>
             </div>
-          </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* Modal 3: Report Delivery / Specification Issue (Phase 2.6 & Scenario F) */}
+      <Modal
+        isOpen={Boolean(issueModalOrder)}
+        onClose={() => setIssueModalOrder(null)}
+        title="Report Delivery or Specification Issue"
+        maxWidth="max-w-lg"
+      >
+        {issueModalOrder && (
+          <form onSubmit={submitClinicIssue} className="space-y-4">
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-900 dark:text-rose-200">
+              Reporting an issue keeps <strong>{issueModalOrder.requestCode}</strong> open under{' '}
+              <strong>Issue Reported</strong> and alerts the laboratory immediately for remake, repair, or replacement.
+            </div>
+
+            <Select
+              label="Issue Category"
+              placeholder=""
+              value={issueType}
+              onChange={(e) => setIssueType(e.target.value)}
+              options={[
+                { value: 'Damaged in Transit', label: 'Damaged / Fractured in Transit' },
+                {
+                  value: 'Missing Items / Attachments',
+                  label: 'Missing Items / Opposing Cast / Parts',
+                },
+                {
+                  value: 'Incorrect Specifications / Fit',
+                  label: 'Incorrect Material, Shade, Tooth/Arch, or Margin Fit',
+                },
+              ]}
+            />
+
+            <div>
+              <label className="block text-xs font-semibold text-ink-secondary mb-1">
+                Detailed Discrepancy Description (Required)
+              </label>
+              <textarea
+                rows={3}
+                required
+                value={issueDescription}
+                onChange={(e) => setIssueDescription(e.target.value)}
+                placeholder="Describe the damage, missing component, or clinical fit discrepancy..."
+                className="w-full rounded-xl bg-surface-subtle border border-surface-border px-3.5 py-2.5 text-sm text-ink-primary focus:outline-none focus:border-rose-500"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" type="button" onClick={() => setIssueModalOrder(null)}>
+                Cancel
+              </Button>
+              <Button variant="danger" type="submit" isLoading={busyId === issueModalOrder.id}>
+                Raise Issue with Laboratory
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* Modal 4: Chairside Try-In Evaluation (Workflow C) */}
+      <Modal
+        isOpen={Boolean(tryInModalOrder)}
+        onClose={() => setTryInModalOrder(null)}
+        title="Chairside Wax Try-In Evaluation"
+        maxWidth="max-w-lg"
+      >
+        {tryInModalOrder && (
+          <form onSubmit={submitTryInDecision} className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setTryInApproved(true)}
+                className={`p-3 rounded-xl border text-xs font-bold ${
+                  tryInApproved
+                    ? 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300'
+                    : 'bg-surface-subtle border-surface-border text-ink-secondary'
+                }`}
+              >
+                Approve &rarr; Final Processing
+              </button>
+              <button
+                type="button"
+                onClick={() => setTryInApproved(false)}
+                className={`p-3 rounded-xl border text-xs font-bold ${
+                  !tryInApproved
+                    ? 'bg-amber-500/15 border-amber-500 text-amber-700 dark:text-amber-300'
+                    : 'bg-surface-subtle border-surface-border text-ink-secondary'
+                }`}
+              >
+                Request Wax Setup Reset
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink-secondary mb-1">
+                Clinical Try-In Notes (VDO, Centric Relation, Midline, Shade)
+              </label>
+              <textarea
+                rows={3}
+                required={!tryInApproved}
+                value={tryInNotes}
+                onChange={(e) => setTryInNotes(e.target.value)}
+                placeholder={
+                  tryInApproved
+                    ? 'e.g., VDO, phonetics, and midline verified chairside. Proceed to acrylization/processing.'
+                    : 'Specify tooth position or bite adjustment needed...'
+                }
+                className="w-full rounded-xl bg-surface-subtle border border-surface-border px-3.5 py-2.5 text-sm text-ink-primary focus:outline-none focus:border-teal-500"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" type="button" onClick={() => setTryInModalOrder(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                type="submit"
+                isLoading={busyId === tryInModalOrder.id}
+              >
+                Submit Try-In Decision
+              </Button>
+            </div>
+          </form>
         )}
       </Modal>
     </div>
   );
 }
+export default LabOrdersManager;

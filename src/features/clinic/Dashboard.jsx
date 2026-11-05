@@ -89,7 +89,9 @@ export function ClinicDashboard() {
   const confirmedCount = appointments.filter((a) => a.status === 'CONFIRMED').length;
   const completedCount = appointments.filter((a) => a.status === 'COMPLETED').length;
   const activeTreatmentsCount = treatments.length;
-  const labsDueSoon = labOrders.filter((l) => l.status !== 'DISPATCHED');
+  const labsDueSoon = labOrders.filter(
+    (l) => l.status !== 'COMPLETED' && l.status !== 'DECLINED'
+  );
 
   // Compute patient volume according to the chosen time range & week offset
   const {

@@ -13,9 +13,9 @@ export function Tabs({
     <div
       className={twMerge(
         clsx(
-          'flex space-x-1 overflow-x-auto p-1 scrollbar-none',
+          'flex flex-wrap gap-1 p-1',
           variant === 'pills' && 'bg-surface-100/80 dark:bg-[#0B1B32]/90 p-1.5 rounded-2xl border border-surface-border/50 dark:border-[#26415E]/80',
-          variant === 'underline' && 'border-b border-surface-border dark:border-[#26415E]/80 gap-6',
+          variant === 'underline' && 'border-b border-surface-border dark:border-[#26415E]/80 gap-4',
           className
         )
       )}

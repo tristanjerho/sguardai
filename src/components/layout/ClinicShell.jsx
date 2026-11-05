@@ -82,7 +82,8 @@ export function ClinicShell() {
     if (path.includes('/patients/')) return 'Patient Case File';
     if (path.includes('/patients')) return 'Patient Directory';
     if (path.includes('/treatments')) return 'Treatment Plans';
-    if (path.includes('/lab-orders')) return 'Lab Orders';
+    if (path.includes('/lab-orders/')) return 'Laboratory Request Details';
+    if (path.includes('/lab-orders')) return 'Dental Laboratory Prescriptions';
     if (path.includes('/ai-workstation')) return 'AI Diagnostic Workstation';
     return 'Clinic Portal';
   };

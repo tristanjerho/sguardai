@@ -8,6 +8,7 @@ export function Button({
   variant = 'primary',
   size = 'md',
   isLoading = false,
+  loading = false,
   disabled = false,
   className = '',
   leftIcon: LeftIcon,
@@ -16,6 +17,7 @@ export function Button({
   onClick,
   ...props
 }) {
+  const busy = Boolean(isLoading || loading);
   const baseStyles =
     'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none active:scale-[0.98]';
 
@@ -44,18 +46,18 @@ export function Button({
   return (
     <button
       type={type}
-      disabled={disabled || isLoading}
+      disabled={disabled || busy}
       onClick={onClick}
       className={twMerge(clsx(baseStyles, variants[variant], sizes[size], className))}
       {...props}
     >
-      {isLoading ? (
+      {busy ? (
         <Loader2 className="w-4 h-4 animate-spin text-current" />
       ) : (
         LeftIcon && <LeftIcon className="w-4 h-4 flex-shrink-0" />
       )}
-      <span>{children}</span>
-      {!isLoading && RightIcon && <RightIcon className="w-4 h-4 flex-shrink-0" />}
+      <span className="truncate">{children}</span>
+      {!busy && RightIcon && <RightIcon className="w-4 h-4 flex-shrink-0" />}
     </button>
   );
 }

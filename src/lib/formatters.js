@@ -60,6 +60,8 @@ export function getStatusColor(status) {
     case 'CONFIRMED':
     case 'COMPLETED':
     case 'READY':
+    case 'READY_FOR_DISPATCH':
+    case 'READY_FOR_PRODUCTION':
     case 'DELIVERED':
     case 'DISPATCHED':
       return {
@@ -68,18 +70,25 @@ export function getStatusColor(status) {
       };
     case 'PENDING':
     case 'PENDING_REVIEW':
+    case 'AWAITING_MATERIALS':
+    case 'AWAITING_CLINIC_RECEIPT':
+    case 'SENT_TO_CLINIC':
     case 'ORDERED':
     case 'INITIAL':
     case 'GLAZING':
+    case 'QUALITY_CHECK':
       return {
         badge: 'bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300 border-amber-200 dark:border-amber-500/25',
         dot: 'bg-amber-500',
       };
+    case 'ACCEPTED':
     case 'RECEIVED':
     case 'DESIGN':
     case 'MILLING':
     case 'QA':
+    case 'IN_PRODUCTION':
     case 'IN_PROGRESS':
+    case 'IN_TRANSIT':
     case 'ALIGNMENT':
     case 'RETENTION':
       return {
@@ -87,7 +96,11 @@ export function getStatusColor(status) {
         dot: 'bg-teal-500',
       };
     case 'REJECTED':
+    case 'DECLINED':
+    case 'CLARIFICATION_REQUESTED':
     case 'REVISION_NEEDED':
+    case 'ISSUE_REPORTED':
+    case 'OVERDUE':
     case 'CANCELLED':
       return {
         badge: 'bg-rose-50 text-rose-800 dark:bg-rose-500/10 dark:text-rose-300 border-rose-200 dark:border-rose-500/25',

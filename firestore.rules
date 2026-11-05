@@ -121,12 +121,65 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // LAB ORDERS COLLECTION (Digital CAD/CAM Production Board)
+    // LAB ORDERS COLLECTION (Service-Specific Laboratory Workflow & RBAC)
+    // - Patients have ZERO read/write access (protects internal notes & Rx data).
+    // - Partner lab accounts with `assignedVendor` are scoped to their vendor.
+    // - Only Clinic Dentists / Admins can create requests or mark COMPLETED.
+    // - Laboratory personnel manage intake, production, QC, and dispatch.
     // =========================================================================
+    function isAuthorizedLabForOrder(orderData) {
+      return isLabTech() && (
+        !('assignedVendor' in getUserData()) ||
+        getUserData().assignedVendor == '' ||
+        orderData.vendor == getUserData().assignedVendor
+      );
+    }
+
     match /labOrders/{orderId} {
-      allow read: if isDentist() || isLabTech() || isAdmin();
-      allow create: if isDentist() || isAdmin();
-      allow update: if isDentist() || isLabTech() || isAdmin();
+      allow read: if isAdmin() || isDentist() || isAuthorizedLabForOrder(resource.data);
+
+      allow create: if (isAdmin() || isDentist()) &&
+        request.resource.data.status == 'PENDING_REVIEW' &&
+        request.resource.data.applianceType is string;
+
+      allow update: if (
+        request.resource.data.get('patientId', '') == resource.data.get('patientId', '')
+      ) && (
+        isAdmin() ||
+        (
+          isDentist() && (
+            request.resource.data.status == resource.data.status ||
+            (request.resource.data.status == 'COMPLETED' && resource.data.status in ['READY_FOR_DISPATCH', 'DISPATCHED', 'READY']) ||
+            (request.resource.data.status == 'ISSUE_REPORTED' && resource.data.status in ['READY_FOR_DISPATCH', 'DISPATCHED', 'READY']) ||
+            (request.resource.data.status == 'PENDING_REVIEW' && resource.data.status in ['CLARIFICATION_REQUESTED', 'REVISION_NEEDED'])
+          )
+        ) ||
+        (
+          isAuthorizedLabForOrder(resource.data) &&
+          request.resource.data.status != 'COMPLETED'
+        )
+      );
+
+      allow delete: if isAdmin();
+
+      // Internal Laboratory Bench Notes — strictly hidden from Patients and Clinic Dentists
+      match /internalNotes/{noteId} {
+        allow read: if isAdmin() || isLabTech();
+        allow create: if (isAdmin() || isLabTech()) && (
+          request.resource.data.get('note', '') is string ||
+          request.resource.data.get('message', '') is string
+        );
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // =========================================================================
+    // LAB WORKFLOW TEMPLATES COLLECTION (Workflow E Configurable Templates)
+    // =========================================================================
+    match /labWorkflows/{workflowId} {
+      allow read: if isAdmin() || isDentist() || isLabTech();
+      allow create, update: if (isAdmin() || isLabTech()) &&
+        request.resource.data.stages is list;
       allow delete: if isAdmin();
     }
 
