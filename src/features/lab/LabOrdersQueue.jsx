@@ -840,6 +840,7 @@ export function LabOrdersQueue() {
       <Modal
         isOpen={Boolean(startModalOrder)}
         onClose={() => setStartModalOrder(null)}
+        exitImmediately
         title="Start Service-Specific Fabrication"
         maxWidth="max-w-lg"
       >
@@ -885,6 +886,7 @@ export function LabOrdersQueue() {
       <Modal
         isOpen={Boolean(stageModalData)}
         onClose={() => setStageModalData(null)}
+        exitImmediately
         title="Advance Production Stage"
         maxWidth="max-w-lg"
       >
@@ -939,6 +941,7 @@ export function LabOrdersQueue() {
       <Modal
         isOpen={Boolean(qcModalOrder)}
         onClose={() => setQcModalOrder(null)}
+        exitImmediately
         title="Laboratory Quality Check Verification"
         maxWidth="max-w-lg"
       >
@@ -1039,6 +1042,7 @@ export function LabOrdersQueue() {
       <Modal
         isOpen={Boolean(dispatchModalOrder)}
         onClose={() => setDispatchModalOrder(null)}
+        exitImmediately
         title="Record Pickup Readiness or Clinic Dispatch"
         maxWidth="max-w-lg"
       >

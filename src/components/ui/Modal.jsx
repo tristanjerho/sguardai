@@ -22,6 +22,7 @@ export function Modal({
   maxWidth,
   showCloseButton = true,
   className = '',
+  exitImmediately = false,
 }) {
   const modalOpen = Boolean(isOpen ?? open);
   const resolvedMaxWidth = maxWidth || (size && SIZE_MAP[size]) || 'max-w-lg';
@@ -50,7 +51,7 @@ export function Modal({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, transition: { duration: exitImmediately ? 0 : 0.2 } }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
             className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
@@ -64,7 +65,12 @@ export function Modal({
             aria-labelledby={title ? 'modal-title' : undefined}
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            exit={{
+              opacity: 0,
+              scale: 0.95,
+              y: 10,
+              transition: exitImmediately ? { duration: 0 } : undefined,
+            }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
             className={twMerge(
               clsx(

@@ -1565,6 +1565,7 @@ export function LabRequestDetails() {
       <Modal
         isOpen={activeModal === 'START_PROD'}
         onClose={() => setActiveModal(null)}
+        exitImmediately
         title="Start Appliance Fabrication"
       >
         <form onSubmit={handleStartProduction} className="space-y-4">
@@ -1611,6 +1612,7 @@ export function LabRequestDetails() {
       <Modal
         isOpen={activeModal === 'STAGE'}
         onClose={() => setActiveModal(null)}
+        exitImmediately
         title={`Update Fabrication Stage (${order.workflowShortName})`}
       >
         <form onSubmit={handleStageUpdate} className="space-y-4">
@@ -1756,6 +1758,7 @@ export function LabRequestDetails() {
       <Modal
         isOpen={activeModal === 'QC'}
         onClose={() => setActiveModal(null)}
+        exitImmediately
         title="Laboratory Quality Check"
         description="Quality checking verifies laboratory workmanship and does not replace clinical evaluation or chairside fitting by the dentist."
       >
@@ -1835,6 +1838,7 @@ export function LabRequestDetails() {
       <Modal
         isOpen={activeModal === 'DISPATCH'}
         onClose={() => setActiveModal(null)}
+        exitImmediately
         title="Record Ready for Pickup / Dispatch"
         description="Note: Dispatching notifies the clinic and sets status to Awaiting Clinic Receipt. Only authorized clinic staff can mark Completed."
       >
