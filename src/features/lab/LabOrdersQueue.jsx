@@ -433,21 +433,24 @@ export function LabOrdersQueue() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="-mx-4 flex flex-col justify-between gap-4 border-y border-l-2 border-surface-border bg-surface-subtle px-5 py-5 sm:-mx-5 sm:flex-row sm:items-center sm:px-6 lg:-mx-6 lg:px-8">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-2">
             <Badge variant="primary" size="sm">
               Service-Specific Fabrication Pipeline
             </Badge>
             <span className="text-xs text-ink-secondary">
-              Active Bench / Digital Cases: <strong>{inFabricationCount}</strong>
+              Active fabrication{' '}
+              <strong className="ml-1 inline-flex min-w-5 justify-center rounded-full bg-teal-500/15 px-1.5 py-0.5 text-teal-700 dark:text-teal-300">
+                {inFabricationCount}
+              </strong>
             </span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-heading font-extrabold leading-tight text-ink-primary tracking-tight">
             Laboratory Production Board
           </h2>
-          <p className="text-sm text-ink-secondary">
-            Real-time tracking across orthodontic retainers, digital &amp; conventional crowns/bridges, dentures, repairs, and custom workflows.
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-ink-secondary">
+            Track each case from preparation through fabrication, quality check, and clinic dispatch.
           </p>
         </div>
 
@@ -494,7 +497,7 @@ export function LabOrdersQueue() {
 
       {/* Workflow Selector Tabs (Wraps cleanly with zero horizontal scrollbar) */}
       <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-1 sm:flex-wrap">
           {workflowTabs.map((tab) => {
             const active = selectedBoard === tab.id;
             return (
@@ -502,7 +505,8 @@ export function LabOrdersQueue() {
                 key={tab.id}
                 type="button"
                 onClick={() => setSelectedBoard(tab.id)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold border transition-all ${
+                aria-pressed={active}
+                className={`inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
                   active
                     ? 'bg-teal-600 text-white border-teal-500 shadow-soft-sm'
                     : 'bg-surface-card text-ink-secondary border-surface-border hover:border-teal-500/50 hover:text-ink-primary'
@@ -539,28 +543,19 @@ export function LabOrdersQueue() {
         )}
       </div>
 
-      {/* Production Board Columns — Full-Width Responsive Grid (Zero Horizontal Scrollbar) */}
-      <div
-        className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 ${
-          boardColumns.length === 5
-            ? 'lg:grid-cols-5'
-            : boardColumns.length === 6
-              ? 'lg:grid-cols-6'
-              : boardColumns.length === 7
-                ? 'lg:grid-cols-7'
-                : 'lg:grid-cols-4'
-        }`}
-      >
-        {boardColumns.map((col) => (
-          <div
-            key={col.key}
-            className="flex flex-col rounded-2xl bg-surface-subtle border border-surface-border p-2.5 min-w-0"
-          >
+      {/* Production Board Columns */}
+      <div className="min-w-0 overflow-x-auto pb-2">
+        <div className="grid w-full grid-cols-1 gap-3 sm:grid-flow-col sm:auto-cols-[minmax(248px,1fr)] sm:grid-cols-none">
+          {boardColumns.map((col) => (
+            <div
+              key={col.key}
+              className="flex min-h-0 min-w-0 flex-col rounded-2xl border border-surface-border bg-surface-subtle p-3 snap-start sm:min-h-[420px]"
+            >
             {/* Column Header */}
             <div className="pb-2 border-b border-surface-border mb-2.5 min-w-0">
               <div className="flex items-center justify-between gap-1.5 min-w-0">
                 <span
-                  className="text-[11px] xl:text-xs font-heading font-bold text-ink-primary truncate"
+                  className="text-sm font-heading font-bold text-ink-primary break-words"
                   title={col.label}
                 >
                   {col.label}
@@ -570,7 +565,7 @@ export function LabOrdersQueue() {
                 </span>
               </div>
               {col.desc && (
-                <p className="text-[10px] text-ink-muted mt-0.5 line-clamp-2 leading-tight" title={col.desc}>
+                <p className="text-xs text-ink-muted mt-1 leading-snug" title={col.desc}>
                   {col.desc}
                 </p>
               )}
@@ -579,7 +574,7 @@ export function LabOrdersQueue() {
             {/* Cards */}
             <div className="flex-1 space-y-2.5 overflow-y-auto max-h-[680px] min-w-0">
               {col.orders.length === 0 ? (
-                <div className="text-center py-8 text-[11px] text-ink-muted italic">
+                <div className="text-center py-8 text-xs text-ink-muted">
                   No cases at this stage
                 </div>
               ) : (
@@ -596,7 +591,7 @@ export function LabOrdersQueue() {
                   return (
                     <Card
                       key={order.id}
-                      className={`p-2.5 space-y-2 bg-surface-card shadow-soft-sm hover:border-teal-400 transition-all min-w-0 overflow-hidden ${
+                      className={`p-3 space-y-3 bg-surface-card shadow-soft-sm hover:border-teal-400 transition-all min-w-0 ${
                         order.priority === 'RUSH' || order.status === LAB_ORDER_STATUS.ISSUE_REPORTED
                           ? 'border-rose-400/70 dark:border-rose-500/50'
                           : 'border-surface-border'
@@ -604,7 +599,7 @@ export function LabOrdersQueue() {
                     >
                       {/* Request Code & Badges */}
                       <div className="flex items-center justify-between gap-1.5 flex-wrap">
-                        <span className="font-mono text-[10px] font-bold text-teal-600 dark:text-teal-400">
+                        <span className="font-mono text-xs font-bold text-teal-700 dark:text-teal-300">
                           {order.requestCode}
                         </span>
                         <div className="flex items-center gap-1 flex-wrap">
@@ -622,11 +617,11 @@ export function LabOrdersQueue() {
                       </div>
 
                       {/* Appliance & Workflow Tag */}
-                      <div>
-                        <div className="font-heading font-bold text-xs text-ink-primary leading-snug">
+                      <div className="min-w-0">
+                        <div className="font-heading font-bold text-sm text-ink-primary leading-snug break-words">
                           {order.applianceType}
                         </div>
-                        <div className="text-[10px] text-ink-muted mt-0.5">
+                        <div className="text-xs text-ink-muted mt-1 break-words">
                           {order.workflowShortName}
                         </div>
                       </div>
@@ -679,24 +674,24 @@ export function LabOrdersQueue() {
                       </div>
 
                       {/* Privacy-Safe Case Metadata */}
-                      <div className="space-y-1 text-[11px] text-ink-secondary pt-0.5 min-w-0">
-                        <div className="flex flex-wrap items-center justify-between gap-1 min-w-0">
-                          <span className="font-semibold text-ink-primary truncate">
+                      <div className="space-y-2 text-xs text-ink-secondary pt-0.5 min-w-0">
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 min-w-0">
+                          <span className="font-semibold text-ink-primary break-words">
                             {order.caseReference}
                           </span>
-                          <span className="text-[10px] text-teal-700 dark:text-teal-400 font-mono truncate">
+                          <span className="text-[11px] text-teal-700 dark:text-teal-300 font-mono">
                             {formatArchAndTeeth(order)}
                           </span>
                         </div>
-                        <div className="text-[10px] text-ink-secondary truncate">
+                        <div className="text-xs text-ink-secondary leading-snug break-words">
                           {order.material}
                           {order.shade ? ` • Shade ${order.shade}` : ''}
                         </div>
-                        <div className="text-[10px] text-ink-muted truncate">
+                        <div className="text-xs text-ink-muted leading-snug break-words">
                           Dr. {order.dentistName} • {order.clinicName}
                         </div>
-                        <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] text-ink-muted">
-                          <span className="inline-flex items-center gap-1 truncate">
+                        <div className="space-y-1 text-[11px] text-ink-muted">
+                          <span className="inline-flex items-center gap-1">
                             <Clock className="w-3 h-3 shrink-0" />
                             Due:{' '}
                             {order.estimatedCompletionDate
@@ -704,8 +699,8 @@ export function LabOrdersQueue() {
                               : 'TBD'}
                           </span>
                           {order.assignedTech && (
-                            <span className="text-purple-600 dark:text-purple-400 font-medium truncate max-w-full">
-                              {order.assignedTech}
+                            <span className="block font-medium break-words">
+                              Technician: {order.assignedTech}
                             </span>
                           )}
                         </div>
@@ -713,7 +708,7 @@ export function LabOrdersQueue() {
 
                       {/* Retainer Subtype Fabrication Guidance */}
                       {retainerDetail && order.status === LAB_ORDER_STATUS.IN_PRODUCTION && (
-                        <div className="p-2 rounded-lg bg-teal-500/10 border border-teal-500/20 text-[10px] text-teal-800 dark:text-teal-200 leading-relaxed break-words">
+                        <div className="p-2 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-800 dark:text-teal-200 leading-relaxed break-words">
                           <Wrench className="w-3 h-3 inline mr-1" />
                           {retainerDetail}
                         </div>
@@ -721,7 +716,7 @@ export function LabOrdersQueue() {
 
                       {/* Reported Issue Summary */}
                       {order.status === LAB_ORDER_STATUS.ISSUE_REPORTED && order.issueReport && (
-                        <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[10px] text-rose-800 dark:text-rose-200 break-words">
+                        <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/30 text-xs text-rose-800 dark:text-rose-200 break-words">
                           <strong>{order.issueReport.issueType}:</strong> {order.issueReport.description}
                         </div>
                       )}
@@ -832,8 +827,9 @@ export function LabOrdersQueue() {
                 })
               )}
             </div>
-          </div>
-        ))}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Modal 1: Start Fabrication */}
