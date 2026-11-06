@@ -70,9 +70,11 @@ export function PatientShell() {
         unreadCount={unreadCount}
       />
 
-      <div className="hidden lg:block">
-        <Sidebar role={ROLES.PATIENT} isOpen={false} />
-      </div>
+      <Sidebar
+        role={ROLES.PATIENT}
+        isOpen={false}
+        onClose={() => { }}
+      />
 
       <main
         className="lg:pl-64 p-3.5 sm:p-6 lg:p-8 lg:pb-8 min-h-[calc(100vh-4rem)] transition-all"
@@ -85,7 +87,7 @@ export function PatientShell() {
         </div>
       </main>
 
-      <BottomTabBar role={ROLES.PATIENT} />
+      <BottomTabBar />
     </div>
   );
 }

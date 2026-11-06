@@ -21,10 +21,15 @@ import {
   Contrast,
   ExternalLink,
   Move,
+  CheckCircle2,
+  Sparkles,
+  Edit3,
+  Save,
+  PlusCircle,
 } from 'lucide-react';
 import { patientService } from '../../services/patientService';
 import { appointmentService } from '../../services/appointmentService';
-import { treatmentService } from '../../services/treatmentService';
+import { treatmentService, generateDefaultStages } from '../../services/treatmentService';
 import { odontogramService } from '../../services/odontogramService';
 import { imageService } from '../../services/imageService';
 import { useAuth } from '../../hooks/useAuth';
@@ -36,9 +41,12 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Tabs } from '../../components/ui/Tabs';
 import { Modal } from '../../components/ui/Modal';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { formatDate } from '../../lib/formatters';
+import { TREATMENT_STAGE } from '../../lib/constants';
 
 export function PatientDetail() {
   const { id } = useParams();
@@ -178,6 +186,30 @@ export function PatientDetail() {
   const [uploadNotes, setUploadNotes] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
+  // Treatment Plan Modal States
+  const [isCreateTrtOpen, setIsCreateTrtOpen] = useState(false);
+  const [isEditTrtOpen, setIsEditTrtOpen] = useState(false);
+  const [trtType, setTrtType] = useState('Ortho Braces (Fixed Orthodontic Alignment)');
+  const [trtDentist, setTrtDentist] = useState('');
+  const [trtStagesCount, setTrtStagesCount] = useState(4);
+  const [trtStage, setTrtStage] = useState(TREATMENT_STAGE.INITIAL);
+  const [trtStageNumber, setTrtStageNumber] = useState(1);
+  const [trtProgress, setTrtProgress] = useState(10);
+  const [trtStartDate, setTrtStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [trtNextAdjDate, setTrtNextAdjDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [trtEstCompDate, setTrtEstCompDate] = useState(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return d.toISOString().split('T')[0];
+  });
+  const [trtNotes, setTrtNotes] = useState('');
+  const [trtStatus, setTrtStatus] = useState('ACTIVE');
+  const [isSavingTrt, setIsSavingTrt] = useState(false);
+
   useEffect(() => {
     async function loadData() {
       if (!id) return;
@@ -248,6 +280,95 @@ export function PatientDetail() {
       toast.error(err.message || 'Cloudinary image upload failed.');
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const openCreateTrtModal = () => {
+    setTrtDentist(user?.fullName || 'Attending Dentist');
+    setTrtStartDate(new Date().toISOString().split('T')[0]);
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    setTrtNextAdjDate(d.toISOString().split('T')[0]);
+    const d2 = new Date();
+    d2.setFullYear(d2.getFullYear() + 1);
+    setTrtEstCompDate(d2.toISOString().split('T')[0]);
+    setTrtNotes('');
+    setTrtProgress(10);
+    setTrtStagesCount(4);
+    setIsCreateTrtOpen(true);
+  };
+
+  const openEditTrtModal = () => {
+    if (!treatment) return;
+    setTrtType(treatment.treatmentType || treatment.type || 'Treatment Plan');
+    setTrtStage(treatment.stage || TREATMENT_STAGE.INITIAL);
+    setTrtStageNumber(treatment.stageNumber || 1);
+    setTrtStagesCount(treatment.totalStages || 4);
+    setTrtProgress(treatment.progressPercentage || 0);
+    setTrtNextAdjDate(treatment.nextAdjustmentDate || '');
+    setTrtNotes(treatment.dentistNotes || '');
+    setTrtStatus(treatment.status || 'ACTIVE');
+    setIsEditTrtOpen(true);
+  };
+
+  const handleCreateTreatment = async (e) => {
+    e.preventDefault();
+    if (!id || !patient) return;
+    setIsSavingTrt(true);
+    try {
+      const created = await treatmentService.create({
+        patientId: id,
+        patientName: patient.fullName || patient.name,
+        dentistId: user?.id || user?.uid || '',
+        dentistName: trtDentist || user?.fullName || 'Attending Dentist',
+        treatmentType: trtType,
+        stage: trtStage,
+        stageNumber: 1,
+        totalStages: Number(trtStagesCount),
+        progressPercentage: Number(trtProgress),
+        startDate: trtStartDate,
+        nextAdjustmentDate: trtNextAdjDate,
+        estimatedCompletionDate: trtEstCompDate,
+        dentistNotes: trtNotes,
+        status: 'ACTIVE',
+      });
+      setTreatment(created);
+      toast.success(`Created active treatment plan for ${patient.fullName}!`);
+      setIsCreateTrtOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'Failed to create treatment plan.');
+    } finally {
+      setIsSavingTrt(false);
+    }
+  };
+
+  const handleUpdateTreatment = async (e) => {
+    e.preventDefault();
+    if (!treatment) return;
+    setIsSavingTrt(true);
+    try {
+      const updated = await treatmentService.update(
+        treatment.id,
+        {
+          stage: trtStage,
+          stageNumber: Number(trtStageNumber),
+          totalStages: Number(trtStagesCount),
+          progressPercentage: Number(trtProgress),
+          nextAdjustmentDate: trtNextAdjDate,
+          dentistNotes: trtNotes,
+          status: trtStatus,
+        },
+        user?.fullName || 'Attending Dentist'
+      );
+      setTreatment(updated);
+      toast.success('Treatment plan updated successfully!');
+      setIsEditTrtOpen(false);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'Failed to update treatment plan.');
+    } finally {
+      setIsSavingTrt(false);
     }
   };
 
@@ -422,33 +543,153 @@ export function PatientDetail() {
 
       {/* TAB 4: Treatment Plan */}
       {activeTab === 'treatment' && (
-        <Card className="p-6 sm:p-8 space-y-5">
+        <div className="space-y-6">
           {treatment ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2 border-b border-surface-border pb-3">
-                <div>
-                  <h3 className="text-lg font-heading font-bold text-ink-primary">
-                    {treatment.type || treatment.treatmentType || 'Clinical Treatment Plan'}
-                  </h3>
-                  <p className="text-xs text-ink-muted">Attending Specialist: {treatment.dentistName || 'Staff'}</p>
+            <Card className="p-6 sm:p-8 space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-surface-border pb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h3 className="text-xl font-heading font-extrabold text-ink-primary">
+                      {treatment.treatmentType || treatment.type || 'Clinical Treatment Plan'}
+                    </h3>
+                    <Badge variant={treatment.status === 'COMPLETED' ? 'success' : 'primary'}>
+                      Stage {treatment.stageNumber || 1} of {treatment.totalStages || 4} ({treatment.stage})
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-ink-secondary flex items-center gap-2">
+                    <User className="w-3.5 h-3.5 text-teal-600" />
+                    <span>Attending Doctor: <strong className="text-ink-primary">{treatment.dentistName || 'Staff Specialist'}</strong></span>
+                  </p>
                 </div>
-                <Badge variant="primary" size="md">
-                  {treatment.progressPercentage || 0}% Complete
-                </Badge>
+
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={openEditTrtModal}
+                    leftIcon={Edit3}
+                  >
+                    Update Stage Progress
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={openCreateTrtModal}
+                    leftIcon={Plus}
+                  >
+                    New Plan
+                  </Button>
+                </div>
               </div>
 
+              {/* Progress Metrics & Dates */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-2xl bg-surface-50 dark:bg-surface-100/40 border border-surface-border space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Progress</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-heading font-extrabold text-teal-600 dark:text-teal-400">
+                      {treatment.progressPercentage || 0}%
+                    </span>
+                    <Activity className="w-5 h-5 text-teal-600/40" />
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-surface-200 dark:bg-surface-300 overflow-hidden">
+                    <div
+                      className="h-full bg-teal-500 rounded-full"
+                      style={{ width: `${Math.min(100, Math.max(0, treatment.progressPercentage || 0))}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-surface-50 dark:bg-surface-100/40 border border-surface-border space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Start Date</span>
+                  <p className="text-base font-bold text-ink-primary">{formatDate(treatment.startDate)}</p>
+                  <p className="text-[11px] text-ink-muted">Case initiated</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/40 space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300">Next Target Adjustment</span>
+                  <p className="text-base font-bold text-teal-900 dark:text-teal-200">{formatDate(treatment.nextAdjustmentDate)}</p>
+                  <p className="text-[11px] text-teal-700/80 dark:text-teal-400">Target appointment</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-surface-50 dark:bg-surface-100/40 border border-surface-border space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Est. Completion</span>
+                  <p className="text-base font-bold text-ink-primary">{formatDate(treatment.estimatedCompletionDate)}</p>
+                  <p className="text-[11px] text-ink-muted">Target debonding/retention</p>
+                </div>
+              </div>
+
+              {/* Doctor Clinical Directions */}
               {treatment.dentistNotes && (
-                <div className="p-4 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 text-xs sm:text-sm text-ink-primary italic">
-                  Clinical Note: &ldquo;{treatment.dentistNotes}&rdquo;
+                <div className="p-4 rounded-2xl bg-surface-50 dark:bg-surface-100/40 border border-surface-border space-y-1">
+                  <span className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400">
+                    Doctor Clinical Directions & Patient Guidance
+                  </span>
+                  <p className="text-sm text-ink-primary italic">
+                    &ldquo;{treatment.dentistNotes}&rdquo;
+                  </p>
                 </div>
               )}
-            </div>
+
+              {/* Clinical Milestone Roadmap */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-teal-600" />
+                  <h4 className="font-heading font-bold text-base text-ink-primary">
+                    Clinical Milestone Roadmap ({treatment.stageNumber || 1} of {treatment.totalStages || 4})
+                  </h4>
+                </div>
+
+                <div className="space-y-3 relative before:absolute before:inset-0 before:left-5 before:w-0.5 before:bg-surface-200 dark:before:bg-surface-300">
+                  {(treatment.stages && treatment.stages.length > 0
+                    ? treatment.stages
+                    : generateDefaultStages(treatment.treatmentType || treatment.type, treatment.totalStages || 4, treatment.stageNumber || 1, treatment.startDate)
+                  ).map((stg) => {
+                    const isDone = stg.status === 'COMPLETED';
+                    const isCurrent = stg.status === 'IN_PROGRESS';
+
+                    return (
+                      <div key={stg.number} className="relative flex items-start gap-4">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs z-10 flex-shrink-0 border-2 ${
+                            isDone
+                              ? 'bg-teal-600 border-teal-600 text-white shadow-soft'
+                              : isCurrent
+                              ? 'bg-surface-card border-teal-500 text-teal-600 ring-4 ring-teal-100 dark:ring-teal-900/40 shadow-glow'
+                              : 'bg-surface-card border-surface-border text-ink-muted'
+                          }`}
+                        >
+                          {isDone ? <CheckCircle2 className="w-5 h-5" /> : stg.number}
+                        </div>
+
+                        <div className="flex-1 p-3.5 rounded-2xl border border-surface-border bg-surface-50/60 dark:bg-surface-100/30 space-y-1">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <h5 className="font-heading font-bold text-sm text-ink-primary">
+                              {stg.name}
+                            </h5>
+                            <Badge variant={isDone ? 'success' : isCurrent ? 'primary' : 'outline'}>
+                              {isDone ? 'COMPLETED' : isCurrent ? 'CURRENT PHASE' : 'UPCOMING'}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </Card>
           ) : (
-            <p className="text-xs text-center text-ink-muted py-8">
-              No active treatment plan registered in Firestore.
-            </p>
+            <Card className="p-8">
+              <EmptyState
+                title="No Active Treatment Plan Recorded"
+                description={`Start tracking orthodontic alignment, prosthetics staging, and clinical milestones for ${patient?.fullName || 'this patient'}.`}
+                icon={Activity}
+                actionLabel={`Create Treatment Plan for ${patient?.fullName || 'Patient'}`}
+                onAction={openCreateTrtModal}
+              />
+            </Card>
           )}
-        </Card>
+        </div>
       )}
 
       {/* TAB 5: Radiology & X-Rays */}
@@ -760,6 +1001,243 @@ export function PatientDetail() {
               leftIcon={UploadCloud}
             >
               Upload to Cloudinary
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* CREATE TREATMENT MODAL */}
+      <Modal
+        isOpen={isCreateTrtOpen}
+        onClose={() => setIsCreateTrtOpen(false)}
+        title={`Initialize Treatment: ${patient?.fullName}`}
+        description="Set up clinical procedure, total milestone phases, and initial directions."
+      >
+        <form onSubmit={handleCreateTreatment} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-ink-secondary">
+              Treatment Procedure *
+            </label>
+            <select
+              value={trtType}
+              onChange={(e) => setTrtType(e.target.value)}
+              className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm text-ink-primary outline-none focus:border-teal-500"
+              required
+            >
+              <option value="Ortho Braces (Fixed Orthodontic Alignment)">Ortho Braces (Fixed Orthodontic Alignment)</option>
+              <option value="Clear Aligners (Invisalign Therapy)">Clear Aligners (Invisalign Therapy)</option>
+              <option value="CROWNS, Bridges (Fixed Prosthodontics)">CROWNS, Bridges (Fixed Prosthodontics)</option>
+              <option value="Root Canal Treatment (Endodontic Care)">Root Canal Treatment (Endodontic Care)</option>
+              <option value="Removable Partial denture">Removable Partial denture</option>
+              <option value="Complete Denture">Complete Denture</option>
+              <option value="FlexIBLE Denture">FlexIBLE Denture</option>
+              <option value="Tooth Extraction & Socket Management">Tooth Extraction & Socket Management</option>
+              <option value="Oral Prophylaxis & Periodontal Maintenance">Oral Prophylaxis & Periodontal Maintenance</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Attending Doctor / Specialist"
+              value={trtDentist}
+              onChange={(e) => setTrtDentist(e.target.value)}
+              required
+            />
+
+            <Select
+              label="Initial Phase"
+              value={trtStage}
+              onChange={(e) => setTrtStage(e.target.value)}
+              options={[
+                { value: TREATMENT_STAGE.INITIAL, label: 'INITIAL (Bonding / Diagnostic)' },
+                { value: TREATMENT_STAGE.ALIGNMENT, label: 'ALIGNMENT (Active Progression)' },
+                { value: TREATMENT_STAGE.IN_PROGRESS, label: 'IN PROGRESS (Intervention)' },
+                { value: TREATMENT_STAGE.RETENTION, label: 'RETENTION (Stabilization)' },
+                { value: TREATMENT_STAGE.COMPLETED, label: 'COMPLETED (Finalized)' },
+              ]}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Total Milestone Stages"
+              type="number"
+              min="2"
+              max="10"
+              value={trtStagesCount}
+              onChange={(e) => setTrtStagesCount(e.target.value)}
+              required
+            />
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-ink-secondary">
+                Initial Progress ({trtProgress}%)
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={trtProgress}
+                onChange={(e) => setTrtProgress(e.target.value)}
+                className="w-full accent-teal-600 cursor-pointer mt-2"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Input
+              label="Start Date"
+              type="date"
+              value={trtStartDate}
+              onChange={(e) => setTrtStartDate(e.target.value)}
+              required
+            />
+
+            <Input
+              label="Next Adjustment Target"
+              type="date"
+              value={trtNextAdjDate}
+              onChange={(e) => setTrtNextAdjDate(e.target.value)}
+              required
+            />
+
+            <Input
+              label="Est. Completion"
+              type="date"
+              value={trtEstCompDate}
+              onChange={(e) => setTrtEstCompDate(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-ink-secondary">
+              Clinical Instructions & Patient Directions
+            </label>
+            <textarea
+              value={trtNotes}
+              onChange={(e) => setTrtNotes(e.target.value)}
+              rows={3}
+              placeholder="e.g. Initial alignment archwire engaged. Instructed patient on hygiene and elastic wear..."
+              className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm text-ink-primary outline-none focus:border-teal-500 resize-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-3 border-t border-surface-border">
+            <Button variant="ghost" size="md" onClick={() => setIsCreateTrtOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              isLoading={isSavingTrt}
+              rightIcon={Save}
+            >
+              Create Treatment Plan
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* EDIT TREATMENT MODAL */}
+      <Modal
+        isOpen={isEditTrtOpen}
+        onClose={() => setIsEditTrtOpen(false)}
+        title={`Update Treatment: ${patient?.fullName}`}
+        description="Advance milestone stage, update completion percentage, and record directions."
+      >
+        <form onSubmit={handleUpdateTreatment} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select
+              label="Current Phase"
+              value={trtStage}
+              onChange={(e) => setTrtStage(e.target.value)}
+              options={[
+                { value: TREATMENT_STAGE.INITIAL, label: 'INITIAL (Bonding & Leveling)' },
+                { value: TREATMENT_STAGE.ALIGNMENT, label: 'ALIGNMENT (Active Progression)' },
+                { value: TREATMENT_STAGE.IN_PROGRESS, label: 'IN_PROGRESS (Space Closure / Detailing)' },
+                { value: TREATMENT_STAGE.RETENTION, label: 'RETENTION (Debonding / Retainer)' },
+                { value: TREATMENT_STAGE.COMPLETED, label: 'COMPLETED (Finalized)' },
+              ]}
+              required
+            />
+
+            <Input
+              label={`Current Stage Number (1 to ${trtStagesCount})`}
+              type="number"
+              min="1"
+              max={trtStagesCount}
+              value={trtStageNumber}
+              onChange={(e) => setTrtStageNumber(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-ink-secondary">
+                Progress Percentage ({trtProgress}%)
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={trtProgress}
+                onChange={(e) => setTrtProgress(e.target.value)}
+                className="w-full accent-teal-600 cursor-pointer mt-2"
+              />
+            </div>
+
+            <Input
+              label="Next Adjustment Target Date"
+              type="date"
+              value={trtNextAdjDate}
+              onChange={(e) => setTrtNextAdjDate(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-ink-secondary">
+              Case Status
+            </label>
+            <select
+              value={trtStatus}
+              onChange={(e) => setTrtStatus(e.target.value)}
+              className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm text-ink-primary outline-none focus:border-teal-500"
+            >
+              <option value="ACTIVE">ACTIVE (Ongoing clinical care)</option>
+              <option value="COMPLETED">COMPLETED (Treatment finalized & retainers delivered)</option>
+              <option value="ON_HOLD">ON_HOLD (Temporarily paused)</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-ink-secondary">
+              Dentist Clinical Notes & Patient Instructions
+            </label>
+            <textarea
+              value={trtNotes}
+              onChange={(e) => setTrtNotes(e.target.value)}
+              rows={3}
+              placeholder="e.g. Advised patient to wear class II intermaxillary elastics 24/7..."
+              className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm text-ink-primary outline-none focus:border-teal-500 resize-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-3 border-t border-surface-border">
+            <Button variant="ghost" size="md" onClick={() => setIsEditTrtOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              isLoading={isSavingTrt}
+              rightIcon={Save}
+            >
+              Save & Notify Patient
             </Button>
           </div>
         </form>

@@ -999,13 +999,12 @@ export function LabRequestDetails() {
             {applicableMilestones.map((m) => (
               <div
                 key={m.key}
-                className={`p-2 rounded-xl border text-center transition-all ${
-                  m.isAlert
+                className={`p-2 rounded-xl border text-center transition-all ${m.isAlert
                     ? 'bg-rose-500/10 border-rose-500/40 text-rose-700 dark:text-rose-300'
                     : m.reached
-                    ? 'bg-teal-500/10 border-teal-500/30 text-teal-800 dark:text-teal-200'
-                    : 'bg-surface-subtle border-surface-border text-ink-muted'
-                }`}
+                      ? 'bg-teal-500/10 border-teal-500/30 text-teal-800 dark:text-teal-200'
+                      : 'bg-surface-subtle border-surface-border text-ink-muted'
+                  }`}
               >
                 <p className="text-[11px] font-bold truncate">{m.label}</p>
               </div>
@@ -1201,13 +1200,12 @@ export function LabRequestDetails() {
                   return (
                     <div
                       key={stg.key}
-                      className={`px-3.5 py-2 rounded-xl border flex items-center justify-between ${
-                        isCurrent
+                      className={`px-3.5 py-2 rounded-xl border flex items-center justify-between ${isCurrent
                           ? 'bg-teal-500/10 border-teal-500 text-teal-900 dark:text-teal-200 font-bold'
                           : isCompletedStep
-                          ? 'bg-emerald-500/5 border-emerald-500/30 text-ink-primary'
-                          : 'bg-surface-subtle border-surface-border text-ink-muted'
-                      }`}
+                            ? 'bg-emerald-500/5 border-emerald-500/30 text-ink-primary'
+                            : 'bg-surface-subtle border-surface-border text-ink-muted'
+                        }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <span className="font-mono text-[11px]">{idx + 1}.</span>
@@ -1228,11 +1226,10 @@ export function LabRequestDetails() {
             {/* Quality Check Result Summary */}
             {order.qcResult && (
               <div
-                className={`p-3.5 rounded-2xl border space-y-1 ${
-                  order.qcResult.passed
+                className={`p-3.5 rounded-2xl border space-y-1 ${order.qcResult.passed
                     ? 'bg-emerald-500/10 border-emerald-500/30'
                     : 'bg-rose-500/10 border-rose-500/30'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <p className="font-bold text-ink-primary">
@@ -1498,8 +1495,8 @@ export function LabRequestDetails() {
           activeModal === 'DECLINE'
             ? 'Decline Laboratory Request (Reason Required)'
             : activeModal === 'CLARIFY'
-            ? 'Request Clarification from Clinic'
-            : 'Provide Clinical Clarification to Laboratory'
+              ? 'Request Clarification from Clinic'
+              : 'Provide Clinical Clarification to Laboratory'
         }
       >
         <form onSubmit={handleClarifyOrDecline} className="space-y-4">
@@ -1512,8 +1509,8 @@ export function LabRequestDetails() {
               activeModal === 'DECLINE'
                 ? 'State the reason for declining this request (required)...'
                 : activeModal === 'CLARIFY'
-                ? 'Specify missing margin details, shade, arch, or scan files needed...'
-                : 'Provide the requested clinical specification or updated scan link...'
+                  ? 'Specify missing margin details, shade, arch, or scan files needed...'
+                  : 'Provide the requested clinical specification or updated scan link...'
             }
             className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm outline-none focus:border-teal-500 resize-none"
           />
@@ -1529,8 +1526,8 @@ export function LabRequestDetails() {
               {activeModal === 'DECLINE'
                 ? 'Decline Request'
                 : activeModal === 'CLARIFY'
-                ? 'Send Clarification Request'
-                : 'Submit to Laboratory'}
+                  ? 'Send Clarification Request'
+                  : 'Submit to Laboratory'}
             </Button>
           </div>
         </form>

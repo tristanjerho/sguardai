@@ -306,8 +306,7 @@ export function LabIntakePage() {
         user
       );
       toast.success(
-        `Accepted ${acceptTarget.requestCode} (${
-          acceptMaterialsReady ? 'Ready for Production' : 'Awaiting Materials'
+        `Accepted ${acceptTarget.requestCode} (${acceptMaterialsReady ? 'Ready for Production' : 'Awaiting Materials'
         }).`
       );
       setAcceptTarget(null);

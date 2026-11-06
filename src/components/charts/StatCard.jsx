@@ -41,11 +41,10 @@ export function StatCard({
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-surface-border/50 text-xs">
           {trend && (
             <span
-              className={`inline-flex items-center gap-0.5 font-bold ${
-                trendDirection === 'up'
+              className={`inline-flex items-center gap-0.5 font-bold ${trendDirection === 'up'
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : 'text-rose-600 dark:text-rose-400'
-              }`}
+                }`}
             >
               {trendDirection === 'up' ? (
                 <TrendingUp className="w-3.5 h-3.5" />

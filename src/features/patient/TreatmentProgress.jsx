@@ -11,7 +11,7 @@ import {
   CalendarPlus,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import { treatmentService } from '../../services/treatmentService';
+import { treatmentService, generateDefaultStages } from '../../services/treatmentService';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -27,19 +27,20 @@ export function TreatmentProgress() {
 
   useEffect(() => {
     async function loadPlan() {
-      if (!user?.id) return;
+      const userId = user?.id || user?.uid;
+      if (!userId) return;
       try {
         setLoading(true);
-        const data = await treatmentService.getByPatientId(user.id);
+        const data = await treatmentService.getByPatientId(userId);
         setTreatment(data);
       } catch (err) {
-        console.error(err);
+        console.error('Error loading patient treatment plan:', err);
       } finally {
         setLoading(false);
       }
     }
     loadPlan();
-  }, [user?.id]);
+  }, [user?.id, user?.uid]);
 
   if (loading) {
     return (
@@ -72,6 +73,12 @@ export function TreatmentProgress() {
     );
   }
 
+  const stages = (treatment.stages && treatment.stages.length > 0)
+    ? treatment.stages
+    : generateDefaultStages(treatment.treatmentType, treatment.totalStages || 4, treatment.stageNumber || 1, treatment.startDate);
+
+  const activeStage = stages[Math.max(0, (treatment.stageNumber || 1) - 1)];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -96,10 +103,10 @@ export function TreatmentProgress() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <div className="flex justify-center md:justify-start">
             <ProgressRing
-              percentage={treatment.progressPercentage}
+              percentage={treatment.progressPercentage || 0}
               size={150}
               strokeWidth={12}
-              label={`Stage ${treatment.stageNumber} of ${treatment.totalStages}`}
+              label={`Stage ${treatment.stageNumber || 1} of ${treatment.totalStages || 4}`}
               sublabel="Completed"
             />
           </div>
@@ -110,7 +117,7 @@ export function TreatmentProgress() {
                 Active Phase
               </span>
               <h3 className="text-xl font-heading font-bold text-ink-primary dark:text-[#F8FAFC]">
-                {treatment.stages?.[treatment.stageNumber - 1]?.name || treatment.stage}
+                {activeStage?.name || treatment.stage || 'Active Progression'}
               </h3>
             </div>
 
@@ -128,7 +135,7 @@ export function TreatmentProgress() {
               <div className="p-3 rounded-xl bg-teal-50 dark:bg-[#0B1B32]/90 border border-teal-200 dark:border-[#83A6CE]/35 space-y-0.5 sm:col-span-2">
                 <span className="text-teal-800 dark:text-[#C48CB3] font-bold">Next Target Adjustment:</span>
                 <p className="font-bold text-teal-900 dark:text-[#E5C9D7] text-sm">
-                  {formatDate(treatment.nextAdjustmentDate)} with {treatment.dentistName}
+                  {formatDate(treatment.nextAdjustmentDate)} with {treatment.dentistName || 'Specialist'}
                 </p>
               </div>
             </div>
@@ -144,12 +151,12 @@ export function TreatmentProgress() {
             <CardTitle>Treatment Stage Roadmap</CardTitle>
           </div>
           <Badge variant="primary">
-            Stage {treatment.stageNumber} / {treatment.totalStages}
+            Stage {treatment.stageNumber || 1} / {treatment.totalStages || 4}
           </Badge>
         </CardHeader>
         <CardContent className="space-y-6 pt-4">
           <div className="space-y-6 relative before:absolute before:inset-0 before:left-5 before:w-0.5 before:bg-surface-200 dark:before:bg-[#26415E]">
-            {treatment.stages?.map((stg) => {
+            {stages.map((stg) => {
               const isDone = stg.status === 'COMPLETED';
               const isCurrent = stg.status === 'IN_PROGRESS';
 

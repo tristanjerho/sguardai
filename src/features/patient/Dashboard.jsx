@@ -253,8 +253,8 @@ export function PatientDashboard() {
                 <ProgressRing
                   percentage={treatment.progressPercentage}
                   size={130}
-                  label={`Stage ${treatment.stageNumber} of ${treatment.totalStages}`}
-                  sublabel={treatment.stage.replace('_', ' ')}
+                  label={`Stage ${treatment.stageNumber || 1} of ${treatment.totalStages || 4}`}
+                  sublabel={(treatment.stage || treatment.status || 'ACTIVE').replace(/_/g, ' ')}
                 />
                 <div className="space-y-1">
                   <p className="text-xs font-semibold text-ink-secondary dark:text-[#83A6CE]">

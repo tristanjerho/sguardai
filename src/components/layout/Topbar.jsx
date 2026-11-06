@@ -86,11 +86,10 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
             type="button"
             onClick={toggleSparky}
             title={showSparky ? 'Hide Gardy Mascot' : 'Show Gardy Mascot'}
-            className={`hidden md:flex p-2 rounded-xl text-xs font-semibold items-center gap-1.5 transition-all ${
-              showSparky
+            className={`hidden md:flex p-2 rounded-xl text-xs font-semibold items-center gap-1.5 transition-all ${showSparky
                 ? 'bg-teal-50 text-teal-700 dark:bg-[#83A6CE]/20 dark:text-[#E5C9D7] border border-teal-200 dark:border-[#83A6CE]/30'
                 : 'text-ink-muted dark:text-[#83A6CE] hover:bg-surface-100 dark:hover:bg-[#26415E]/60'
-            }`}
+              }`}
             aria-label="Toggle Gardy Mascot"
           >
             <Smile className="w-4 h-4 text-teal-600 dark:text-[#C48CB3]" />
@@ -183,9 +182,8 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
                               navigate(user?.role === ROLES.DENTIST ? '/clinic/lab-orders' : '/lab');
                             }
                           }}
-                          className={`w-full text-left px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-[#26415E]/50 ${
-                            !n.read ? 'bg-teal-50/50 dark:bg-[#83A6CE]/10' : ''
-                          }`}
+                          className={`w-full text-left px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-[#26415E]/50 ${!n.read ? 'bg-teal-50/50 dark:bg-[#83A6CE]/10' : ''
+                            }`}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <p className="text-xs font-bold text-ink-primary dark:text-[#F8FAFC]">

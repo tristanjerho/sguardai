@@ -506,20 +506,18 @@ export function LabOrdersQueue() {
                 type="button"
                 onClick={() => setSelectedBoard(tab.id)}
                 aria-pressed={active}
-                className={`inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-                  active
+                className={`inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${active
                     ? 'bg-teal-600 text-white border-teal-500 shadow-soft-sm'
                     : 'bg-surface-card text-ink-secondary border-surface-border hover:border-teal-500/50 hover:text-ink-primary'
-                }`}
+                  }`}
               >
                 <Layers className="w-3 h-3 shrink-0" />
                 <span>{tab.label}</span>
                 <span
-                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
-                    active
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${active
                       ? 'bg-white/20 text-white'
                       : 'bg-surface-subtle text-ink-muted'
-                  }`}
+                    }`}
                 >
                   {tab.count}
                 </span>
@@ -551,282 +549,281 @@ export function LabOrdersQueue() {
               key={col.key}
               className="flex min-h-0 min-w-0 flex-col rounded-2xl border border-surface-border bg-surface-subtle p-3 snap-start sm:min-h-[420px]"
             >
-            {/* Column Header */}
-            <div className="pb-2 border-b border-surface-border mb-2.5 min-w-0">
-              <div className="flex items-center justify-between gap-1.5 min-w-0">
-                <span
-                  className="text-sm font-heading font-bold text-ink-primary break-words"
-                  title={col.label}
-                >
-                  {col.label}
-                </span>
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-300 shrink-0">
-                  {col.orders.length}
-                </span>
-              </div>
-              {col.desc && (
-                <p className="text-xs text-ink-muted mt-1 leading-snug" title={col.desc}>
-                  {col.desc}
-                </p>
-              )}
-            </div>
-
-            {/* Cards */}
-            <div className="flex-1 space-y-2.5 overflow-y-auto max-h-[680px] min-w-0">
-              {col.orders.length === 0 ? (
-                <div className="text-center py-8 text-xs text-ink-muted">
-                  No cases at this stage
+              {/* Column Header */}
+              <div className="pb-2 border-b border-surface-border mb-2.5 min-w-0">
+                <div className="flex items-center justify-between gap-1.5 min-w-0">
+                  <span
+                    className="text-sm font-heading font-bold text-ink-primary break-words"
+                    title={col.label}
+                  >
+                    {col.label}
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-600 dark:text-teal-300 shrink-0">
+                    {col.orders.length}
+                  </span>
                 </div>
-              ) : (
-                col.orders.map((order) => {
-                  const currentStageObj = (order.workflowStages || []).find(
-                    (s) => s.key === order.productionStage
-                  );
-                  const nextStage = getNextProductionStage(order);
-                  const retainerDetail =
-                    order.workflowId === 'ORTHO_RETAINERS'
-                      ? getRetainerFabricationDetail(order)
-                      : null;
+                {col.desc && (
+                  <p className="text-xs text-ink-muted mt-1 leading-snug" title={col.desc}>
+                    {col.desc}
+                  </p>
+                )}
+              </div>
 
-                  return (
-                    <Card
-                      key={order.id}
-                      className={`p-3 space-y-3 bg-surface-card shadow-soft-sm hover:border-teal-400 transition-all min-w-0 ${
-                        order.priority === 'RUSH' || order.status === LAB_ORDER_STATUS.ISSUE_REPORTED
-                          ? 'border-rose-400/70 dark:border-rose-500/50'
-                          : 'border-surface-border'
-                      }`}
-                    >
-                      {/* Request Code & Badges */}
-                      <div className="flex items-center justify-between gap-1.5 flex-wrap">
-                        <span className="font-mono text-xs font-bold text-teal-700 dark:text-teal-300">
-                          {order.requestCode}
-                        </span>
-                        <div className="flex items-center gap-1 flex-wrap">
-                          {order.priority === 'RUSH' && (
-                            <Badge variant="danger" size="sm">
-                              RUSH
+              {/* Cards */}
+              <div className="flex-1 space-y-2.5 overflow-y-auto max-h-[680px] min-w-0">
+                {col.orders.length === 0 ? (
+                  <div className="text-center py-8 text-xs text-ink-muted">
+                    No cases at this stage
+                  </div>
+                ) : (
+                  col.orders.map((order) => {
+                    const currentStageObj = (order.workflowStages || []).find(
+                      (s) => s.key === order.productionStage
+                    );
+                    const nextStage = getNextProductionStage(order);
+                    const retainerDetail =
+                      order.workflowId === 'ORTHO_RETAINERS'
+                        ? getRetainerFabricationDetail(order)
+                        : null;
+
+                    return (
+                      <Card
+                        key={order.id}
+                        className={`p-3 space-y-3 bg-surface-card shadow-soft-sm hover:border-teal-400 transition-all min-w-0 ${order.priority === 'RUSH' || order.status === LAB_ORDER_STATUS.ISSUE_REPORTED
+                            ? 'border-rose-400/70 dark:border-rose-500/50'
+                            : 'border-surface-border'
+                          }`}
+                      >
+                        {/* Request Code & Badges */}
+                        <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                          <span className="font-mono text-xs font-bold text-teal-700 dark:text-teal-300">
+                            {order.requestCode}
+                          </span>
+                          <div className="flex items-center gap-1 flex-wrap">
+                            {order.priority === 'RUSH' && (
+                              <Badge variant="danger" size="sm">
+                                RUSH
+                              </Badge>
+                            )}
+                            {order.isOverdue && (
+                              <Badge status="OVERDUE" size="sm">
+                                Overdue
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Appliance & Workflow Tag */}
+                        <div className="min-w-0">
+                          <div className="font-heading font-bold text-sm text-ink-primary leading-snug break-words">
+                            {order.applianceType}
+                          </div>
+                          <div className="text-xs text-ink-muted mt-1 break-words">
+                            {order.workflowShortName}
+                          </div>
+                        </div>
+
+                        {/* Status / Sub-status Banner */}
+                        <div className="flex flex-wrap gap-1">
+                          {order.status === LAB_ORDER_STATUS.ACCEPTED && (
+                            <Badge
+                              status={
+                                order.materialsStatus === MATERIALS_STATUS.AWAITING_MATERIALS
+                                  ? 'AWAITING_MATERIALS'
+                                  : 'READY_FOR_PRODUCTION'
+                              }
+                              size="sm"
+                            >
+                              {MATERIALS_DISPLAY_LABELS[order.materialsStatus] || 'Ready for Production'}
                             </Badge>
                           )}
-                          {order.isOverdue && (
-                            <Badge status="OVERDUE" size="sm">
-                              Overdue
+                          {order.status === LAB_ORDER_STATUS.IN_PRODUCTION && currentStageObj && (
+                            <Badge status="IN_PRODUCTION" size="sm">
+                              {currentStageObj.label}
                             </Badge>
                           )}
-                        </div>
-                      </div>
-
-                      {/* Appliance & Workflow Tag */}
-                      <div className="min-w-0">
-                        <div className="font-heading font-bold text-sm text-ink-primary leading-snug break-words">
-                          {order.applianceType}
-                        </div>
-                        <div className="text-xs text-ink-muted mt-1 break-words">
-                          {order.workflowShortName}
-                        </div>
-                      </div>
-
-                      {/* Status / Sub-status Banner */}
-                      <div className="flex flex-wrap gap-1">
-                        {order.status === LAB_ORDER_STATUS.ACCEPTED && (
-                          <Badge
-                            status={
-                              order.materialsStatus === MATERIALS_STATUS.AWAITING_MATERIALS
-                                ? 'AWAITING_MATERIALS'
-                                : 'READY_FOR_PRODUCTION'
-                            }
-                            size="sm"
-                          >
-                            {MATERIALS_DISPLAY_LABELS[order.materialsStatus] || 'Ready for Production'}
-                          </Badge>
-                        )}
-                        {order.status === LAB_ORDER_STATUS.IN_PRODUCTION && currentStageObj && (
-                          <Badge status="IN_PRODUCTION" size="sm">
-                            {currentStageObj.label}
-                          </Badge>
-                        )}
-                        {order.tryInStatus === 'SENT_TO_CLINIC' && (
-                          <Badge status="SENT_TO_CLINIC" size="sm">
-                            At Clinic • Try-In
-                          </Badge>
-                        )}
-                        {order.status === LAB_ORDER_STATUS.QUALITY_CHECK && (
-                          <Badge status="QUALITY_CHECK" size="sm">
-                            Quality Check
-                          </Badge>
-                        )}
-                        {[LAB_ORDER_STATUS.READY_FOR_DISPATCH, LAB_ORDER_STATUS.DISPATCHED].includes(
-                          order.status
-                        ) && (
-                          <Badge
-                            status={order.dispatchSubStatus || order.status}
-                            size="sm"
-                          >
-                            {DISPATCH_SUB_LABELS[order.dispatchSubStatus] ||
-                              STATUS_DISPLAY_LABELS[order.status]}
-                          </Badge>
-                        )}
-                        {order.status === LAB_ORDER_STATUS.ISSUE_REPORTED && (
-                          <Badge status="ISSUE_REPORTED" size="sm">
-                            Clinic Issue Reported
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Privacy-Safe Case Metadata */}
-                      <div className="space-y-2 text-xs text-ink-secondary pt-0.5 min-w-0">
-                        <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 min-w-0">
-                          <span className="font-semibold text-ink-primary break-words">
-                            {order.caseReference}
-                          </span>
-                          <span className="text-[11px] text-teal-700 dark:text-teal-300 font-mono">
-                            {formatArchAndTeeth(order)}
-                          </span>
-                        </div>
-                        <div className="text-xs text-ink-secondary leading-snug break-words">
-                          {order.material}
-                          {order.shade ? ` • Shade ${order.shade}` : ''}
-                        </div>
-                        <div className="text-xs text-ink-muted leading-snug break-words">
-                          Dr. {order.dentistName} • {order.clinicName}
-                        </div>
-                        <div className="space-y-1 text-[11px] text-ink-muted">
-                          <span className="inline-flex items-center gap-1">
-                            <Clock className="w-3 h-3 shrink-0" />
-                            Due:{' '}
-                            {order.estimatedCompletionDate
-                              ? formatDate(order.estimatedCompletionDate)
-                              : 'TBD'}
-                          </span>
-                          {order.assignedTech && (
-                            <span className="block font-medium break-words">
-                              Technician: {order.assignedTech}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Retainer Subtype Fabrication Guidance */}
-                      {retainerDetail && order.status === LAB_ORDER_STATUS.IN_PRODUCTION && (
-                        <div className="p-2 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-800 dark:text-teal-200 leading-relaxed break-words">
-                          <Wrench className="w-3 h-3 inline mr-1" />
-                          {retainerDetail}
-                        </div>
-                      )}
-
-                      {/* Reported Issue Summary */}
-                      {order.status === LAB_ORDER_STATUS.ISSUE_REPORTED && order.issueReport && (
-                        <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/30 text-xs text-rose-800 dark:text-rose-200 break-words">
-                          <strong>{order.issueReport.issueType}:</strong> {order.issueReport.description}
-                        </div>
-                      )}
-
-                      {/* Stage-Appropriate Actions */}
-                      <div className="pt-2 border-t border-surface-border space-y-1.5 min-w-0">
-                        {order.status === LAB_ORDER_STATUS.ACCEPTED &&
-                          order.materialsStatus === MATERIALS_STATUS.AWAITING_MATERIALS && (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="sm"
-                              className="w-full text-[11px] px-2"
-                              leftIcon={PackageCheck}
-                              isLoading={busyId === order.id}
-                              onClick={() => handleConfirmMaterials(order)}
-                            >
-                              Confirm Materials
-                            </Button>
-                          )}
-
-                        {order.status === LAB_ORDER_STATUS.ACCEPTED &&
-                          order.materialsStatus === MATERIALS_STATUS.READY_FOR_PRODUCTION && (
-                            <Button
-                              type="button"
-                              variant="primary"
-                              size="sm"
-                              className="w-full text-[11px] px-2"
-                              leftIcon={Play}
-                              isLoading={busyId === order.id}
-                              onClick={() => openStartProduction(order)}
-                            >
-                              Start Fabrication
-                            </Button>
-                          )}
-
-                        {order.status === LAB_ORDER_STATUS.IN_PRODUCTION &&
-                          order.tryInStatus !== 'SENT_TO_CLINIC' &&
-                          nextStage &&
-                          nextStage.phase !== 'DISPATCH' && (
-                            <Button
-                              type="button"
-                              variant="primary"
-                              size="sm"
-                              className="w-full text-[11px] px-2"
-                              rightIcon={ArrowRight}
-                              isLoading={busyId === order.id}
-                              onClick={() => openAdvanceStage(order, nextStage)}
-                            >
-                              {nextStage.phase === 'QUALITY_CHECK'
-                                ? 'Quality Check'
-                                : `Next: ${nextStage.label}`}
-                            </Button>
-                          )}
-
-                        {order.status === LAB_ORDER_STATUS.IN_PRODUCTION &&
-                          order.tryInStatus === 'SENT_TO_CLINIC' && (
-                            <div className="text-[10px] text-center py-1 px-1.5 rounded-lg bg-sky-500/10 text-sky-700 dark:text-sky-300 font-medium">
+                          {order.tryInStatus === 'SENT_TO_CLINIC' && (
+                            <Badge status="SENT_TO_CLINIC" size="sm">
                               At Clinic • Try-In
-                            </div>
+                            </Badge>
+                          )}
+                          {order.status === LAB_ORDER_STATUS.QUALITY_CHECK && (
+                            <Badge status="QUALITY_CHECK" size="sm">
+                              Quality Check
+                            </Badge>
+                          )}
+                          {[LAB_ORDER_STATUS.READY_FOR_DISPATCH, LAB_ORDER_STATUS.DISPATCHED].includes(
+                            order.status
+                          ) && (
+                              <Badge
+                                status={order.dispatchSubStatus || order.status}
+                                size="sm"
+                              >
+                                {DISPATCH_SUB_LABELS[order.dispatchSubStatus] ||
+                                  STATUS_DISPLAY_LABELS[order.status]}
+                              </Badge>
+                            )}
+                          {order.status === LAB_ORDER_STATUS.ISSUE_REPORTED && (
+                            <Badge status="ISSUE_REPORTED" size="sm">
+                              Clinic Issue Reported
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Privacy-Safe Case Metadata */}
+                        <div className="space-y-2 text-xs text-ink-secondary pt-0.5 min-w-0">
+                          <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 min-w-0">
+                            <span className="font-semibold text-ink-primary break-words">
+                              {order.caseReference}
+                            </span>
+                            <span className="text-[11px] text-teal-700 dark:text-teal-300 font-mono">
+                              {formatArchAndTeeth(order)}
+                            </span>
+                          </div>
+                          <div className="text-xs text-ink-secondary leading-snug break-words">
+                            {order.material}
+                            {order.shade ? ` • Shade ${order.shade}` : ''}
+                          </div>
+                          <div className="text-xs text-ink-muted leading-snug break-words">
+                            Dr. {order.dentistName} • {order.clinicName}
+                          </div>
+                          <div className="space-y-1 text-[11px] text-ink-muted">
+                            <span className="inline-flex items-center gap-1">
+                              <Clock className="w-3 h-3 shrink-0" />
+                              Due:{' '}
+                              {order.estimatedCompletionDate
+                                ? formatDate(order.estimatedCompletionDate)
+                                : 'TBD'}
+                            </span>
+                            {order.assignedTech && (
+                              <span className="block font-medium break-words">
+                                Technician: {order.assignedTech}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Retainer Subtype Fabrication Guidance */}
+                        {retainerDetail && order.status === LAB_ORDER_STATUS.IN_PRODUCTION && (
+                          <div className="p-2 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-800 dark:text-teal-200 leading-relaxed break-words">
+                            <Wrench className="w-3 h-3 inline mr-1" />
+                            {retainerDetail}
+                          </div>
+                        )}
+
+                        {/* Reported Issue Summary */}
+                        {order.status === LAB_ORDER_STATUS.ISSUE_REPORTED && order.issueReport && (
+                          <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/30 text-xs text-rose-800 dark:text-rose-200 break-words">
+                            <strong>{order.issueReport.issueType}:</strong> {order.issueReport.description}
+                          </div>
+                        )}
+
+                        {/* Stage-Appropriate Actions */}
+                        <div className="pt-2 border-t border-surface-border space-y-1.5 min-w-0">
+                          {order.status === LAB_ORDER_STATUS.ACCEPTED &&
+                            order.materialsStatus === MATERIALS_STATUS.AWAITING_MATERIALS && (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                className="w-full text-[11px] px-2"
+                                leftIcon={PackageCheck}
+                                isLoading={busyId === order.id}
+                                onClick={() => handleConfirmMaterials(order)}
+                              >
+                                Confirm Materials
+                              </Button>
+                            )}
+
+                          {order.status === LAB_ORDER_STATUS.ACCEPTED &&
+                            order.materialsStatus === MATERIALS_STATUS.READY_FOR_PRODUCTION && (
+                              <Button
+                                type="button"
+                                variant="primary"
+                                size="sm"
+                                className="w-full text-[11px] px-2"
+                                leftIcon={Play}
+                                isLoading={busyId === order.id}
+                                onClick={() => openStartProduction(order)}
+                              >
+                                Start Fabrication
+                              </Button>
+                            )}
+
+                          {order.status === LAB_ORDER_STATUS.IN_PRODUCTION &&
+                            order.tryInStatus !== 'SENT_TO_CLINIC' &&
+                            nextStage &&
+                            nextStage.phase !== 'DISPATCH' && (
+                              <Button
+                                type="button"
+                                variant="primary"
+                                size="sm"
+                                className="w-full text-[11px] px-2"
+                                rightIcon={ArrowRight}
+                                isLoading={busyId === order.id}
+                                onClick={() => openAdvanceStage(order, nextStage)}
+                              >
+                                {nextStage.phase === 'QUALITY_CHECK'
+                                  ? 'Quality Check'
+                                  : `Next: ${nextStage.label}`}
+                              </Button>
+                            )}
+
+                          {order.status === LAB_ORDER_STATUS.IN_PRODUCTION &&
+                            order.tryInStatus === 'SENT_TO_CLINIC' && (
+                              <div className="text-[10px] text-center py-1 px-1.5 rounded-lg bg-sky-500/10 text-sky-700 dark:text-sky-300 font-medium">
+                                At Clinic • Try-In
+                              </div>
+                            )}
+
+                          {order.status === LAB_ORDER_STATUS.QUALITY_CHECK && (
+                            <Button
+                              type="button"
+                              variant="primary"
+                              size="sm"
+                              className="w-full text-[11px] px-2"
+                              leftIcon={ShieldCheck}
+                              isLoading={busyId === order.id}
+                              onClick={() => openQualityCheck(order)}
+                            >
+                              Verify QC
+                            </Button>
                           )}
 
-                        {order.status === LAB_ORDER_STATUS.QUALITY_CHECK && (
+                          {[LAB_ORDER_STATUS.READY_FOR_DISPATCH, LAB_ORDER_STATUS.DISPATCHED].includes(
+                            order.status
+                          ) && (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                className="w-full text-[11px] px-2"
+                                leftIcon={Truck}
+                                isLoading={busyId === order.id}
+                                onClick={() => openDispatchModal(order)}
+                              >
+                                {order.status === LAB_ORDER_STATUS.READY_FOR_DISPATCH
+                                  ? 'Record Dispatch'
+                                  : 'Dispatch Ref'}
+                              </Button>
+                            )}
+
                           <Button
                             type="button"
-                            variant="primary"
+                            variant="ghost"
                             size="sm"
                             className="w-full text-[11px] px-2"
-                            leftIcon={ShieldCheck}
-                            isLoading={busyId === order.id}
-                            onClick={() => openQualityCheck(order)}
+                            leftIcon={Eye}
+                            onClick={() => navigate(`/lab/requests/${order.id}`)}
                           >
-                            Verify QC
+                            View Details
                           </Button>
-                        )}
-
-                        {[LAB_ORDER_STATUS.READY_FOR_DISPATCH, LAB_ORDER_STATUS.DISPATCHED].includes(
-                          order.status
-                        ) && (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            className="w-full text-[11px] px-2"
-                            leftIcon={Truck}
-                            isLoading={busyId === order.id}
-                            onClick={() => openDispatchModal(order)}
-                          >
-                            {order.status === LAB_ORDER_STATUS.READY_FOR_DISPATCH
-                              ? 'Record Dispatch'
-                              : 'Dispatch Ref'}
-                          </Button>
-                        )}
-
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="w-full text-[11px] px-2"
-                          leftIcon={Eye}
-                          onClick={() => navigate(`/lab/requests/${order.id}`)}
-                        >
-                          View Details
-                        </Button>
-                      </div>
-                    </Card>
-                  );
-                })
-              )}
-            </div>
+                        </div>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -951,22 +948,20 @@ export function LabOrdersQueue() {
               <button
                 type="button"
                 onClick={() => setQcDecision('PASS')}
-                className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 ${
-                  qcDecision === 'PASS'
+                className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 ${qcDecision === 'PASS'
                     ? 'bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-300'
                     : 'bg-surface-subtle border-surface-border text-ink-secondary'
-                }`}
+                  }`}
               >
                 <CheckCircle2 className="w-4 h-4" /> Pass Quality Check
               </button>
               <button
                 type="button"
                 onClick={() => setQcDecision('FAIL')}
-                className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 ${
-                  qcDecision === 'FAIL'
+                className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 ${qcDecision === 'FAIL'
                     ? 'bg-rose-500/15 border-rose-500 text-rose-700 dark:text-rose-300'
                     : 'bg-surface-subtle border-surface-border text-ink-secondary'
-                }`}
+                  }`}
               >
                 <AlertTriangle className="w-4 h-4" /> Fail &amp; Return to Bench
               </button>

@@ -59,7 +59,7 @@ const SERVICE_META = {
   },
   'crowns-bridges': {
     category: 'Restorations',
-    subtitle: 'Fixed Prosthetics',
+    subtitle: 'Crowns, Bridges',
     icon: ShieldCheck,
     prepTips: 'Please advise our specialist if you clench or grind your teeth. Digital impressions will be taken.',
   },

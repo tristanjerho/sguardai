@@ -521,16 +521,13 @@ export function SmileGuardAssistant() {
   const isPatientPortal = location.pathname.startsWith('/patient');
   const isBookingPage = location.pathname === '/patient/book';
   const isPatient = isPatientPortal || userRole === ROLES.PATIENT;
-  const isMobileNavPortal = ['/patient', '/clinic', '/lab', '/admin'].some(
-    (basePath) => location.pathname === basePath || location.pathname.startsWith(`${basePath}/`)
-  );
 
   // On the booking page, elevate launcher higher and keep it compact so it doesn't overlap the sticky booking bar or service cards
   const bottomLauncherClass = isBookingPage
-    ? 'bottom-[max(8.5rem,calc(7.5rem+env(safe-area-inset-bottom,0px)))] lg:bottom-6 right-3 sm:right-6'
-    : isMobileNavPortal
-    ? 'bottom-[max(7rem,calc(6rem+env(safe-area-inset-bottom,0px)))] lg:bottom-6 right-4 sm:right-6'
-    : 'bottom-6 right-4 sm:right-6';
+    ? 'bottom-[max(8.5rem,calc(7.5rem+env(safe-area-inset-bottom,0px)))] sm:bottom-6 right-3 sm:right-6'
+    : isPatientPortal
+      ? 'bottom-28 sm:bottom-6 right-4 sm:right-6'
+      : 'bottom-6 right-4 sm:right-6';
 
   // Dimension classes depending on maximized toggle
   const panelDimensionsClass = isMaximized
@@ -548,11 +545,10 @@ export function SmileGuardAssistant() {
           onClick={() => setIsOpen((prev) => !prev)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className={`relative group flex items-center justify-center ${
-            isBookingPage
-              ? 'w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl shadow-md opacity-90 hover:opacity-100'
-              : 'w-14 h-14 rounded-2xl shadow-soft-lg'
-          } bg-gradient-to-tr from-teal-600 via-teal-500 to-cyan-500 text-white hover:shadow-teal-600/40 border border-teal-400/30 focus:outline-none focus:ring-4 focus:ring-teal-500/30 transition-all cursor-pointer`}
+          className={`relative group flex items-center justify-center ${isBookingPage
+            ? 'w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl shadow-md opacity-90 hover:opacity-100'
+            : 'w-14 h-14 rounded-2xl shadow-soft-lg'
+            } bg-gradient-to-tr from-teal-600 via-teal-500 to-cyan-500 text-white hover:shadow-teal-600/40 border border-teal-400/30 focus:outline-none focus:ring-4 focus:ring-teal-500/30 transition-all cursor-pointer`}
           aria-label={isOpen ? 'Close Gardy Assistant' : 'Open Gardy Assistant'}
           title="Gardy Assistant"
         >
@@ -589,7 +585,7 @@ export function SmileGuardAssistant() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.96 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={`fixed z-50 right-3 sm:right-6 ${isMobileNavPortal ? 'bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] lg:bottom-6' : 'bottom-4 sm:bottom-6'
+            className={`fixed z-50 right-3 sm:right-6 ${isPatientPortal ? 'bottom-20 sm:bottom-6' : 'bottom-4 sm:bottom-6'
               } ${panelDimensionsClass} rounded-3xl bg-surface-card dark:bg-[#0B1B32] border border-surface-border dark:border-[#26415E]/90 shadow-2xl overflow-hidden flex flex-col font-sans backdrop-blur-xl transition-all duration-300`}
           >
             {/* Header */}
@@ -742,8 +738,8 @@ export function SmileGuardAssistant() {
                       {/* Bubble */}
                       <div
                         className={`group relative rounded-2xl px-4 py-2.5 shadow-xs transition-all ${isUser
-                            ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-br-xs'
-                            : 'bg-surface-50 dark:bg-[#122444] border border-surface-200/90 dark:border-[#26415E] text-ink-primary dark:text-[#F8FAFC] rounded-bl-xs'
+                          ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-br-xs'
+                          : 'bg-surface-50 dark:bg-[#122444] border border-surface-200/90 dark:border-[#26415E] text-ink-primary dark:text-[#F8FAFC] rounded-bl-xs'
                           }`}
                       >
                         {isUser ? (
@@ -873,8 +869,8 @@ export function SmileGuardAssistant() {
                   type="button"
                   onClick={toggleVoiceDictation}
                   className={`p-2 rounded-xl transition-all cursor-pointer ${isListening
-                      ? 'bg-red-500 text-white animate-pulse'
-                      : 'text-ink-secondary dark:text-[#83A6CE] hover:text-teal-600 hover:bg-surface-200/60 dark:hover:bg-[#1E3756]'
+                    ? 'bg-red-500 text-white animate-pulse'
+                    : 'text-ink-secondary dark:text-[#83A6CE] hover:text-teal-600 hover:bg-surface-200/60 dark:hover:bg-[#1E3756]'
                     }`}
                   title={
                     isListening

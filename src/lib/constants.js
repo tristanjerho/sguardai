@@ -87,7 +87,7 @@ export const SERVICES = [
   },
   {
     id: 'crowns-bridges',
-    name: 'Crowns & Bridges',
+    name: 'Crowns, Bridges',
     duration: '60-90 mins',
     description: 'Fixed prosthetic restorations to reinforce badly damaged teeth or replace missing teeth.',
     pricingNote: 'Fee depends on remaining tooth structure, material, and number of units',

@@ -7,9 +7,31 @@ const ThemeContext = createContext({
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('sguardai_theme');
-    if (saved) return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    // Clear any legacy dark mode stored from automatic OS dark detection
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        if (localStorage.getItem('sguardai_theme') === 'dark') {
+          localStorage.removeItem('sguardai_theme');
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // Check if the user manually toggled the theme during this active browser session
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        const sessionTheme = sessionStorage.getItem('sguardai_session_theme');
+        if (sessionTheme === 'light' || sessionTheme === 'dark') {
+          return sessionTheme;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // Default must unconditionally be the original white (light mode)
+    return 'light';
   });
 
   useEffect(() => {
@@ -19,7 +41,20 @@ export function ThemeProvider({ children }) {
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('sguardai_theme', theme);
+
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        sessionStorage.setItem('sguardai_session_theme', theme);
+      }
+      // Also sync to localStorage so any other tabs stay consistent
+      if (typeof window !== 'undefined' && window.localStorage) {
+        if (theme === 'light') {
+          localStorage.removeItem('sguardai_theme');
+        }
+      }
+    } catch {
+      // ignore
+    }
   }, [theme]);
 
   const toggleTheme = () => {
@@ -36,3 +71,4 @@ export function ThemeProvider({ children }) {
 export function useTheme() {
   return useContext(ThemeContext);
 }
+
