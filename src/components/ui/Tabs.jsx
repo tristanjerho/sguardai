@@ -64,7 +64,7 @@ export function Tabs({
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
             className={clsx(
-              'flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-200 whitespace-nowrap',
+              'flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-200 whitespace-nowrap',
               isActive
                 ? 'bg-surface-card dark:bg-[#26415E]/90 text-teal-700 dark:text-[#E5C9D7] shadow-soft-sm dark:shadow-[0_2px_8px_rgba(11,27,50,0.6)] dark:border dark:border-[#83A6CE]/40 font-bold'
                 : 'text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-[#F8FAFC] hover:bg-surface-50 dark:hover:bg-[#26415E]/40'

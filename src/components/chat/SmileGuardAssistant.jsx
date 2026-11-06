@@ -357,19 +357,31 @@ export function SmileGuardAssistant() {
     }
   }, [messages, isOpen, isLoading]);
 
-  // Reset unread count when opening
+  // Reset unread count & ensure input is compact when opening
   useEffect(() => {
     if (isOpen) {
       setUnreadCount(0);
+      if (textareaRef.current) {
+        textareaRef.current.style.height = '36px';
+        textareaRef.current.style.overflowY = 'hidden';
+      }
     }
   }, [isOpen]);
 
-  // Auto-resize textarea as content expands
+  // Auto-resize textarea as content expands (hide scrollbar until exceeding max-height)
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    if (!inputText) {
+      el.style.height = '36px';
+      el.style.overflowY = 'hidden';
+      return;
     }
+    const scrollH = el.scrollHeight;
+    const targetHeight = Math.min(Math.max(scrollH, 36), 120);
+    el.style.height = `${targetHeight}px`;
+    el.style.overflowY = scrollH > 120 ? 'auto' : 'hidden';
   }, [inputText]);
 
   const handleSendMessage = async (textToSend) => {
@@ -505,8 +517,9 @@ export function SmileGuardAssistant() {
 
   const roleBadge = getRoleBadge();
 
-  // Floating button bottom offset for mobile when patient BottomTabBar is mounted
+  // Floating button bottom offset for mobile when patient BottomTabBar or sticky booking bar is mounted
   const isPatientPortal = location.pathname.startsWith('/patient');
+  const isBookingPage = location.pathname === '/patient/book';
   const isPatient = isPatientPortal || userRole === ROLES.PATIENT;
   const isMobileNavPortal = ['/patient', '/clinic', '/lab', '/admin'].some(
     (basePath) => location.pathname === basePath || location.pathname.startsWith(`${basePath}/`)
@@ -716,9 +729,8 @@ export function SmileGuardAssistant() {
                     className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
                   >
                     <div
-                      className={`flex items-start gap-2 max-w-[90%] ${
-                        isUser ? 'flex-row-reverse' : 'flex-row'
-                      }`}
+                      className={`flex items-start gap-2 max-w-[90%] ${isUser ? 'flex-row-reverse' : 'flex-row'
+                        }`}
                     >
                       {/* Avatar */}
                       {!isUser && (
@@ -729,11 +741,10 @@ export function SmileGuardAssistant() {
 
                       {/* Bubble */}
                       <div
-                        className={`group relative rounded-2xl px-4 py-2.5 shadow-xs transition-all ${
-                          isUser
+                        className={`group relative rounded-2xl px-4 py-2.5 shadow-xs transition-all ${isUser
                             ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-br-xs'
                             : 'bg-surface-50 dark:bg-[#122444] border border-surface-200/90 dark:border-[#26415E] text-ink-primary dark:text-[#F8FAFC] rounded-bl-xs'
-                        }`}
+                          }`}
                       >
                         {isUser ? (
                           <p className="text-[13.5px] leading-relaxed whitespace-pre-wrap font-sans">
@@ -861,11 +872,10 @@ export function SmileGuardAssistant() {
                 <button
                   type="button"
                   onClick={toggleVoiceDictation}
-                  className={`p-2 rounded-xl transition-all cursor-pointer ${
-                    isListening
+                  className={`p-2 rounded-xl transition-all cursor-pointer ${isListening
                       ? 'bg-red-500 text-white animate-pulse'
                       : 'text-ink-secondary dark:text-[#83A6CE] hover:text-teal-600 hover:bg-surface-200/60 dark:hover:bg-[#1E3756]'
-                  }`}
+                    }`}
                   title={
                     isListening
                       ? 'Stop dictation'
@@ -884,12 +894,12 @@ export function SmileGuardAssistant() {
                   placeholder={
                     isListening
                       ? 'Listening chairside... speak clearly'
-                      : 'Ask about dental workflows, X-ray AI, or system features...'
+                      : 'Ask Gardy anything...'
                   }
                   rows={1}
                   maxLength={1000}
                   disabled={isLoading}
-                  className="w-full resize-none bg-transparent px-2 py-1.5 text-[13.5px] text-ink-primary dark:text-[#F8FAFC] placeholder:text-ink-muted dark:placeholder:text-[#83A6CE]/60 focus:outline-none disabled:opacity-50 min-h-[38px] max-h-[120px]"
+                  className="w-full resize-none bg-transparent px-2.5 py-2 text-[13px] leading-5 text-ink-primary dark:text-[#F8FAFC] placeholder:text-ink-muted dark:placeholder:text-[#83A6CE]/60 placeholder:truncate focus:outline-none disabled:opacity-50 min-h-[36px] max-h-[120px] overflow-hidden"
                 />
 
                 <button

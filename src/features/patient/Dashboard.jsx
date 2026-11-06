@@ -113,40 +113,48 @@ export function PatientDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Top Sparky Greeting Hero */}
-      <div className="rounded-3xl bg-gradient-to-r from-teal-600 via-teal-500 to-teal-700 dark:from-[#0D1E4C] dark:via-[#1B2F52] dark:to-[#26415E] dark:border dark:border-[#83A6CE]/30 p-6 sm:p-8 text-white shadow-soft-lg dark:shadow-[0_12px_40px_-8px_rgba(11,27,50,0.8),0_0_30px_-5px_rgba(131,166,206,0.2)] flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Top Sparky Greeting Hero — Compact & Responsive for Mobile/PWA */}
+      <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-teal-600 via-teal-500 to-teal-700 dark:from-[#0D1E4C] dark:via-[#1B2F52] dark:to-[#26415E] dark:border dark:border-[#83A6CE]/30 p-4 sm:p-6 lg:p-8 text-white shadow-soft-lg dark:shadow-[0_12px_40px_-8px_rgba(11,27,50,0.8),0_0_30px_-5px_rgba(131,166,206,0.2)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6 relative overflow-hidden">
         {/* Background ambient lighting */}
         <div className="absolute -right-10 -bottom-10 w-72 h-72 rounded-full bg-[#C48CB3]/25 dark:bg-[#C48CB3]/20 blur-3xl pointer-events-none" />
         <div className="absolute top-0 left-1/3 w-72 h-72 rounded-full bg-white/10 dark:bg-[#83A6CE]/20 blur-3xl pointer-events-none" />
 
-        <div className="flex-shrink-0 flex items-center justify-center">
-          <Mascot mood="happy" size="lg" />
-        </div>
-
-        <div className="flex-1 space-y-2 text-center md:text-left z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 dark:bg-[#83A6CE]/20 dark:border dark:border-[#83A6CE]/30 text-white dark:text-[#E5C9D7] text-xs font-semibold backdrop-blur-sm">
-            <Sparkles className="w-3.5 h-3.5 text-[#E5C9D7]" />
-            <span>Oral Health Guardian</span>
+        <div className="flex items-center gap-3.5 sm:gap-6 w-full md:w-auto">
+          {/* Mascot: Compact size on mobile, expansive on desktop */}
+          <div className="flex-shrink-0 flex items-center justify-center">
+            <div className="sm:hidden">
+              <Mascot mood="happy" size="sm" />
+            </div>
+            <div className="hidden sm:block">
+              <Mascot mood="happy" size="lg" />
+            </div>
           </div>
 
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-heading font-extrabold tracking-tight text-white dark:text-[#F8FAFC]">
-            {getGreeting(user?.fullName || user?.name || 'Friend')}
-          </h2>
+          <div className="flex-1 space-y-1 sm:space-y-2 text-left z-10 min-w-0">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-white/20 dark:bg-[#83A6CE]/20 dark:border dark:border-[#83A6CE]/30 text-white dark:text-[#E5C9D7] text-[11px] sm:text-xs font-semibold backdrop-blur-sm">
+              <Sparkles className="w-3 h-3 text-[#E5C9D7]" />
+              <span>Oral Health Guardian</span>
+            </div>
 
-          <p className="text-sm text-teal-100 dark:text-[#E5C9D7]/90 max-w-xl">
-            {treatment
-              ? `You are currently at ${treatment.progressPercentage}% of your ${treatment.treatmentType}. Keep following your home-care plan!`
-              : 'Keep up your daily oral routines and book your routine dental checkup regularly!'}
-          </p>
+            <h2 className="text-base sm:text-2xl lg:text-3xl font-heading font-extrabold tracking-tight text-white dark:text-[#F8FAFC] leading-snug line-clamp-2 sm:line-clamp-none">
+              {getGreeting(user?.fullName || user?.name || 'Friend')}
+            </h2>
+
+            <p className="text-xs sm:text-sm text-teal-100 dark:text-[#E5C9D7]/90 max-w-xl line-clamp-2 sm:line-clamp-none">
+              {treatment
+                ? `You are currently at ${treatment.progressPercentage}% of your ${treatment.treatmentType}. Keep following your home-care plan!`
+                : 'Keep up your daily oral routines and book your routine dental checkup regularly!'}
+            </p>
+          </div>
         </div>
 
-        <div className="z-10 flex-shrink-0">
-          <Link to="/patient/book">
+        <div className="z-10 flex-shrink-0 w-full md:w-auto pt-1 md:pt-0">
+          <Link to="/patient/book" className="block w-full">
             <Button
               variant="accent"
-              size="md"
-              className="font-bold shadow-soft"
+              size="sm"
+              className="w-full md:w-auto font-bold shadow-soft justify-center py-2 sm:py-2.5 text-xs sm:text-sm"
               rightIcon={ArrowRight}
             >
               Book Visit

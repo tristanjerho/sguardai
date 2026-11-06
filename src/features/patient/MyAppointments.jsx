@@ -70,8 +70,8 @@ export function MyAppointments() {
 
   const tabs = [
     { id: 'upcoming', label: 'Upcoming', badge: upcomingList.length },
-    { id: 'past', label: 'Past Visits', badge: pastList.length },
-    { id: 'cancelled', label: 'Cancelled / Declined', badge: cancelledList.length },
+    { id: 'past', label: 'Past', badge: pastList.length },
+    { id: 'cancelled', label: 'Cancelled', badge: cancelledList.length },
   ];
 
   const getTodayStr = () => {
