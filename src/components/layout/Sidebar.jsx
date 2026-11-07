@@ -21,63 +21,71 @@ import {
 import { ROLES } from '../../lib/roles';
 import { Logo } from '../common/Logo';
 
-export function Sidebar({ role, isOpen = true, onClose }) {
-  let navItems = [];
-
+export function getNavItemsByRole(role) {
   if (role === ROLES.PATIENT) {
-    navItems = [
-      { to: '/patient', label: 'Dashboard', icon: LayoutDashboard, end: true },
-      { to: '/patient/book', label: 'Book Appointment', icon: CalendarPlus },
-      { to: '/patient/appointments', label: 'My Appointments', icon: CalendarCheck },
-      { to: '/patient/treatment', label: 'Treatment Progress', icon: Activity },
-      { to: '/patient/records', label: 'Dental Records', icon: FolderArchive },
-      { to: '/patient/profile', label: 'Profile & Settings', icon: User },
+    return [
+      { to: '/patient', label: 'Dashboard', shortLabel: 'Dashboard', icon: LayoutDashboard, end: true },
+      { to: '/patient/book', label: 'Book Appointment', shortLabel: 'Book', icon: CalendarPlus },
+      { to: '/patient/appointments', label: 'My Appointments', shortLabel: 'Appointments', icon: CalendarCheck },
+      { to: '/patient/treatment', label: 'Treatment Progress', shortLabel: 'Treatment', icon: Activity },
+      { to: '/patient/records', label: 'Dental Records', shortLabel: 'Records', icon: FolderArchive },
+      { to: '/patient/profile', label: 'Profile & Settings', shortLabel: 'Profile', icon: User },
     ];
-  } else if (role === ROLES.LAB_TECH) {
-    navItems = [
-      { to: '/lab', label: 'Order Intake & Admin', icon: Inbox, end: true },
-      { to: '/lab/board', label: 'Laboratory Production Board', icon: FlaskConical },
-    ];
-  } else if (role === ROLES.DENTIST || role === ROLES.ADMIN || role === ROLES.SUPERADMIN) {
-    const clinicItems = [
-      { to: '/clinic', label: 'Dashboard', icon: LayoutDashboard, end: true },
-      { to: '/clinic/queue', label: 'Appointments Queue', icon: Clock },
-      { to: '/clinic/patients', label: 'Patient Directory', icon: Users },
-      { to: '/clinic/treatments', label: 'Treatment Plans', icon: ClipboardList },
-      { to: '/clinic/lab-orders', label: 'Lab Prescriptions', icon: FlaskConical },
-      { to: '/clinic/ai-workstation', label: 'AI Workstation', icon: BrainCircuit, badge: 'AI' },
-    ];
-
-    if (role === ROLES.SUPERADMIN) {
-      navItems = [
-        { to: '/admin/super', label: 'Command Center', icon: ShieldCheck, badge: 'ROOT', end: true },
-        { to: '/admin/users', label: 'User Registry & Roles', icon: Users },
-        { to: '/admin/logs', label: 'Security & Audit Stream', icon: ShieldAlert },
-        { type: 'divider', label: 'Operational Portals' },
-        { to: '/clinic', label: 'Chairside Clinic Portal', icon: LayoutDashboard },
-        { to: '/lab', label: 'Lab Order Intake', icon: Inbox, end: true },
-        { to: '/lab/board', label: 'Laboratory Production Board', icon: FlaskConical },
-      ];
-    } else if (role === ROLES.ADMIN) {
-      navItems = [
-        { to: '/admin/users', label: 'User Management', icon: Users, end: true },
-        { to: '/admin/logs', label: 'Activity Logs', icon: ShieldAlert },
-        { type: 'divider', label: 'Operational Portals' },
-        { to: '/clinic', label: 'Chairside Clinic Portal', icon: LayoutDashboard },
-        { to: '/lab', label: 'Lab Order Intake', icon: Inbox, end: true },
-        { to: '/lab/board', label: 'Laboratory Production Board', icon: FlaskConical },
-      ];
-    } else {
-      navItems = clinicItems;
-    }
   }
+
+  if (role === ROLES.LAB_TECH) {
+    return [
+      { to: '/lab', label: 'Order Intake & Admin', shortLabel: 'Order Intake', icon: Inbox, end: true },
+      { to: '/lab/board', label: 'Laboratory Production Board', shortLabel: 'Production Board', icon: FlaskConical },
+    ];
+  }
+
+  if (role === ROLES.SUPERADMIN) {
+    return [
+      { to: '/admin/super', label: 'Command Center', shortLabel: 'Command', icon: ShieldCheck, badge: 'ROOT', end: true },
+      { to: '/admin/users', label: 'User Registry & Roles', shortLabel: 'Users', icon: Users },
+      { to: '/admin/logs', label: 'Security & Audit Stream', shortLabel: 'Audit Logs', icon: ShieldAlert },
+      { type: 'divider', label: 'Operational Portals' },
+      { to: '/clinic', label: 'Chairside Clinic Portal', shortLabel: 'Clinic', icon: LayoutDashboard },
+      { to: '/lab', label: 'Lab Order Intake', shortLabel: 'Lab Intake', icon: Inbox, end: true },
+      { to: '/lab/board', label: 'Laboratory Production Board', shortLabel: 'Lab Board', icon: FlaskConical },
+    ];
+  }
+
+  if (role === ROLES.ADMIN) {
+    return [
+      { to: '/admin/users', label: 'User Management', shortLabel: 'Users', icon: Users, end: true },
+      { to: '/admin/logs', label: 'Activity Logs', shortLabel: 'Logs', icon: ShieldAlert },
+      { type: 'divider', label: 'Operational Portals' },
+      { to: '/clinic', label: 'Chairside Clinic Portal', shortLabel: 'Clinic', icon: LayoutDashboard },
+      { to: '/lab', label: 'Lab Order Intake', shortLabel: 'Lab Intake', icon: Inbox, end: true },
+      { to: '/lab/board', label: 'Laboratory Production Board', shortLabel: 'Lab Board', icon: FlaskConical },
+    ];
+  }
+
+  if (role === ROLES.DENTIST) {
+    return [
+      { to: '/clinic', label: 'Dashboard', shortLabel: 'Dashboard', icon: LayoutDashboard, end: true },
+      { to: '/clinic/queue', label: 'Appointments Queue', shortLabel: 'Queue', icon: Clock },
+      { to: '/clinic/patients', label: 'Patient Directory', shortLabel: 'Patients', icon: Users },
+      { to: '/clinic/treatments', label: 'Treatment Plans', shortLabel: 'Treatments', icon: ClipboardList },
+      { to: '/clinic/lab-orders', label: 'Lab Prescriptions', shortLabel: 'Lab', icon: FlaskConical },
+      { to: '/clinic/ai-workstation', label: 'AI Workstation', shortLabel: 'AI', icon: BrainCircuit, badge: 'AI' },
+    ];
+  }
+
+  return [];
+}
+
+export function Sidebar({ role, isOpen = true, onClose }) {
+  const navItems = getNavItemsByRole(role);
 
   return (
     <>
       {/* Mobile Backdrop */}
       {isOpen && onClose && (
         <div
-          className="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-[45] lg:hidden"
           onClick={onClose}
           aria-hidden="true"
         />

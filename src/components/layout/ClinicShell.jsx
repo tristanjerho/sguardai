@@ -13,6 +13,7 @@ import { triggerDeviceNotification, requestNotificationPermission } from '../../
 export function ClinicShell() {
   const { user } = useAuth();
   const toast = useToast();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 
@@ -92,13 +93,16 @@ export function ClinicShell() {
     <div className="min-h-screen bg-surface-base text-ink-primary">
       <Topbar
         title={getPageTitle()}
-        showMenuButton={false}
+        showMenuButton={true}
+        onMenuToggle={() => setIsSidebarOpen(true)}
         unreadCount={unreadCount}
       />
 
-      <div className="hidden lg:block">
-        <Sidebar role={user?.role || ROLES.DENTIST} isOpen={false} />
-      </div>
+      <Sidebar
+        role={user?.role || ROLES.DENTIST}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       <main className="lg:pl-64 p-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:p-6 sm:pb-[calc(7rem+env(safe-area-inset-bottom,0px))] lg:p-8 lg:pb-8 min-h-[calc(100vh-4rem)] transition-all">
         <div className="max-w-7xl mx-auto">

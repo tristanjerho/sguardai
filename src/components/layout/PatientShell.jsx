@@ -12,6 +12,7 @@ import { triggerDeviceNotification, requestNotificationPermission } from '../../
 export function PatientShell() {
   const { user } = useAuth();
   const toast = useToast();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 
@@ -66,14 +67,15 @@ export function PatientShell() {
     <div className="min-h-screen bg-surface-base text-ink-primary">
       <Topbar
         title={getPageTitle()}
-        showMenuButton={false}
+        showMenuButton={true}
+        onMenuToggle={() => setIsSidebarOpen(true)}
         unreadCount={unreadCount}
       />
 
       <Sidebar
-        role={ROLES.PATIENT}
-        isOpen={false}
-        onClose={() => { }}
+        role={user?.role || ROLES.PATIENT}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       <main
@@ -87,7 +89,7 @@ export function PatientShell() {
         </div>
       </main>
 
-      <BottomTabBar />
+      <BottomTabBar role={user?.role || ROLES.PATIENT} />
     </div>
   );
 }
