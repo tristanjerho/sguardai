@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { useMascot } from '../../context/MascotContext';
@@ -13,6 +13,12 @@ export function Mascot({
 }) {
   const { showSparky } = useMascot();
   const prefersReducedMotion = useReducedMotion();
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+
+  const toothGradientId = `toothGradient_${uid}`;
+  const shieldGradientId = `shieldGradient_${uid}`;
+  const rosyCheekId = `rosyCheek_${uid}`;
+  const brushHandleId = `brushHandle_${uid}`;
 
   if (!showSparky && !forceShow) return null;
 
@@ -93,23 +99,23 @@ export function Mascot({
       >
         <defs>
           {/* Smooth gradients for tooth enamel and shading */}
-          <linearGradient id="toothGradient" x1="20" y1="10" x2="100" y2="120" gradientUnits="userSpaceOnUse">
+          <linearGradient id={toothGradientId} x1="20" y1="10" x2="100" y2="120" gradientUnits="userSpaceOnUse">
             <stop stopColor="#FFFFFF" />
-            <stop offset="0.7" stopColor="#F0FDFA" />
-            <stop offset="1" stopColor="#CCFBF1" />
+            <stop offset="0.8" stopColor="#FFFFFF" />
+            <stop offset="1" stopColor="#F0FDFA" />
           </linearGradient>
 
-          <linearGradient id="shieldGradient" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <linearGradient id={shieldGradientId} x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
             <stop stopColor="#0D9488" />
             <stop offset="1" stopColor="#14B8A6" />
           </linearGradient>
 
-          <radialGradient id="rosyCheek" cx="50%" cy="50%" r="50%">
+          <radialGradient id={rosyCheekId} cx="50%" cy="50%" r="50%">
             <stop stopColor="#FB7185" stopOpacity="0.6" />
             <stop offset="100%" stopColor="#FB7185" stopOpacity="0" />
           </radialGradient>
 
-          <linearGradient id="brushHandle" x1="0" y1="0" x2="40" y2="10" gradientUnits="userSpaceOnUse">
+          <linearGradient id={brushHandleId} x1="0" y1="0" x2="40" y2="10" gradientUnits="userSpaceOnUse">
             <stop stopColor="#0D9488" />
             <stop offset="1" stopColor="#5EEAD4" />
           </linearGradient>
@@ -136,7 +142,7 @@ export function Mascot({
         {/* Shadow underneath */}
         <ellipse cx="60" cy="122" rx="34" ry="6" fill="rgba(15, 23, 42, 0.12)" />
 
-        {/* Main Tooth Body Anatomy */}
+        {/* Main Tooth Body Anatomy (Pure Solid Opaque White) */}
         <path
           d="M32 20
              C44 14, 52 22, 60 22
@@ -147,10 +153,25 @@ export function Mascot({
              C55 96, 52 116, 44 116
              C30 116, 22 88, 18 70
              C14 48, 18 27, 32 20 Z"
-          fill="url(#toothGradient)"
+          fill="#FFFFFF"
           stroke="#0D9488"
           strokeWidth="3.5"
           strokeLinejoin="round"
+        />
+
+        {/* Subtle Pearlescent Enamel Finish */}
+        <path
+          d="M32 20
+             C44 14, 52 22, 60 22
+             C68 22, 76 14, 88 20
+             C102 27, 106 48, 102 70
+             C98 88, 90 116, 76 116
+             C68 116, 65 96, 60 96
+             C55 96, 52 116, 44 116
+             C30 116, 22 88, 18 70
+             C14 48, 18 27, 32 20 Z"
+          fill={`url(#${toothGradientId})`}
+          opacity="0.5"
         />
 
         {/* Enamel Highlight Shine */}
@@ -165,7 +186,7 @@ export function Mascot({
         <g transform="translate(52, 28) scale(0.65)">
           <path
             d="M12 2 L22 6 L22 14 C22 20 12 24 12 24 C12 24 2 20 2 14 L2 6 Z"
-            fill="url(#shieldGradient)"
+            fill={`url(#${shieldGradientId})`}
             stroke="#0F766E"
             strokeWidth="1.5"
           />
@@ -173,8 +194,8 @@ export function Mascot({
         </g>
 
         {/* Rosy Cheeks */}
-        <circle cx="36" cy="66" r="8" fill="url(#rosyCheek)" />
-        <circle cx="84" cy="66" r="8" fill="url(#rosyCheek)" />
+        <circle cx="36" cy="66" r="8" fill={`url(#${rosyCheekId})`} />
+        <circle cx="84" cy="66" r="8" fill={`url(#${rosyCheekId})`} />
 
         {/* Mood Expressions: Eyes and Mouth */}
         {mood === 'sleepy' ? (
@@ -271,7 +292,7 @@ export function Mascot({
             <motion.g animate={brushArmAnimation}>
               <path d="M96 70 Q84 76 74 72" stroke="#0D9488" strokeWidth="3.5" strokeLinecap="round" fill="none" />
               {/* Toothbrush handle */}
-              <rect x="58" y="60" width="36" height="5" rx="2.5" transform="rotate(-15 58 60)" fill="url(#brushHandle)" stroke="#0F766E" strokeWidth="1" />
+              <rect x="58" y="60" width="36" height="5" rx="2.5" transform="rotate(-15 58 60)" fill={`url(#${brushHandleId})`} stroke="#0F766E" strokeWidth="1" />
               {/* Toothbrush bristles */}
               <rect x="52" y="55" width="12" height="6" rx="1.5" transform="rotate(-15 52 55)" fill="#FFFFFF" stroke="#0D9488" strokeWidth="1" />
               {/* Toothpaste bubbles */}

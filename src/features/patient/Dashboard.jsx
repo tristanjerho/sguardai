@@ -121,13 +121,13 @@ export function PatientDashboard() {
         <div className="absolute top-0 left-1/3 w-72 h-72 rounded-full bg-white/10 dark:bg-[#83A6CE]/20 blur-3xl pointer-events-none" />
 
         <div className="flex items-center gap-3.5 sm:gap-6 w-full md:w-auto">
-          {/* Mascot: Compact size on mobile, expansive on desktop */}
+          {/* Mascot: Solid White Dental Guardian */}
           <div className="flex-shrink-0 flex items-center justify-center">
             <div className="sm:hidden">
-              <Mascot mood="happy" size="sm" />
+              <Mascot key="gardy-sm" mood="happy" size="sm" />
             </div>
             <div className="hidden sm:block">
-              <Mascot mood="happy" size="lg" />
+              <Mascot key="gardy-lg" mood="happy" size="lg" />
             </div>
           </div>
 
