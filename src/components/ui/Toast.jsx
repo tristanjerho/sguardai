@@ -5,7 +5,7 @@ import { clsx } from 'clsx';
 
 export function ToastContainer({ toasts, removeToast }) {
   return (
-    <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0">
+    <div className="fixed top-3 left-3 right-3 sm:top-5 sm:left-auto sm:right-5 sm:w-full sm:max-w-sm z-[9999] flex flex-col gap-2.5 pointer-events-none">
       <AnimatePresence>
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
@@ -43,13 +43,14 @@ function ToastItem({ toast, onClose }) {
       role="alert"
     >
       {icons[toast.type || 'info']}
-      <div className="flex-1 pt-0.5">
-        {toast.title && <p className="font-heading font-semibold leading-tight">{toast.title}</p>}
-        <p className="text-xs text-ink-secondary mt-0.5">{toast.message}</p>
+      <div className="flex-1 min-w-0 pt-0.5">
+        {toast.title && <p className="font-heading font-semibold leading-tight break-words">{toast.title}</p>}
+        <p className="text-xs text-ink-secondary mt-0.5 break-words">{toast.message}</p>
       </div>
       <button
+        type="button"
         onClick={onClose}
-        className="text-ink-muted hover:text-ink-primary p-1 rounded-lg hover:bg-surface-100 transition-colors"
+        className="text-ink-muted hover:text-ink-primary p-1 rounded-lg hover:bg-surface-100 transition-colors shrink-0"
         aria-label="Dismiss toast"
       >
         <X className="w-4 h-4" />

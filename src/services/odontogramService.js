@@ -20,7 +20,7 @@ export const TOOTH_CONDITIONS = {
   COMPOSITE: { label: 'Composite Filling', color: 'blue' },
   AMALGAM: { label: 'Amalgam Filling', color: 'slate' },
   CROWN: { label: 'Crown / Cap', color: 'amber' },
-  ROOT_CANAL: { label: 'Root Canal Treated', color: 'purple' },
+  ROOT_CANAL: { label: 'Root Canal Treatment', color: 'purple' },
   MISSING: { label: 'Missing / Extracted', color: 'gray' },
   IMPLANT: { label: 'Dental Implant', color: 'teal' },
 };

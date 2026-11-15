@@ -1,4 +1,5 @@
 import { auth } from '../config/firebase';
+import { validateImageFile } from './imageService';
 
 const PRIMARY_AI_URL = import.meta.env.VITE_AI_SERVICE_URL || 'https://sguardai.onrender.com/api/predict';
 const LOCAL_AI_URL = 'http://127.0.0.1:8000/api/predict';
@@ -52,6 +53,10 @@ export const aiService = {
   async analyzeRadiograph(imageInput, options = {}) {
     if (!imageInput) {
       throw new Error('Dental radiograph image is required for diagnostic analysis.');
+    }
+
+    if (imageInput instanceof File || imageInput instanceof Blob) {
+      validateImageFile(imageInput);
     }
 
     const headers = {};

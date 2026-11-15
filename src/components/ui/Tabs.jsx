@@ -13,9 +13,9 @@ export function Tabs({
     <div
       className={twMerge(
         clsx(
-          'flex flex-wrap gap-1 p-1',
-          variant === 'pills' && 'bg-surface-100/80 dark:bg-[#0B1B32]/90 p-1.5 rounded-2xl border border-surface-border/50 dark:border-[#26415E]/80',
-          variant === 'underline' && 'border-b border-surface-border dark:border-[#26415E]/80 gap-4',
+          'flex max-w-full p-1',
+          variant === 'pills' && 'flex-wrap gap-1 sm:gap-1.5 bg-surface-100/80 dark:bg-[#0B1B32]/90 p-1.5 rounded-2xl border border-surface-border/50 dark:border-[#26415E]/80',
+          variant === 'underline' && 'flex-nowrap overflow-x-auto no-scrollbar border-b border-surface-border dark:border-[#26415E]/80 gap-4 sm:gap-6 px-0',
           className
         )
       )}
@@ -29,11 +29,12 @@ export function Tabs({
           return (
             <button
               key={tab.id}
+              type="button"
               role="tab"
               aria-selected={isActive}
               onClick={() => onChange(tab.id)}
               className={clsx(
-                'flex items-center gap-2 py-3 px-1 text-sm font-semibold border-b-2 transition-all duration-150 whitespace-nowrap',
+                'flex items-center gap-2 py-3 px-1 text-xs sm:text-sm font-semibold border-b-2 transition-all duration-150 whitespace-nowrap shrink-0',
                 isActive
                   ? 'border-teal-600 text-teal-600 dark:border-[#83A6CE] dark:text-[#E5C9D7] font-bold'
                   : 'border-transparent text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-[#F8FAFC] hover:border-surface-300 dark:hover:border-[#26415E]'

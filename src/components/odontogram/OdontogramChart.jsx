@@ -117,11 +117,11 @@ export function OdontogramChart({
   return (
     <div className="space-y-6">
       {/* Legend */}
-      <div className="p-4 rounded-xl bg-surface-subtle border border-surface-border space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-heading font-bold text-ink-primary flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-            32-Tooth Permanent Dentition Chart (FDI / Universal Notation)
+      <div className="p-3.5 sm:p-4 rounded-xl bg-surface-subtle border border-surface-border space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-xs font-heading font-bold text-ink-primary flex items-center gap-1.5 min-w-0">
+            <Layers className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
+            <span className="break-words">32-Tooth Permanent Dentition Chart (FDI / Universal Notation)</span>
           </span>
           <span className="text-[11px] text-ink-secondary">
             {readOnly ? 'View mode' : 'Click any tooth to chart conditions or surfaces'}
@@ -146,9 +146,12 @@ export function OdontogramChart({
       </div>
 
       {/* Dental Arch Display */}
-      <div className="p-6 rounded-2xl bg-surface-card border border-surface-border shadow-soft space-y-8 overflow-x-auto">
+      <div className="p-3.5 sm:p-6 rounded-2xl bg-surface-card border border-surface-border shadow-soft space-y-6 sm:space-y-8 overflow-x-auto">
+        <div className="sm:hidden text-[11px] font-medium text-ink-muted text-center">
+          Swipe horizontally to view all 32 teeth
+        </div>
         {/* Upper Arch (Maxilla) */}
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-max mx-auto">
           <div className="text-center text-xs font-heading font-bold tracking-wider uppercase text-teal-700 dark:text-teal-400">
             Maxillary Arch (Upper Teeth)
           </div>
@@ -167,10 +170,10 @@ export function OdontogramChart({
           </div>
         </div>
 
-        <div className="w-full border-t border-dashed border-surface-border" />
+        <div className="w-full min-w-[700px] border-t border-dashed border-surface-border" />
 
         {/* Lower Arch (Mandible) */}
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-max mx-auto">
           <div className="flex items-center justify-center gap-1 sm:gap-2 min-w-[700px]">
             {/* Lower Right Quadrant 4 */}
             <div className="flex items-center gap-1 sm:gap-2">

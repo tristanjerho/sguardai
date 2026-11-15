@@ -115,12 +115,12 @@ export function PatientDashboard() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Top Sparky Greeting Hero — Compact & Responsive for Mobile/PWA */}
-      <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-teal-600 via-teal-500 to-teal-700 dark:from-[#0D1E4C] dark:via-[#1B2F52] dark:to-[#26415E] dark:border dark:border-[#83A6CE]/30 p-4 sm:p-6 lg:p-8 text-white shadow-soft-lg dark:shadow-[0_12px_40px_-8px_rgba(11,27,50,0.8),0_0_30px_-5px_rgba(131,166,206,0.2)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6 relative overflow-hidden">
+      <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-r from-teal-600 via-teal-500 to-teal-700 dark:from-[#0D1E4C] dark:via-[#1B2F52] dark:to-[#26415E] dark:border dark:border-[#83A6CE]/30 p-4 sm:p-6 lg:p-8 text-white shadow-soft-lg dark:shadow-[0_12px_40px_-8px_rgba(11,27,50,0.8),0_0_30px_-5px_rgba(131,166,206,0.2)] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6 relative overflow-hidden">
         {/* Background ambient lighting */}
         <div className="absolute -right-10 -bottom-10 w-72 h-72 rounded-full bg-[#C48CB3]/25 dark:bg-[#C48CB3]/20 blur-3xl pointer-events-none" />
         <div className="absolute top-0 left-1/3 w-72 h-72 rounded-full bg-white/10 dark:bg-[#83A6CE]/20 blur-3xl pointer-events-none" />
 
-        <div className="flex items-center gap-3.5 sm:gap-6 w-full md:w-auto">
+        <div className="flex items-center gap-3.5 sm:gap-6 w-full lg:w-auto lg:flex-1 min-w-0">
           {/* Mascot: Solid White Dental Guardian */}
           <div className="flex-shrink-0 flex items-center justify-center">
             <div className="sm:hidden">
@@ -149,12 +149,12 @@ export function PatientDashboard() {
           </div>
         </div>
 
-        <div className="z-10 flex-shrink-0 w-full md:w-auto pt-1 md:pt-0">
+        <div className="z-10 flex-shrink-0 w-full lg:w-auto pt-1 lg:pt-0">
           <Link to="/patient/book" className="block w-full">
             <Button
               variant="accent"
               size="sm"
-              className="w-full md:w-auto font-bold shadow-soft justify-center py-2 sm:py-2.5 text-xs sm:text-sm"
+              className="w-full lg:w-auto font-bold shadow-soft justify-center py-2 sm:py-2.5 text-xs sm:text-sm"
               rightIcon={ArrowRight}
             >
               Book Visit
@@ -172,35 +172,39 @@ export function PatientDashboard() {
               <Calendar className="w-5 h-5 text-teal-600 dark:text-[#83A6CE]" />
               <CardTitle>Next Scheduled Visit</CardTitle>
             </div>
-            {nextAppointment && <Badge status={nextAppointment.status} showDot>{nextAppointment.status}</Badge>}
+            {nextAppointment && (
+              <span className="text-xs font-semibold uppercase tracking-wider text-ink-secondary">
+                {nextAppointment.status}
+              </span>
+            )}
           </CardHeader>
 
           <CardContent>
             {nextAppointment ? (
               <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-teal-50/70 dark:bg-[#0B1B32]/75 border border-teal-200/70 dark:border-[#26415E]/80 dark:shadow-inner flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="text-base font-heading font-bold text-ink-primary">
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-teal-50/70 dark:bg-[#0B1B32]/75 border border-teal-200/70 dark:border-[#26415E]/80 dark:shadow-inner flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 sm:gap-4">
+                  <div className="space-y-1 min-w-0 w-full sm:w-auto sm:flex-1">
+                    <p className="text-base font-heading font-bold text-ink-primary break-words">
                       {nextAppointment.serviceName}
                     </p>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-ink-secondary dark:text-[#83A6CE]">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-secondary dark:text-[#83A6CE]">
                       <span className="flex items-center gap-1 font-semibold text-teal-700 dark:text-[#E5C9D7]">
-                        <Calendar className="w-3.5 h-3.5" />
+                        <Calendar className="w-3.5 h-3.5 shrink-0" />
                         {formatDate(nextAppointment.date)}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
                         {nextAppointment.timeSlot}
                       </span>
                       <span className="flex items-center gap-1">
-                        <User className="w-3.5 h-3.5" />
+                        <User className="w-3.5 h-3.5 shrink-0" />
                         {nextAppointment.dentistName}
                       </span>
                     </div>
                   </div>
 
-                  <Link to="/patient/appointments">
-                    <Button variant="secondary" size="sm">
+                  <Link to="/patient/appointments" className="self-stretch sm:self-auto shrink-0">
+                    <Button variant="secondary" size="sm" className="w-full sm:w-auto justify-center">
                       Manage Booking
                     </Button>
                   </Link>
@@ -296,23 +300,23 @@ export function PatientDashboard() {
             </Link>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-teal-50/60 dark:bg-[#0B1B32]/75 border border-teal-200/60 dark:border-[#26415E]/80 dark:shadow-inner">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-teal-600 dark:bg-[#83A6CE]/20 dark:border dark:border-[#83A6CE]/30 flex items-center justify-center text-white dark:text-[#E5C9D7] shadow-soft">
-                  <ShieldCheck className="w-6 h-6" />
+            <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3.5 p-3.5 sm:p-4 rounded-2xl bg-teal-50/60 dark:bg-[#0B1B32]/75 border border-teal-200/60 dark:border-[#26415E]/80 dark:shadow-inner">
+              <div className="flex items-center gap-3.5 min-w-0 w-full xl:w-auto xl:flex-1">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-teal-600 dark:bg-[#83A6CE]/20 dark:border dark:border-[#83A6CE]/30 flex items-center justify-center text-white dark:text-[#E5C9D7] shadow-soft shrink-0">
+                  <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
-                <div>
-                  <p className="font-heading font-bold text-ink-primary text-base">
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading font-bold text-ink-primary text-sm sm:text-base break-words">
                     Clinical Chart & Radiographs
                   </p>
-                  <p className="text-xs text-ink-secondary dark:text-[#83A6CE] mt-0.5">
+                  <p className="text-xs text-ink-secondary dark:text-[#83A6CE] mt-0.5 break-words">
                     End-to-end encrypted under <strong className="text-teal-700 dark:text-[#E5C9D7]">RA 10173</strong>
                   </p>
                 </div>
               </div>
 
-              <Link to="/patient/records">
-                <Button variant="outline" size="sm" rightIcon={ArrowRight}>
+              <Link to="/patient/records" className="self-stretch xl:self-auto shrink-0">
+                <Button variant="outline" size="sm" rightIcon={ArrowRight} className="w-full xl:w-auto justify-center">
                   Open Records
                 </Button>
               </Link>
@@ -346,9 +350,9 @@ export function PatientDashboard() {
               </p>
             </div>
 
-            <div className="flex items-center justify-between pt-1">
+            <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
               <span className="text-xs text-ink-muted">Need to schedule a routine cleaning?</span>
-              <Link to="/patient/book">
+              <Link to="/patient/book" className="shrink-0">
                 <Button variant="primary" size="sm" rightIcon={CalendarPlus}>
                   Book Visit
                 </Button>
@@ -378,19 +382,19 @@ export function PatientDashboard() {
               <div
                 key={n.id}
                 onClick={() => handleOpenNotification(n)}
-                className={`p-4 flex items-start justify-between gap-4 transition-all cursor-pointer hover:bg-surface-50 dark:hover:bg-[#26415E]/40 ${!n.read ? 'bg-teal-50/40 dark:bg-[#83A6CE]/10' : ''
+                className={`p-3.5 sm:p-4 flex items-start justify-between gap-2.5 sm:gap-4 transition-all cursor-pointer hover:bg-surface-50 dark:hover:bg-[#26415E]/40 ${!n.read ? 'bg-teal-50/40 dark:bg-[#83A6CE]/10' : ''
                   }`}
               >
-                <div className="space-y-1 flex-1">
-                  <div className="flex items-center gap-2">
+                <div className="space-y-1 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     {!n.read && <span className="w-2 h-2 rounded-full bg-[#C48CB3] flex-shrink-0" />}
-                    <p className="text-sm font-semibold text-ink-primary hover:text-teal-600 dark:hover:text-[#E5C9D7] transition-colors">
+                    <p className="text-sm font-semibold text-ink-primary hover:text-teal-600 dark:hover:text-[#E5C9D7] transition-colors break-words">
                       {n.title}
                     </p>
                   </div>
-                  <p className="text-xs text-ink-secondary dark:text-[#83A6CE] line-clamp-2">{n.message}</p>
+                  <p className="text-xs text-ink-secondary dark:text-[#83A6CE] line-clamp-2 break-words">{n.message}</p>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                   <span className="text-[11px] text-ink-muted whitespace-nowrap">
                     {formatRelativeTime(n.createdAt)}
                   </span>
@@ -439,12 +443,12 @@ export function PatientDashboard() {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-surface-border">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-surface-border">
               <span className="text-xs text-ink-muted">
                 Received: {formatRelativeTime(selectedNotif.createdAt)}
               </span>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
                 {selectedNotif.type === 'APPOINTMENT' && (
                   <Button
                     variant="primary"

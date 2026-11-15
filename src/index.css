@@ -39,6 +39,31 @@
   --color-ink-secondary: 71 85 105;
   --color-ink-muted: 148 163 184;
   --color-ink-inverse: 255 255 255;
+
+  /* Global Responsive Layout & Spacing Tokens */
+  --topbar-height: 4rem;
+  --sidebar-width: 16rem;
+  --sidebar-rail-width: 4.5rem;
+  --page-max-width: 80rem;
+  --page-gutter-x: clamp(0.875rem, 2.2vw, 2rem);
+  --page-gutter-y: clamp(1rem, 2vw, 2rem);
+  --section-gap: clamp(1rem, 1.8vw, 1.5rem);
+  --card-pad: clamp(1rem, 1.5vw, 1.5rem);
+}
+
+@layer base {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: clip;
+    min-height: 100dvh;
+  }
+
+  body {
+    background-color: rgb(var(--color-surface-base));
+    color: rgb(var(--color-ink-primary));
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 .dark {
@@ -157,4 +182,39 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 :focus-visible {
   outline: 2px solid rgb(var(--color-primary-500));
   outline-offset: 2px;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .table-responsive-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .safe-bottom-nav {
+    padding-bottom: max(0.625rem, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@layer components {
+  .page-header-row {
+    @apply flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4;
+  }
+
+  .page-header-text {
+    @apply min-w-0 w-full sm:w-auto sm:flex-1;
+  }
+
+  .page-header-action {
+    @apply self-stretch sm:self-auto shrink-0;
+  }
 }

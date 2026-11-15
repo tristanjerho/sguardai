@@ -18,7 +18,7 @@ export function Unauthorized() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-base flex items-center justify-center p-4">
+    <div className="min-h-[100dvh] bg-surface-base flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center space-y-5">
         <div className="w-16 h-16 rounded-3xl bg-rose-500/10 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center border border-rose-200 dark:border-rose-800">
           <ShieldAlert className="w-8 h-8" />

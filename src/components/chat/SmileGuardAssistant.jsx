@@ -517,22 +517,23 @@ export function SmileGuardAssistant() {
 
   const roleBadge = getRoleBadge();
 
-  // Floating button bottom offset for mobile when patient BottomTabBar or sticky booking bar is mounted
+  // Floating button bottom offset for mobile when portal BottomTabBar or sticky booking bar is mounted
+  const isPortalRoute = /^\/(patient|clinic|lab|admin)/.test(location.pathname);
   const isPatientPortal = location.pathname.startsWith('/patient');
   const isBookingPage = location.pathname === '/patient/book';
   const isPatient = isPatientPortal || userRole === ROLES.PATIENT;
 
   // On the booking page, elevate launcher higher and keep it compact so it doesn't overlap the sticky booking bar or service cards
   const bottomLauncherClass = isBookingPage
-    ? 'bottom-[max(8.5rem,calc(7.5rem+env(safe-area-inset-bottom,0px)))] sm:bottom-6 right-3 sm:right-6'
-    : isPatientPortal
-      ? 'bottom-28 sm:bottom-6 right-4 sm:right-6'
-      : 'bottom-6 right-4 sm:right-6';
+    ? 'bottom-[calc(9.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-3 md:right-6'
+    : isPortalRoute
+      ? 'bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-3 md:right-6'
+      : 'bottom-4 sm:bottom-6 right-3 sm:right-6';
 
   // Dimension classes depending on maximized toggle
   const panelDimensionsClass = isMaximized
-    ? 'w-[calc(100vw-1.5rem)] sm:w-[680px] h-[calc(100vh-4rem)] max-h-[720px]'
-    : 'w-[calc(100vw-1.5rem)] sm:w-[410px] h-[580px] max-h-[calc(100vh-6.5rem)]';
+    ? 'w-[calc(100vw-1rem)] sm:w-[min(680px,calc(100vw-3rem))] h-[min(720px,calc(100dvh-9.5rem))] sm:h-[min(720px,calc(100dvh-3rem))]'
+    : 'w-[calc(100vw-1rem)] sm:w-[410px] h-[min(580px,calc(100dvh-9.5rem))] sm:h-[min(580px,calc(100dvh-6.5rem))]';
 
   return (
     <>
@@ -585,31 +586,34 @@ export function SmileGuardAssistant() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.96 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={`fixed z-50 right-3 sm:right-6 ${isPatientPortal ? 'bottom-20 sm:bottom-6' : 'bottom-4 sm:bottom-6'
-              } ${panelDimensionsClass} rounded-3xl bg-surface-card dark:bg-[#0B1B32] border border-surface-border dark:border-[#26415E]/90 shadow-2xl overflow-hidden flex flex-col font-sans backdrop-blur-xl transition-all duration-300`}
+            className={`fixed z-50 left-2 right-2 sm:left-auto sm:right-6 ${
+              isPortalRoute
+                ? 'bottom-[calc(4.875rem+env(safe-area-inset-bottom,0px))] md:bottom-6'
+                : 'bottom-3 md:bottom-6'
+            } ${panelDimensionsClass} rounded-2xl sm:rounded-3xl bg-surface-card dark:bg-[#0B1B32] border border-surface-border dark:border-[#26415E]/90 shadow-2xl overflow-hidden flex flex-col font-sans backdrop-blur-xl transition-all duration-300`}
           >
             {/* Header */}
-            <header className="px-4 py-3 bg-gradient-to-r from-surface-50 via-teal-50/40 to-surface-card dark:from-[#0B1B32] dark:via-[#11233E] dark:to-[#0B1B32] border-b border-surface-border dark:border-[#26415E]/80 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
+            <header className="px-3 xs:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-surface-50 via-teal-50/40 to-surface-card dark:from-[#0B1B32] dark:via-[#11233E] dark:to-[#0B1B32] border-b border-surface-border dark:border-[#26415E]/80 flex items-center justify-between gap-1.5 shrink-0">
+              <div className="flex items-center gap-2 xs:gap-3 min-w-0 flex-1 mr-1 xs:mr-2">
                 {/* Mascot Avatar with pulsating online badge */}
-                <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-tr from-teal-500/15 via-cyan-500/10 to-teal-500/20 dark:from-teal-500/25 dark:to-cyan-500/15 flex items-center justify-center shrink-0 border border-teal-500/30 shadow-xs overflow-visible">
-                  <SmileGuardMascot size={28} tight={true} animated={false} />
-                  <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">
+                <div className="relative w-8 h-8 xs:w-10 xs:h-10 rounded-xl xs:rounded-2xl bg-gradient-to-tr from-teal-500/15 via-cyan-500/10 to-teal-500/20 dark:from-teal-500/25 dark:to-cyan-500/15 flex items-center justify-center shrink-0 border border-teal-500/30 shadow-xs overflow-visible">
+                  <SmileGuardMascot size={24} tight={true} animated={false} />
+                  <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 xs:h-3 xs:w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white dark:border-[#0B1B32]" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 xs:h-3 xs:w-3 bg-emerald-500 border-2 border-white dark:border-[#0B1B32]" />
                   </span>
                 </div>
 
                 {/* Identity Information */}
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="font-heading font-bold text-[14.5px] text-ink-primary dark:text-[#F8FAFC] tracking-tight truncate">
+                  <div className="flex items-center gap-1">
+                    <h3 className="font-heading font-bold text-[13.5px] xs:text-[14.5px] text-ink-primary dark:text-[#F8FAFC] tracking-tight truncate">
                       Gardy Assistant
                     </h3>
                     <Sparkles className="w-3.5 h-3.5 text-teal-500 shrink-0" />
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[11.5px] font-medium text-ink-muted dark:text-[#83A6CE] truncate">
+                    <span className="text-[11px] xs:text-[11.5px] font-medium text-ink-muted dark:text-[#83A6CE] truncate">
                       SmileGuard Assistant
                     </span>
                   </div>
@@ -617,7 +621,7 @@ export function SmileGuardAssistant() {
               </div>
 
               {/* Action buttons bar */}
-              <div className="flex items-center gap-0.5 shrink-0 bg-surface-100/70 dark:bg-[#122444]/80 p-1 rounded-xl border border-surface-200/80 dark:border-[#26415E]/70 shadow-2xs backdrop-blur-xs">
+              <div className="flex items-center gap-0.5 shrink-0 bg-surface-100/70 dark:bg-[#122444]/80 p-0.5 xs:p-1 rounded-xl border border-surface-200/80 dark:border-[#26415E]/70 shadow-2xs backdrop-blur-xs">
                 <button
                   type="button"
                   onClick={() => setIsMaximized((prev) => !prev)}
@@ -630,7 +634,7 @@ export function SmileGuardAssistant() {
                 <button
                   type="button"
                   onClick={handleNewConversation}
-                  className="p-1.5 rounded-lg text-ink-secondary dark:text-[#83A6CE] hover:text-teal-600 dark:hover:text-teal-300 hover:bg-white/80 dark:hover:bg-[#1E3756] transition-all cursor-pointer"
+                  className="p-1 xs:p-1.5 rounded-lg text-ink-secondary dark:text-[#83A6CE] hover:text-teal-600 dark:hover:text-teal-300 hover:bg-white/80 dark:hover:bg-[#1E3756] transition-all cursor-pointer"
                   title="New Conversation"
                   aria-label="New Conversation"
                 >
@@ -639,7 +643,7 @@ export function SmileGuardAssistant() {
                 <button
                   type="button"
                   onClick={handleClearHistory}
-                  className="p-1.5 rounded-lg text-ink-secondary dark:text-[#83A6CE] hover:text-red-500 dark:hover:text-red-400 hover:bg-white/80 dark:hover:bg-[#1E3756] transition-all cursor-pointer"
+                  className="p-1 xs:p-1.5 rounded-lg text-ink-secondary dark:text-[#83A6CE] hover:text-red-500 dark:hover:text-red-400 hover:bg-white/80 dark:hover:bg-[#1E3756] transition-all cursor-pointer"
                   title="Clear History"
                   aria-label="Clear History"
                 >
@@ -651,7 +655,7 @@ export function SmileGuardAssistant() {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-lg text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-white hover:bg-white/80 dark:hover:bg-[#1E3756] transition-all cursor-pointer"
+                  className="p-1 xs:p-1.5 rounded-lg text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-white hover:bg-white/80 dark:hover:bg-[#1E3756] transition-all cursor-pointer"
                   title="Minimize"
                   aria-label="Minimize"
                 >
@@ -660,7 +664,7 @@ export function SmileGuardAssistant() {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-lg text-ink-secondary dark:text-[#83A6CE] hover:text-red-500 dark:hover:text-red-400 hover:bg-white/80 dark:hover:bg-[#1E3756] transition-all cursor-pointer"
+                  className="p-1 xs:p-1.5 rounded-lg text-ink-secondary dark:text-[#83A6CE] hover:text-red-500 dark:hover:text-red-400 hover:bg-white/80 dark:hover:bg-[#1E3756] transition-all cursor-pointer"
                   title="Close"
                   aria-label="Close"
                 >
@@ -737,13 +741,13 @@ export function SmileGuardAssistant() {
 
                       {/* Bubble */}
                       <div
-                        className={`group relative rounded-2xl px-4 py-2.5 shadow-xs transition-all ${isUser
+                        className={`group relative min-w-0 max-w-full rounded-2xl px-3.5 sm:px-4 py-2.5 shadow-xs transition-all ${isUser
                           ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-br-xs'
                           : 'bg-surface-50 dark:bg-[#122444] border border-surface-200/90 dark:border-[#26415E] text-ink-primary dark:text-[#F8FAFC] rounded-bl-xs'
                           }`}
                       >
                         {isUser ? (
-                          <p className="text-[13.5px] leading-relaxed whitespace-pre-wrap font-sans">
+                          <p className="text-[13.5px] leading-relaxed whitespace-pre-wrap break-words font-sans">
                             {msg.content}
                           </p>
                         ) : (
@@ -756,7 +760,7 @@ export function SmileGuardAssistant() {
 
                         {/* Action buttons on AI responses (Copy & Copy SOAP Note) */}
                         {!isUser && (
-                          <div className="absolute -bottom-2 right-2 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity z-10">
+                          <div className="mt-2 -mb-0.5 flex items-center justify-end gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:absolute md:-bottom-2 md:right-2 md:mt-0 transition-opacity z-10">
                             {isClinical && (
                               <button
                                 type="button"

@@ -21,7 +21,13 @@ import { Avatar } from '../ui/Avatar';
 import { Logo } from '../common/Logo';
 import { ROLES, ROLE_LABELS } from '../../lib/roles';
 
-export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCount = 0 }) {
+export function Topbar({
+  title,
+  onMenuToggle,
+  showMenuButton = false,
+  isMobileMenuOpen = false,
+  unreadCount = 0,
+}) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { showSparky, toggleSparky } = useMascot();
@@ -52,26 +58,27 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-surface-border dark:border-[#26415E]/80 bg-surface-card/90 dark:bg-[#0B1B32]/90 backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between transition-colors shadow-xs pt-[env(safe-area-inset-top,0px)] h-[calc(4rem+env(safe-area-inset-top,0px))]">
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+    <header className="sticky top-0 z-40 w-full border-b border-surface-border dark:border-[#26415E]/80 bg-surface-card/90 dark:bg-[#0B1B32]/90 backdrop-blur-xl px-2.5 xs:px-4 sm:px-6 flex items-center justify-between gap-2 transition-colors shadow-xs pt-[env(safe-area-inset-top,0px)] h-[calc(4rem+env(safe-area-inset-top,0px))]">
+      <div className="flex items-center gap-1.5 xs:gap-2.5 sm:gap-3 min-w-0 flex-1">
         {showMenuButton && (
           <button
             type="button"
             onClick={onMenuToggle}
-            className="p-2 rounded-xl text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-[#F8FAFC] hover:bg-surface-100 dark:hover:bg-[#26415E]/60 lg:hidden shrink-0"
+            className="p-1.5 xs:p-2 rounded-xl text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-[#F8FAFC] hover:bg-surface-100 dark:hover:bg-[#26415E]/60 md:hidden shrink-0"
             aria-label="Toggle navigation menu"
+            aria-expanded={isMobileMenuOpen}
           >
             <Menu className="w-5 h-5" />
           </button>
         )}
 
-        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-          <Logo size="md" iconClassName="w-9 h-9 sm:w-10 sm:h-10" />
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+          <Logo size="md" iconClassName="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10" />
 
           {title && (
             <>
-              <span className="hidden sm:inline-block text-surface-300 dark:text-[#26415E] font-light">/</span>
-              <h1 className="hidden sm:inline-block text-sm font-heading font-semibold text-ink-secondary dark:text-[#E5C9D7] truncate max-w-[160px] lg:max-w-xs">
+              <span className="hidden sm:inline-block text-surface-300 dark:text-[#26415E] font-light shrink-0">/</span>
+              <h1 className="hidden sm:inline-block text-sm font-heading font-semibold text-ink-secondary dark:text-[#E5C9D7] truncate max-w-[140px] md:max-w-[220px] lg:max-w-xs">
                 {title}
               </h1>
             </>
@@ -79,8 +86,8 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
         </div>
       </div>
 
-      <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
-        {/* Gardy Mascot toggle for patients only (hidden on mobile to prevent topbar overflow & brand collision) */}
+      <div className="flex items-center gap-0.5 xs:gap-1.5 sm:gap-2.5 shrink-0">
+        {/* Gardy Mascot toggle for patients only (mobile patients toggle via profile dropdown) */}
         {isPatient && (
           <button
             type="button"
@@ -101,7 +108,7 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
         <button
           type="button"
           onClick={toggleTheme}
-          className="p-2 rounded-xl text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-white hover:bg-surface-100 dark:hover:bg-[#26415E]/60 transition-colors"
+          className="p-1.5 xs:p-2 rounded-xl text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-white hover:bg-surface-100 dark:hover:bg-[#26415E]/60 transition-colors"
           aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {theme === 'dark' ? (
@@ -115,7 +122,7 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
         {isPatient ? (
           <Link
             to="/patient/notifications"
-            className="relative p-2 rounded-xl text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-white hover:bg-surface-100 dark:hover:bg-[#26415E]/60 transition-colors"
+            className="relative p-1.5 xs:p-2 rounded-xl text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-white hover:bg-surface-100 dark:hover:bg-[#26415E]/60 transition-colors"
             aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
           >
             <Bell className="w-5 h-5" />
@@ -131,7 +138,7 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
                 setShowNotifPopover(!showNotifPopover);
                 setShowDropdown(false);
               }}
-              className="relative p-2 rounded-xl text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-white hover:bg-surface-100 dark:hover:bg-[#26415E]/60 transition-colors"
+              className="relative p-1.5 xs:p-2 rounded-xl text-ink-secondary dark:text-[#83A6CE] hover:text-ink-primary dark:hover:text-white hover:bg-surface-100 dark:hover:bg-[#26415E]/60 transition-colors"
               aria-label={`Notifications ${unreadCount > 0 ? `(${unreadCount} unread)` : ''}`}
             >
               <Bell className="w-5 h-5" />
@@ -148,16 +155,16 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
                   className="fixed inset-0 z-40"
                   onClick={() => setShowNotifPopover(false)}
                 />
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-surface-card dark:bg-[#0D1E4C]/95 dark:backdrop-blur-xl border border-surface-border dark:border-[#26415E] shadow-soft-lg z-50 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-surface-border dark:border-[#26415E] flex items-center justify-between">
-                    <p className="text-xs font-heading font-extrabold uppercase tracking-wider text-ink-primary dark:text-[#F8FAFC]">
+                <div className="fixed sm:absolute right-2 sm:right-0 top-[calc(4rem+env(safe-area-inset-top,0px)+0.5rem)] sm:top-auto sm:mt-2 w-[calc(100vw-1rem)] sm:w-96 max-h-[calc(100dvh-5.5rem)] flex flex-col rounded-2xl bg-surface-card dark:bg-[#0D1E4C]/95 dark:backdrop-blur-xl border border-surface-border dark:border-[#26415E] shadow-soft-lg z-50 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-surface-border dark:border-[#26415E] flex items-center justify-between gap-2 shrink-0">
+                    <p className="text-xs font-heading font-extrabold uppercase tracking-wider text-ink-primary dark:text-[#F8FAFC] truncate">
                       Live Clinical &amp; Lab Alerts
                     </p>
                     {unreadCount > 0 && (
                       <button
                         type="button"
                         onClick={handleMarkAllRead}
-                        className="text-[11px] font-semibold text-teal-600 dark:text-[#E5C9D7] hover:underline flex items-center gap-1"
+                        className="text-[11px] font-semibold text-teal-600 dark:text-[#E5C9D7] hover:underline flex items-center gap-1 shrink-0"
                       >
                         <CheckCheck className="w-3.5 h-3.5" />
                         Mark all read
@@ -165,7 +172,7 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
                     )}
                   </div>
 
-                  <div className="max-h-80 overflow-y-auto divide-y divide-surface-border/60 dark:divide-[#26415E]/60">
+                  <div className="flex-1 min-h-0 max-h-[60dvh] sm:max-h-80 overflow-y-auto divide-y divide-surface-border/60 dark:divide-[#26415E]/60">
                     {staffNotifs.length === 0 ? (
                       <div className="p-6 text-center text-xs text-ink-muted">
                         No notifications yet. Lab order and clinic updates appear here live.
@@ -185,15 +192,15 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
                           className={`w-full text-left px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-[#26415E]/50 ${!n.read ? 'bg-teal-50/50 dark:bg-[#83A6CE]/10' : ''
                             }`}
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-xs font-bold text-ink-primary dark:text-[#F8FAFC]">
+                          <div className="flex items-start justify-between gap-2 min-w-0">
+                            <p className="text-xs font-bold text-ink-primary dark:text-[#F8FAFC] min-w-0 break-words">
                               {n.title}
                             </p>
                             <span className="text-[10px] text-ink-muted shrink-0">
                               {formatRelativeTime(n.createdAt)}
                             </span>
                           </div>
-                          <p className="text-[11px] text-ink-secondary dark:text-[#83A6CE] mt-0.5 line-clamp-2">
+                          <p className="text-[11px] text-ink-secondary dark:text-[#83A6CE] mt-0.5 line-clamp-2 break-words">
                             {n.message}
                           </p>
                         </button>
@@ -214,20 +221,20 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
               setShowDropdown(!showDropdown);
               setShowNotifPopover(false);
             }}
-            className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface-100 dark:hover:bg-[#26415E]/60 transition-colors focus:outline-none"
+            className="flex items-center gap-2 p-1 xs:p-1.5 rounded-xl hover:bg-surface-100 dark:hover:bg-[#26415E]/60 transition-colors focus:outline-none"
             aria-expanded={showDropdown}
             aria-haspopup="true"
           >
             <Avatar name={user?.fullName || user?.name || user?.email} size="sm" />
-            <div className="hidden lg:block text-left">
-              <p className="text-xs font-heading font-bold text-ink-primary leading-tight dark:text-[#F8FAFC]">
+            <div className="hidden lg:block text-left max-w-[140px]">
+              <p className="text-xs font-heading font-bold text-ink-primary leading-tight dark:text-[#F8FAFC] truncate">
                 {user?.fullName || user?.name || 'User'}
               </p>
-              <p className="text-[10px] text-teal-600 dark:text-[#C48CB3] font-semibold uppercase">
+              <p className="text-[10px] text-teal-600 dark:text-[#C48CB3] font-semibold uppercase truncate">
                 {ROLE_LABELS[user?.role] || user?.role}
               </p>
             </div>
-            <ChevronDown className="w-3.5 h-3.5 text-ink-muted dark:text-[#83A6CE] hidden lg:block" />
+            <ChevronDown className="w-3.5 h-3.5 text-ink-muted dark:text-[#83A6CE] hidden lg:block shrink-0" />
           </button>
 
           {showDropdown && (
@@ -236,23 +243,42 @@ export function Topbar({ title, onMenuToggle, showMenuButton = false, unreadCoun
                 className="fixed inset-0 z-40"
                 onClick={() => setShowDropdown(false)}
               />
-              <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-surface-card dark:bg-[#0D1E4C]/95 dark:backdrop-blur-xl border border-surface-border dark:border-[#26415E] shadow-soft-lg dark:shadow-[0_12px_30px_rgba(11,27,50,0.8)] z-50 p-2 py-2 space-y-1">
+              <div className="fixed sm:absolute right-2 sm:right-0 top-[calc(4rem+env(safe-area-inset-top,0px)+0.5rem)] sm:top-auto sm:mt-2 w-[min(15rem,calc(100vw-1rem))] max-h-[calc(100dvh-5.5rem)] overflow-y-auto rounded-2xl bg-surface-card dark:bg-[#0D1E4C]/95 dark:backdrop-blur-xl border border-surface-border dark:border-[#26415E] shadow-soft-lg dark:shadow-[0_12px_30px_rgba(11,27,50,0.8)] z-50 p-2 py-2 space-y-1">
                 <div className="px-3 py-2 border-b border-surface-border/60 dark:border-[#26415E]/80 mb-1">
-                  <p className="text-sm font-heading font-bold text-ink-primary dark:text-[#F8FAFC]">
+                  <p className="text-sm font-heading font-bold text-ink-primary dark:text-[#F8FAFC] truncate">
                     {user?.fullName || user?.name || 'User'}
                   </p>
                   <p className="text-xs text-ink-muted dark:text-[#83A6CE] truncate">{user?.email}</p>
                 </div>
 
                 {isPatient && (
-                  <Link
-                    to="/patient/profile"
-                    onClick={() => setShowDropdown(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-ink-secondary dark:text-[#E5C9D7] hover:text-ink-primary dark:hover:text-white hover:bg-surface-100 dark:hover:bg-[#26415E]/60 rounded-xl transition-colors"
-                  >
-                    <User className="w-4 h-4 text-teal-600 dark:text-[#83A6CE]" />
-                    <span>My Profile &amp; Settings</span>
-                  </Link>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toggleSparky();
+                        setShowDropdown(false);
+                      }}
+                      className="w-full md:hidden flex items-center justify-between gap-2.5 px-3 py-2 text-xs font-semibold text-ink-secondary dark:text-[#E5C9D7] hover:text-ink-primary dark:hover:text-white hover:bg-surface-100 dark:hover:bg-[#26415E]/60 rounded-xl transition-colors"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Smile className="w-4 h-4 text-teal-600 dark:text-[#C48CB3]" />
+                        <span>Gardy Mascot</span>
+                      </span>
+                      <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 dark:bg-[#83A6CE]/20 dark:text-[#E5C9D7]">
+                        {showSparky ? 'On' : 'Off'}
+                      </span>
+                    </button>
+
+                    <Link
+                      to="/patient/profile"
+                      onClick={() => setShowDropdown(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-ink-secondary dark:text-[#E5C9D7] hover:text-ink-primary dark:hover:text-white hover:bg-surface-100 dark:hover:bg-[#26415E]/60 rounded-xl transition-colors"
+                    >
+                      <User className="w-4 h-4 text-teal-600 dark:text-[#83A6CE]" />
+                      <span>My Profile &amp; Settings</span>
+                    </Link>
+                  </>
                 )}
 
                 {user?.role === ROLES.ADMIN && (

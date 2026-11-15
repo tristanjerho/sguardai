@@ -164,7 +164,7 @@ export function BrushStreak() {
       </div>
 
       {/* Hero Streak Banner with Sparky Reaction */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 text-white shadow-soft-lg flex flex-col md:flex-row items-center gap-6 relative overflow-hidden">
+      <div className="p-4 sm:p-6 lg:p-8 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 text-white shadow-soft-lg flex flex-col md:flex-row items-center gap-5 sm:gap-6 relative overflow-hidden">
         <div className="flex-shrink-0">
           <Mascot mood={mascotMood} size="lg" />
         </div>
@@ -261,12 +261,12 @@ export function BrushStreak() {
       </div>
 
       {/* Tooth Trivia Mini-Quiz Game */}
-      <Card className="p-6 sm:p-8 space-y-6">
-        <div className="flex items-center justify-between border-b border-surface-border pb-4">
-          <div className="flex items-center gap-2.5">
-            <HelpCircle className="w-6 h-6 text-teal-600 dark:text-teal-400" />
-            <div>
-              <h3 className="text-lg font-heading font-bold text-ink-primary">
+      <Card className="p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-surface-border pb-4">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <HelpCircle className="w-6 h-6 text-teal-600 dark:text-teal-400 shrink-0" />
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-heading font-bold text-ink-primary">
                 Gardy&apos;s Dental IQ Mini-Quiz
               </h3>
               <p className="text-xs text-ink-secondary">
@@ -274,7 +274,7 @@ export function BrushStreak() {
               </p>
             </div>
           </div>
-          <Badge variant="primary">3 Questions</Badge>
+          <Badge variant="primary" className="shrink-0">3 Questions</Badge>
         </div>
 
         {!quizStarted && !quizFinished && (

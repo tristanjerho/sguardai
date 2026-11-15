@@ -711,10 +711,10 @@ export function LabRequestDetails() {
     'Standard Prescription';
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6">
       {/* Top Navigation & Print */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           <Button
             variant="ghost"
             size="sm"
@@ -741,9 +741,9 @@ export function LabRequestDetails() {
       </div>
 
       {/* Hero Status & Contextual Workflow Controls Banner */}
-      <Card className="p-6 border-l-4 border-l-teal-500 space-y-5">
+      <Card className="p-4 sm:p-6 border-l-4 border-l-teal-500 space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-extrabold px-2.5 py-0.5 rounded-lg bg-slate-900 text-teal-300 dark:bg-teal-950 dark:border dark:border-teal-700">
                 {order.requestCode}
@@ -995,18 +995,18 @@ export function LabRequestDetails() {
           <p className="text-[10px] font-bold uppercase tracking-wider text-ink-muted mb-2.5">
             Request Lifecycle Progress
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 xl:grid-cols-7 gap-2">
             {applicableMilestones.map((m) => (
               <div
                 key={m.key}
-                className={`p-2 rounded-xl border text-center transition-all ${m.isAlert
+                className={`p-2 rounded-xl border text-center flex items-center justify-center min-h-[2.5rem] transition-all ${m.isAlert
                     ? 'bg-rose-500/10 border-rose-500/40 text-rose-700 dark:text-rose-300'
                     : m.reached
                       ? 'bg-teal-500/10 border-teal-500/30 text-teal-800 dark:text-teal-200'
                       : 'bg-surface-subtle border-surface-border text-ink-muted'
                   }`}
               >
-                <p className="text-[11px] font-bold truncate">{m.label}</p>
+                <p className="text-[11px] font-bold leading-tight break-words">{m.label}</p>
               </div>
             ))}
           </div>
@@ -1130,13 +1130,14 @@ export function LabRequestDetails() {
                       href={att.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center justify-between p-2.5 rounded-xl bg-surface-subtle border border-surface-border hover:border-teal-500 transition-colors"
+                      className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-surface-subtle border border-surface-border hover:border-teal-500 transition-colors min-w-0"
                     >
-                      <span className="flex items-center gap-2 font-semibold text-ink-primary">
-                        <ImageIcon className="w-4 h-4 text-teal-500" />
-                        {att.title} <span className="text-ink-muted font-normal">({att.uploadedBy})</span>
+                      <span className="flex items-center gap-2 font-semibold text-ink-primary min-w-0 truncate">
+                        <ImageIcon className="w-4 h-4 text-teal-500 shrink-0" />
+                        <span className="truncate">{att.title}</span>{' '}
+                        <span className="text-ink-muted font-normal shrink-0">({att.uploadedBy})</span>
                       </span>
-                      <ExternalLink className="w-3.5 h-3.5 text-ink-muted" />
+                      <ExternalLink className="w-3.5 h-3.5 text-ink-muted shrink-0" />
                     </a>
                   ))}
                 </div>
@@ -1200,23 +1201,23 @@ export function LabRequestDetails() {
                   return (
                     <div
                       key={stg.key}
-                      className={`px-3.5 py-2 rounded-xl border flex items-center justify-between ${isCurrent
+                      className={`px-3 sm:px-3.5 py-2 rounded-xl border flex flex-wrap items-center justify-between gap-2 ${isCurrent
                           ? 'bg-teal-500/10 border-teal-500 text-teal-900 dark:text-teal-200 font-bold'
                           : isCompletedStep
                             ? 'bg-emerald-500/5 border-emerald-500/30 text-ink-primary'
                             : 'bg-surface-subtle border-surface-border text-ink-muted'
                         }`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <span className="font-mono text-[11px]">{idx + 1}.</span>
-                        <span>{stg.label}</span>
+                      <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                        <span className="font-mono text-[11px] shrink-0">{idx + 1}.</span>
+                        <span className="break-words">{stg.label}</span>
                       </div>
                       {isCurrent && (
-                        <span className="text-[10px] uppercase tracking-wider font-extrabold text-teal-600 dark:text-teal-300">
+                        <span className="text-[10px] uppercase tracking-wider font-extrabold text-teal-600 dark:text-teal-300 shrink-0">
                           Current Stage
                         </span>
                       )}
-                      {isCompletedStep && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                      {isCompletedStep && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
                     </div>
                   );
                 })}
@@ -1231,7 +1232,7 @@ export function LabRequestDetails() {
                     : 'bg-rose-500/10 border-rose-500/30'
                   }`}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-1.5">
                   <p className="font-bold text-ink-primary">
                     Quality Check: {order.qcResult.passed ? 'PASSED' : 'RETURNED TO PRODUCTION'}
                   </p>
@@ -1299,25 +1300,25 @@ export function LabRequestDetails() {
                         key={n.id}
                         className="p-2.5 rounded-xl bg-purple-500/5 border border-purple-500/20"
                       >
-                        <div className="flex items-center justify-between text-[10px] text-ink-muted">
+                        <div className="flex flex-wrap items-center justify-between gap-1.5 text-[10px] text-ink-muted">
                           <strong className="text-ink-primary">{n.authorName}</strong>
                           <span>{formatDateTime(n.createdAt)}</span>
                         </div>
-                        <p className="text-ink-secondary mt-0.5">{n.note}</p>
+                        <p className="text-ink-secondary mt-0.5 break-words">{n.note}</p>
                       </div>
                     ))
                   )}
                 </div>
 
-                <form onSubmit={handleAddInternalNote} className="flex gap-2">
+                <form onSubmit={handleAddInternalNote} className="flex flex-col xs:flex-row gap-2">
                   <input
                     type="text"
                     placeholder="Add internal technician note (furnace batch, die spacer, etc.)..."
                     value={internalNoteText}
                     onChange={(e) => setInternalNoteText(e.target.value)}
-                    className="flex-1 bg-surface-card border border-surface-border rounded-xl px-3 py-1.5 text-xs outline-none focus:border-purple-500"
+                    className="min-w-0 flex-1 bg-surface-card border border-surface-border rounded-xl px-3 py-2 text-xs outline-none focus:border-purple-500"
                   />
-                  <Button type="submit" size="sm" variant="secondary" isLoading={isSavingInternal}>
+                  <Button type="submit" size="sm" variant="secondary" isLoading={isSavingInternal} className="shrink-0">
                     Add Internal
                   </Button>
                 </form>
@@ -1333,7 +1334,7 @@ export function LabRequestDetails() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <Clock className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
               <CardTitle>Request Audit Timeline</CardTitle>
             </div>
           </CardHeader>
@@ -1348,13 +1349,13 @@ export function LabRequestDetails() {
                   key={evt.id}
                   className="p-3.5 rounded-2xl bg-surface-subtle border border-surface-border space-y-1"
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
                     <p className="font-bold text-ink-primary">{evt.title}</p>
                     <span className="text-[10px] font-mono text-ink-muted shrink-0">
                       {formatDateTime(evt.timestamp)}
                     </span>
                   </div>
-                  {evt.detail && <p className="text-ink-secondary">{evt.detail}</p>}
+                  {evt.detail && <p className="text-ink-secondary break-words">{evt.detail}</p>}
                   <p className="text-[10px] text-teal-700 dark:text-teal-400 font-semibold">
                     Recorded by: {evt.actorName} ({evt.actorRole})
                   </p>
@@ -1368,7 +1369,7 @@ export function LabRequestDetails() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
               <CardTitle>Clinic &amp; Laboratory Communication</CardTitle>
             </div>
           </CardHeader>
@@ -1384,32 +1385,32 @@ export function LabRequestDetails() {
                     key={msg.id}
                     className="p-3.5 rounded-2xl bg-surface-subtle border border-surface-border space-y-1"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                      <div className="flex flex-wrap items-center gap-2 min-w-0">
                         <strong className="text-ink-primary">{msg.actorName}</strong>
                         <Badge variant="primary" size="sm">
                           {msg.type?.replace(/_/g, ' ') || msg.actorRole}
                         </Badge>
                       </div>
-                      <span className="text-[10px] text-ink-muted">
+                      <span className="text-[10px] text-ink-muted shrink-0">
                         {formatDateTime(msg.timestamp)}
                       </span>
                     </div>
-                    <p className="text-ink-secondary whitespace-pre-wrap">{msg.message}</p>
+                    <p className="text-ink-secondary whitespace-pre-wrap break-words">{msg.message}</p>
                   </div>
                 ))
               )}
             </div>
 
-            <form onSubmit={handleSendCommunication} className="flex gap-2 pt-2 border-t border-surface-border">
+            <form onSubmit={handleSendCommunication} className="flex flex-col xs:flex-row gap-2 pt-2 border-t border-surface-border">
               <input
                 type="text"
                 placeholder="Post a clinical update, question, or response..."
                 value={commMessage}
                 onChange={(e) => setCommMessage(e.target.value)}
-                className="flex-1 bg-surface-card border border-surface-border rounded-xl px-3.5 py-2 text-xs outline-none focus:border-teal-500"
+                className="min-w-0 flex-1 bg-surface-card border border-surface-border rounded-xl px-3.5 py-2 text-xs outline-none focus:border-teal-500"
               />
-              <Button type="submit" variant="primary" size="sm" leftIcon={Send} isLoading={isSendingComm}>
+              <Button type="submit" variant="primary" size="sm" leftIcon={Send} isLoading={isSendingComm} className="shrink-0">
                 Send
               </Button>
             </form>
@@ -1476,7 +1477,7 @@ export function LabRequestDetails() {
             placeholder="e.g. ₱3,500"
           />
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setActiveModal(null)}>
               Cancel
             </Button>
@@ -1514,7 +1515,7 @@ export function LabRequestDetails() {
             }
             className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm outline-none focus:border-teal-500 resize-none"
           />
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setActiveModal(null)}>
               Cancel
             </Button>
@@ -1547,7 +1548,7 @@ export function LabRequestDetails() {
             onChange={(e) => setMaterialCondition(e.target.value)}
             required
           />
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setActiveModal(null)}>
               Cancel
             </Button>
@@ -1594,7 +1595,7 @@ export function LabRequestDetails() {
             onChange={(e) => setStageNote(e.target.value)}
             placeholder="e.g. Cast articulated and blocked out"
           />
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setActiveModal(null)}>
               Cancel
             </Button>
@@ -1650,7 +1651,7 @@ export function LabRequestDetails() {
             className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm outline-none focus:border-teal-500 resize-none"
           />
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setActiveModal(null)}>
               Cancel
             </Button>
@@ -1688,7 +1689,7 @@ export function LabRequestDetails() {
                 accept="image/*"
                 onChange={handleFileUpload}
                 disabled={uploadingFile}
-                className="text-xs text-ink-secondary"
+                className="w-full max-w-full text-xs text-ink-secondary file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:bg-teal-500/15 file:text-teal-700 dark:file:text-teal-300"
               />
             )}
             <Input
@@ -1705,7 +1706,7 @@ export function LabRequestDetails() {
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setActiveModal(null)}>
               Cancel
             </Button>
@@ -1740,7 +1741,7 @@ export function LabRequestDetails() {
             placeholder="Record midline, VDO, occlusion, or shade verification notes..."
             className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm outline-none focus:border-teal-500 resize-none"
           />
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setActiveModal(null)}>
               Cancel
             </Button>
@@ -1816,7 +1817,7 @@ export function LabRequestDetails() {
             className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm outline-none focus:border-teal-500 resize-none"
           />
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setActiveModal(null)}>
               Cancel
             </Button>
@@ -1872,7 +1873,7 @@ export function LabRequestDetails() {
             onChange={(e) => setDispatchNotes(e.target.value)}
             placeholder="e.g. Sealed in sterile hydration pouch with articulated cast"
           />
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setActiveModal(null)}>
               Cancel
             </Button>
@@ -1913,7 +1914,7 @@ export function LabRequestDetails() {
             placeholder="Optional clinical receiving remarks..."
             className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm outline-none focus:border-teal-500 resize-none"
           />
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setActiveModal(null)}>
               Cancel
             </Button>
@@ -1951,7 +1952,7 @@ export function LabRequestDetails() {
             placeholder="Describe the damage, missing item, or chairside discrepancy..."
             className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm outline-none focus:border-rose-500 resize-none"
           />
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setActiveModal(null)}>
               Cancel
             </Button>
@@ -2000,7 +2001,7 @@ export function LabRequestDetails() {
             placeholder="Document corrective action taken..."
             className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm outline-none focus:border-teal-500 resize-none"
           />
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setActiveModal(null)}>
               Cancel
             </Button>

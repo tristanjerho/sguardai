@@ -29,6 +29,7 @@ import { authService } from '../../services/authService';
 import { appointmentService } from '../../services/appointmentService';
 import { laboratoryService } from '../../services/laboratoryService';
 import { activityLogService } from '../../services/activityLogService';
+import { seedService } from '../../services/seedService';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -86,6 +87,52 @@ export function SuperAdminDashboard() {
   const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
   const [tempNotice, setTempNotice] = useState(emergencyNotice);
 
+  // Clinic Demonstration & Seed Data State
+  const [testStats, setTestStats] = useState(null);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [isPurging, setIsPurging] = useState(false);
+  const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
+
+  const refreshTestStats = async () => {
+    try {
+      const stats = await seedService.getTestDataStats();
+      setTestStats(stats);
+    } catch (e) {
+      console.warn('Could not load test stats:', e);
+    }
+  };
+
+  const handleSeedData = async () => {
+    setIsSeeding(true);
+    try {
+      const res = await seedService.seedTestData(currentUser?.fullName || 'SuperAdmin');
+      toast.success(
+        `Populated test data: ${res.patientsActive + res.patientsHistorical} patients, ${res.dentists} dentists, ${res.appointments} appointments.`
+      );
+      await loadPlatformData();
+      await refreshTestStats();
+    } catch (err) {
+      toast.error(err.message || 'Failed to seed test data.');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  const handlePurgeData = async () => {
+    setIsPurging(true);
+    try {
+      await seedService.purgeTestData(currentUser?.fullName || 'SuperAdmin');
+      toast.success('Test data safely purged. Genuine patient records and live charts were preserved.');
+      setIsPurgeModalOpen(false);
+      await loadPlatformData();
+      await refreshTestStats();
+    } catch (err) {
+      toast.error(err.message || 'Failed to purge test data.');
+    } finally {
+      setIsPurging(false);
+    }
+  };
+
   // Real-time latency measurement
   const testDatabaseLatency = async () => {
     setIsTestingLatency(true);
@@ -125,8 +172,9 @@ export function SuperAdminDashboard() {
         setAuditLogs(logsList.value);
       }
 
-      // Test latency
+      // Test latency & test data stats
       testDatabaseLatency();
+      refreshTestStats();
     } catch (err) {
       console.error('Superadmin data load error:', err);
       toast.error('Failed to aggregate platform telemetry data');
@@ -336,22 +384,22 @@ export function SuperAdminDashboard() {
   const pwaSupported = typeof window !== 'undefined' && 'serviceWorker' in navigator;
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 sm:space-y-8">
       {/* Top Banner & SuperAdmin Crown Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white shadow-xl border border-teal-500/20 relative overflow-hidden">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white shadow-xl border border-teal-500/20 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="space-y-2 z-10">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-teal-500/20 border border-teal-400/30 text-teal-300">
-              <ShieldCheck className="w-7 h-7" />
+        <div className="space-y-2 z-10 min-w-0 w-full xl:w-auto xl:flex-1">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-teal-500/20 border border-teal-400/30 text-teal-300 shrink-0">
+              <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl xs:text-2xl sm:text-3xl font-heading font-extrabold tracking-tight">
                   SuperAdmin Command Center
                 </h1>
-                <Badge variant="primary" className="bg-amber-400 text-slate-950 font-extrabold uppercase text-[10px] tracking-wider px-2 py-0.5">
+                <Badge variant="primary" className="bg-amber-400 text-slate-950 font-extrabold uppercase text-[10px] tracking-wider px-2 py-0.5 shrink-0">
                   Root Sovereign
                 </Badge>
               </div>
@@ -363,7 +411,7 @@ export function SuperAdminDashboard() {
         </div>
 
         {/* Global Quick Action Bar */}
-        <div className="flex flex-wrap items-center gap-2 z-10">
+        <div className="flex flex-wrap items-center gap-2 z-10 shrink-0 max-w-full">
           <Button
             variant="secondary"
             size="sm"
@@ -418,14 +466,14 @@ export function SuperAdminDashboard() {
 
       {/* Emergency Broadcast Banner Display (If Set) */}
       {emergencyNotice && (
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-amber-800 dark:text-amber-200 text-xs sm:text-sm animate-pulse">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-            <div>
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-800 dark:text-amber-200 text-xs sm:text-sm animate-pulse">
+          <div className="flex items-start sm:items-center gap-3 min-w-0">
+            <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5 sm:mt-0" />
+            <div className="min-w-0">
               <span className="font-bold uppercase tracking-wider text-[11px] mr-2 px-2 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300">
                 Clinic Broadcast
               </span>
-              <span>{emergencyNotice}</span>
+              <span className="break-words">{emergencyNotice}</span>
             </div>
           </div>
           <button
@@ -436,7 +484,7 @@ export function SuperAdminDashboard() {
               } catch {}
               toast.info('Emergency broadcast removed');
             }}
-            className="text-xs font-semibold text-amber-700 dark:text-amber-300 hover:underline ml-4"
+            className="text-xs font-semibold text-amber-700 dark:text-amber-300 hover:underline self-end sm:self-center shrink-0"
           >
             Dismiss
           </button>
@@ -647,10 +695,71 @@ export function SuperAdminDashboard() {
         </div>
       </div>
 
+      {/* Test Data & Capstone Defense Demonstration Management */}
+      <Card className="p-4 sm:p-6 bg-gradient-to-br from-surface-card to-amber-50/20 dark:to-amber-950/10 border-amber-500/20 shadow-soft-sm">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 sm:gap-6">
+          <div className="space-y-1.5 max-w-2xl min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                <Database className="w-5 h-5" />
+              </div>
+              <h2 className="text-base font-heading font-extrabold text-ink-primary min-w-0">
+                Capstone Defense Demonstration & Test Data Center
+              </h2>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300 shrink-0">
+                {testStats?.totalTestRecords || 0} Test Records
+              </span>
+            </div>
+            <p className="text-xs text-ink-secondary leading-relaxed">
+              Populate the system with realistic fictional patients, multiple attending dentists, archived records, multi-status appointments, treatments, radiographs, and SMS logs. Every record is tagged with <code className="text-amber-600 dark:text-amber-400 font-mono">isTestData: true</code> and can be purged safely without affecting genuine clinic charts.
+            </p>
+            {testStats && (
+              <div className="flex flex-wrap gap-3 pt-2 text-[11px] text-ink-muted">
+                <span className="px-2 py-1 rounded-lg bg-surface-base border border-surface-border">
+                  Users: <strong className="text-ink-primary">{testStats.collections?.users || 0}</strong>
+                </span>
+                <span className="px-2 py-1 rounded-lg bg-surface-base border border-surface-border">
+                  Appointments: <strong className="text-ink-primary">{testStats.collections?.appointments || 0}</strong>
+                </span>
+                <span className="px-2 py-1 rounded-lg bg-surface-base border border-surface-border">
+                  Treatments: <strong className="text-ink-primary">{testStats.collections?.treatmentPlans || 0}</strong>
+                </span>
+                <span className="px-2 py-1 rounded-lg bg-surface-base border border-surface-border">
+                  Radiographs: <strong className="text-ink-primary">{testStats.collections?.dentalImages || 0}</strong>
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSeedData}
+              disabled={isSeeding || isPurging}
+              className="bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs shadow-soft-sm"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isSeeding ? 'animate-spin' : ''}`} />
+              {isSeeding ? 'Seeding Demonstration Data...' : 'Populate Realistic Test Data'}
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPurgeModalOpen(true)}
+              disabled={isSeeding || isPurging}
+              className="text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs"
+            >
+              Reset / Purge Test Data
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       {/* Role Governance & Staff Elevation Matrix */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
+        <div className="page-header-row">
+          <div className="page-header-text">
             <h2 className="text-base font-heading font-bold text-ink-primary flex items-center gap-2">
               <KeyRound className="w-4 h-4 text-teal-600 dark:text-teal-400" />
               Role Governance & Privilege Delegation
@@ -660,22 +769,22 @@ export function SuperAdminDashboard() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative w-full sm:w-64">
+          <div className="flex flex-col xs:flex-row xs:flex-wrap items-stretch xs:items-center gap-2.5 w-full sm:w-auto shrink-0">
+            <div className="relative w-full xs:w-56 sm:w-64">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
               <input
                 type="text"
                 placeholder="Search user, email, or UID..."
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-surface-card border border-surface-border focus:outline-none focus:ring-2 focus:ring-teal-500 text-ink-primary placeholder:text-ink-muted"
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-surface-card border border-surface-border focus:outline-none focus:ring-2 focus:ring-teal-500 text-ink-primary placeholder:text-ink-muted"
               />
             </div>
 
             <select
               value={selectedRoleFilter}
               onChange={(e) => setSelectedRoleFilter(e.target.value)}
-              className="py-1.5 px-3 text-xs rounded-xl bg-surface-card border border-surface-border text-ink-primary focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="self-stretch xs:self-auto py-2 px-3 text-xs rounded-xl bg-surface-card border border-surface-border text-ink-primary focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
               <option value="ALL">All Roles ({users.length})</option>
               <option value={ROLES.SUPERADMIN}>SUPERADMIN ({metrics.rolesCount.SUPERADMIN})</option>
@@ -689,8 +798,8 @@ export function SuperAdminDashboard() {
 
         {/* Governance Table */}
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="table-responsive-wrap">
+            <table className="w-full min-w-[680px] text-left text-xs">
               <thead className="bg-surface-50 dark:bg-surface-200/40 border-b border-surface-border font-heading font-semibold text-ink-muted uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-4">User / Account</th>
@@ -790,10 +899,10 @@ export function SuperAdminDashboard() {
 
       {/* Live System Activity Stream (Latest 6) */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-base font-heading font-bold text-ink-primary flex items-center gap-2">
-              <Activity className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              <Activity className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
               Live Platform Audit Stream
             </h2>
             <p className="text-xs text-ink-muted">
@@ -802,7 +911,7 @@ export function SuperAdminDashboard() {
           </div>
           <Link
             to="/admin/logs"
-            className="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1"
+            className="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 shrink-0"
           >
             All Audit Records <ArrowRight className="w-3.5 h-3.5" />
           </Link>
@@ -816,22 +925,22 @@ export function SuperAdminDashboard() {
           ) : (
             auditLogs.slice(0, 6).map((log) => (
               <div key={log.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-surface-50 dark:hover:bg-surface-200/20 transition-colors">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 mt-0.5">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="p-2 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 mt-0.5 shrink-0">
                     <ShieldAlert className="w-4 h-4" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-xs text-ink-primary">{log.action || 'SYSTEM_ACTION'}</span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-bold text-xs text-ink-primary break-words">{log.action || 'SYSTEM_ACTION'}</span>
                       <Badge variant="primary" size="sm">
                         {log.resourceType || 'DATABASE'}
                       </Badge>
                     </div>
-                    <p className="text-xs text-ink-secondary mt-0.5">{log.entity || 'Standard execution'}</p>
-                    <p className="text-[11px] text-ink-muted mt-0.5">Actor: {log.actor || 'System'}</p>
+                    <p className="text-xs text-ink-secondary mt-0.5 break-words">{log.entity || 'Standard execution'}</p>
+                    <p className="text-[11px] text-ink-muted mt-0.5 break-words">Actor: {log.actor || 'System'}</p>
                   </div>
                 </div>
-                <div className="text-[11px] text-ink-muted self-end sm:self-center font-mono">
+                <div className="text-[11px] text-ink-muted self-end sm:self-center font-mono shrink-0">
                   {formatDate(log.timestamp) || 'Recent'}
                 </div>
               </div>
@@ -905,7 +1014,7 @@ export function SuperAdminDashboard() {
             required
           />
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-3 pt-3 border-t border-surface-border">
             <Button
               type="button"
               variant="secondary"
@@ -958,7 +1067,7 @@ export function SuperAdminDashboard() {
               Role updates apply immediately. The user will be rerouted to their designated portal on their next request.
             </div>
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-surface-border">
+            <div className="flex flex-wrap justify-end gap-3 pt-3 border-t border-surface-border">
               <Button
                 variant="secondary"
                 onClick={() => setSelectedUser(null)}
@@ -996,7 +1105,7 @@ export function SuperAdminDashboard() {
             onChange={(e) => setTempNotice(e.target.value)}
           />
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-3 pt-3 border-t border-surface-border">
             <Button
               variant="secondary"
               onClick={() => setIsNoticeModalOpen(false)}
@@ -1005,6 +1114,43 @@ export function SuperAdminDashboard() {
             </Button>
             <Button variant="primary" onClick={handleSaveBroadcast}>
               Save Broadcast
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL: Confirm Test Data Purge */}
+      <Modal
+        isOpen={isPurgeModalOpen}
+        onClose={() => setIsPurgeModalOpen(false)}
+        title="Confirm Safe Test Data Reset"
+        description="Safely removes all demonstration documents tagged with isTestData: true."
+      >
+        <div className="space-y-4">
+          <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-xs text-rose-800 dark:text-rose-200 space-y-1">
+            <p className="font-bold flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+              Safety Guarantee:
+            </p>
+            <p>
+              Genuine patient records, doctor accounts, clinic notes, and active appointments that do not have the test tag are strictly protected and will remain untouched.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-end gap-3 pt-3 border-t border-surface-border">
+            <Button
+              variant="secondary"
+              onClick={() => setIsPurgeModalOpen(false)}
+              disabled={isPurging}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handlePurgeData}
+              loading={isPurging}
+            >
+              Confirm Safe Purge
             </Button>
           </div>
         </div>

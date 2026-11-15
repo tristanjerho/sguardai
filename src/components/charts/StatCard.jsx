@@ -19,26 +19,26 @@ export function StatCard({
   };
 
   return (
-    <Card className="p-5">
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <p className="min-h-8 text-xs font-semibold uppercase leading-4 tracking-wider text-ink-muted">
+    <Card className="p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1 min-w-0 flex-1">
+          <p className="min-h-8 text-xs font-semibold uppercase leading-4 tracking-wider text-ink-muted break-words">
             {title}
           </p>
-          <p className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
+          <p className="text-xl xs:text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight break-words">
             {value}
           </p>
         </div>
 
         {Icon && (
-          <div className={`p-3 rounded-2xl border ${colorMap[color] || colorMap.teal}`}>
+          <div className={`p-2.5 sm:p-3 rounded-2xl border shrink-0 ${colorMap[color] || colorMap.teal}`}>
             <Icon className="w-5 h-5" />
           </div>
         )}
       </div>
 
       {(subtitle || trend) && (
-        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-surface-border/50 text-xs">
+        <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-surface-border/50 text-xs">
           {trend && (
             <span
               className={`inline-flex items-center gap-0.5 font-bold ${trendDirection === 'up'
@@ -54,7 +54,7 @@ export function StatCard({
               {trend}
             </span>
           )}
-          {subtitle && <span className="text-ink-muted">{subtitle}</span>}
+          {subtitle && <span className="text-ink-muted break-words">{subtitle}</span>}
         </div>
       )}
     </Card>

@@ -26,12 +26,12 @@ export function LandingPage() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <div className="min-h-screen bg-surface-base text-ink-primary flex flex-col selection:bg-teal-500 selection:text-white">
+    <div className="min-h-[100dvh] bg-surface-base text-ink-primary flex flex-col overflow-x-clip selection:bg-teal-500 selection:text-white">
       {/* Navigation Bar */}
-      <header className="sticky top-0 z-30 w-full h-16 border-b border-surface-border bg-surface-card/85 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between">
+      <header className="sticky top-0 z-30 w-full h-16 border-b border-surface-border bg-surface-card/85 backdrop-blur-md px-3.5 xs:px-4 sm:px-8 flex items-center justify-between gap-2">
         <Logo size="md" />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             type="button"
             onClick={toggleTheme}
@@ -44,62 +44,62 @@ export function LandingPage() {
       </header>
 
       {/* Hero Section with Sparky Waving */}
-      <section className="relative py-16 sm:py-24 px-4 sm:px-8 overflow-hidden">
+      <section className="relative py-10 sm:py-16 lg:py-24 px-3.5 xs:px-4 sm:px-8 overflow-hidden">
         {/* Background gradient orbs */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-teal-500/10 dark:bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-12 items-center">
           {/* Hero Left Content */}
-          <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-50 dark:bg-teal-950/70 border border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-xs font-bold">
-              <Sparkles className="w-4 h-4 text-orange-500" />
-              <span>Intelligent Dental Clinic & Orthodontic Monitoring</span>
+          <div className="lg:col-span-7 space-y-5 sm:space-y-6 text-center lg:text-left min-w-0">
+            <div className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-2xl xs:rounded-full bg-teal-50 dark:bg-teal-950/70 border border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-[11px] sm:text-xs font-bold max-w-full text-left">
+              <Sparkles className="w-4 h-4 text-orange-500 shrink-0" />
+              <span className="leading-snug">Intelligent Dental Clinic &amp; Orthodontic Monitoring</span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-heading font-black tracking-tight leading-[1.15] text-ink-primary">
+            <h1 className="text-2xl xs:text-3xl sm:text-5xl lg:text-6xl font-heading font-black tracking-tight leading-[1.15] text-ink-primary">
               Guarding Every Smile with{' '}
               <span className="bg-gradient-to-r from-teal-600 via-teal-500 to-emerald-500 dark:from-teal-300 dark:to-teal-500 bg-clip-text text-transparent">
                 Clinical Precision
               </span>{' '}
-              & AI.
+              &amp; AI.
             </h1>
 
-            <p className="text-base sm:text-lg text-ink-secondary max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            <p className="text-sm xs:text-base sm:text-lg text-ink-secondary max-w-xl mx-auto lg:mx-0 leading-relaxed">
               Connect patients and dental specialists seamlessly. Experience real-time orthodontic stage tracking, gamified brushing streaks with <strong>Gardy the Smile Guard</strong>, and AI-assisted radiograph diagnostics.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 pt-2">
               <Link to="/login" className="w-full sm:w-auto">
-                <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-soft" rightIcon={ArrowRight}>
+                <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-soft text-sm sm:text-base px-4 sm:px-6" rightIcon={ArrowRight}>
                   Sign In to Clinic Portal
                 </Button>
               </Link>
               <Link to="/signup" className="w-full sm:w-auto">
-                <Button variant="secondary" size="lg" className="w-full sm:w-auto">
+                <Button variant="secondary" size="lg" className="w-full sm:w-auto text-sm sm:text-base px-4 sm:px-6">
                   Create Patient Account
                 </Button>
               </Link>
             </div>
 
             {/* Credibility badges */}
-            <div className="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-4 text-xs text-ink-secondary">
+            <div className="pt-3 sm:pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-x-4 gap-y-2 text-xs text-ink-secondary">
               <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-teal-600" />
+                <ShieldCheck className="w-4 h-4 text-teal-600 shrink-0" />
                 RA 10173 Privacy Protected
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
                 Real-time Double-Booking Guard
               </span>
             </div>
           </div>
 
           {/* Hero Right: Sparky & Interactive Speech Bubble */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center space-y-4">
-            <div className="relative p-8 rounded-3xl bg-gradient-to-br from-teal-500/10 via-teal-50/50 to-orange-50/30 dark:from-teal-950/40 dark:via-slate-900/60 dark:to-slate-950 border border-teal-200/80 dark:border-teal-800/60 shadow-soft-lg flex flex-col items-center text-center">
+          <div className="lg:col-span-5 flex flex-col items-center justify-center space-y-4 min-w-0">
+            <div className="relative w-full max-w-md lg:max-w-full p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-teal-500/10 via-teal-50/50 to-orange-50/30 dark:from-teal-950/40 dark:via-slate-900/60 dark:to-slate-950 border border-teal-200/80 dark:border-teal-800/60 shadow-soft-lg flex flex-col items-center text-center">
               <Mascot mood="wave" size="xl" forceShow={true} />
 
-              <div className="mt-4">
+              <div className="mt-4 w-full">
                 <MascotBubble
                   title="Hi there, I'm Gardy!"
                   message="Welcome to SmileGuard! Sign in to book appointments, track your orthodontic journey, or manage clinical dental records securely."
@@ -113,8 +113,8 @@ export function LandingPage() {
       </section>
 
       {/* Feature Pillars: For Patients vs For Clinics */}
-      <section className="py-16 px-4 sm:px-8 bg-surface-50/70 dark:bg-surface-100/20 border-y border-surface-border">
-        <div className="max-w-6xl mx-auto space-y-12">
+      <section className="py-12 sm:py-16 px-3.5 xs:px-4 sm:px-8 bg-surface-50/70 dark:bg-surface-100/20 border-y border-surface-border">
+        <div className="max-w-6xl mx-auto space-y-8 sm:space-y-12">
           <div className="text-center space-y-3 max-w-2xl mx-auto">
             <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary">
               Built for Patients and Modern Dental Teams
@@ -124,9 +124,9 @@ export function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8">
             {/* Patient Portal Highlights */}
-            <Card className="p-6 sm:p-8 space-y-6 border-teal-200 dark:border-teal-800/60">
+            <Card className="p-5 sm:p-8 space-y-5 sm:space-y-6 border-teal-200 dark:border-teal-800/60">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-teal-100 dark:bg-teal-900/60 flex items-center justify-center text-teal-700 dark:text-teal-300">
                   <Flame className="w-6 h-6 text-orange-500" />
@@ -162,7 +162,7 @@ export function LandingPage() {
             </Card>
 
             {/* Clinic & Specialist Highlights */}
-            <Card className="p-6 sm:p-8 space-y-6 border-teal-200 dark:border-teal-800/60">
+            <Card className="p-5 sm:p-8 space-y-5 sm:space-y-6 border-teal-200 dark:border-teal-800/60">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-teal-100 dark:bg-teal-900/60 flex items-center justify-center text-teal-700 dark:text-teal-300">
                   <Stethoscope className="w-6 h-6 text-teal-600" />
@@ -201,8 +201,8 @@ export function LandingPage() {
       </section>
 
       {/* How It Works in 3 Steps */}
-      <section className="py-16 px-4 sm:px-8">
-        <div className="max-w-5xl mx-auto space-y-12">
+      <section className="py-12 sm:py-16 px-3.5 xs:px-4 sm:px-8">
+        <div className="max-w-5xl mx-auto space-y-8 sm:space-y-12">
           <div className="text-center space-y-2">
             <span className="text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400">
               Simple Workflow
@@ -212,8 +212,8 @@ export function LandingPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="p-6 text-center space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+            <Card className="p-5 sm:p-6 text-center space-y-3">
               <div className="w-12 h-12 rounded-full bg-teal-600 text-white font-heading font-extrabold text-lg flex items-center justify-center mx-auto shadow-soft">
                 1
               </div>
@@ -225,7 +225,7 @@ export function LandingPage() {
               </p>
             </Card>
 
-            <Card className="p-6 text-center space-y-3">
+            <Card className="p-5 sm:p-6 text-center space-y-3">
               <div className="w-12 h-12 rounded-full bg-teal-600 text-white font-heading font-extrabold text-lg flex items-center justify-center mx-auto shadow-soft">
                 2
               </div>
@@ -237,7 +237,7 @@ export function LandingPage() {
               </p>
             </Card>
 
-            <Card className="p-6 text-center space-y-3">
+            <Card className="p-5 sm:p-6 text-center space-y-3">
               <div className="w-12 h-12 rounded-full bg-teal-600 text-white font-heading font-extrabold text-lg flex items-center justify-center mx-auto shadow-soft">
                 3
               </div>
@@ -253,7 +253,7 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-surface-border py-8 px-4 sm:px-8 bg-surface-card text-xs text-ink-secondary">
+      <footer className="mt-auto border-t border-surface-border py-6 sm:py-8 px-3.5 xs:px-4 sm:px-8 bg-surface-card text-xs text-ink-secondary">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="font-heading font-bold text-teal-700 dark:text-teal-400">

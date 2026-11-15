@@ -61,7 +61,7 @@ export function ProtectedRoute({ allowedRoles = [], children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-base">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-surface-base p-4">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-xs font-heading font-semibold text-teal-700 dark:text-teal-400">
@@ -98,7 +98,7 @@ export function PublicAuthRoute({ children }) {
     if (user.role === ROLES.PATIENT) {
       return <Navigate to={user.isOnboarded ? '/patient' : '/onboarding'} replace />;
     }
-    if (user.role === ROLES.DENTIST) return <Navigate to="/clinic" replace />;
+    if (user.role === ROLES.DENTIST || user.role === ROLES.RECEPTIONIST) return <Navigate to="/clinic" replace />;
     if (user.role === ROLES.LAB_TECH) return <Navigate to="/lab" replace />;
     if (user.role === ROLES.ADMIN || user.role === ROLES.SUPERADMIN) return <Navigate to="/admin" replace />;
   }
@@ -175,11 +175,11 @@ export function AppRoutes() {
         <Route path="profile" element={<PatientProfile />} />
       </Route>
 
-      {/* Clinic Portal Routes (DENTIST, ADMIN, SUPERADMIN) */}
+      {/* Clinic Portal Routes (DENTIST, RECEPTIONIST, ADMIN, SUPERADMIN) */}
       <Route
         path="/clinic"
         element={
-          <ProtectedRoute allowedRoles={[ROLES.DENTIST, ROLES.ADMIN, ROLES.SUPERADMIN]}>
+          <ProtectedRoute allowedRoles={[ROLES.DENTIST, ROLES.RECEPTIONIST, ROLES.ADMIN, ROLES.SUPERADMIN]}>
             <ClinicShell />
           </ProtectedRoute>
         }

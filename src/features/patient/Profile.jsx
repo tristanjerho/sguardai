@@ -23,7 +23,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Avatar } from '../../components/ui/Avatar';
-import { formatDate, formatPhPhone, isValidPhPhone } from '../../lib/formatters';
+import { formatDate, formatPhPhone, isValidPhPhone, formatPatientId } from '../../lib/formatters';
 
 export function PatientProfile() {
   const { user, updateProfile } = useAuth();
@@ -150,15 +150,17 @@ export function PatientProfile() {
       </div>
 
       {/* Patient Profile Card */}
-      <Card className="p-6 sm:p-8 space-y-6">
-        <div className="flex flex-col sm:flex-row items-center gap-5 pb-6 border-b border-surface-border">
+      <Card className="p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 pb-5 sm:pb-6 border-b border-surface-border">
           <Avatar name={user?.fullName || user?.email} size="xl" />
-          <div className="text-center sm:text-left space-y-1">
-            <h3 className="text-xl font-heading font-bold text-ink-primary">
+          <div className="text-center sm:text-left space-y-1 min-w-0 max-w-full">
+            <h3 className="text-xl font-heading font-bold text-ink-primary break-words">
               {user?.fullName || 'Patient'}
             </h3>
-            <p className="text-xs text-ink-muted">{user?.email}</p>
-            <div className="flex items-center gap-2 pt-1 justify-center sm:justify-start">
+            <p className="text-xs text-ink-muted break-all">
+              Patient ID: <span className="font-semibold text-ink-primary font-mono">{formatPatientId(user)}</span> • {user?.email}
+            </p>
+            <div className="flex flex-wrap items-center gap-2 pt-1 justify-center sm:justify-start">
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300">
                 PATIENT PORTAL
               </span>
@@ -242,34 +244,34 @@ export function PatientProfile() {
       </Card>
 
       {/* Preferences Card: Theme & Mascot Toggles */}
-      <Card className="p-6 sm:p-8 space-y-6">
+      <Card className="p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6">
         <h3 className="text-lg font-heading font-bold text-ink-primary border-b border-surface-border pb-3">
           App Preferences & Accessibility
         </h3>
 
         <div className="divide-y divide-surface-border/60">
           {/* Dark Mode Toggle */}
-          <div className="py-4 flex items-center justify-between">
-            <div className="space-y-0.5">
+          <div className="py-4 flex flex-col xs:flex-row xs:items-center justify-between gap-3">
+            <div className="space-y-0.5 min-w-0">
               <span className="font-heading font-bold text-sm text-ink-primary flex items-center gap-2">
-                {theme === 'dark' ? <Moon className="w-4 h-4 text-amber-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
+                {theme === 'dark' ? <Moon className="w-4 h-4 text-amber-400 shrink-0" /> : <Sun className="w-4 h-4 text-amber-500 shrink-0" />}
                 Theme Mode
               </span>
               <p className="text-xs text-ink-secondary">
                 Switch between clinical bright mode and sleek dark mode.
               </p>
             </div>
-            <Button variant="secondary" size="sm" onClick={toggleTheme}>
+            <Button variant="secondary" size="sm" onClick={toggleTheme} className="shrink-0 self-start xs:self-auto">
               {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
             </Button>
           </div>
 
           {/* Mascot Toggle */}
-          <div className="py-4 flex items-center justify-between">
-            <div className="space-y-0.5">
+          <div className="py-4 flex flex-col xs:flex-row xs:items-center justify-between gap-3">
+            <div className="space-y-0.5 min-w-0">
               <span className="font-heading font-bold text-sm text-ink-primary flex items-center gap-2">
-                <Smile className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                Show &ldquo;Gardy the Smile Guard&rdquo; Mascot
+                <Smile className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+                <span>Show &ldquo;Gardy the Smile Guard&rdquo; Mascot</span>
               </span>
               <p className="text-xs text-ink-secondary">
                 Toggle animated companion guidance, brushing cheers, and daily tips.
@@ -279,6 +281,7 @@ export function PatientProfile() {
               variant={showSparky ? 'primary' : 'outline'}
               size="sm"
               onClick={toggleSparky}
+              className="shrink-0 self-start xs:self-auto"
             >
               {showSparky ? 'Enabled (Showing)' : 'Disabled (Hidden)'}
             </Button>
@@ -287,7 +290,7 @@ export function PatientProfile() {
       </Card>
 
       {/* Security & Password Reset */}
-      <Card className="p-6 sm:p-8 space-y-6">
+      <Card className="p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6">
         <h3 className="text-lg font-heading font-bold text-ink-primary border-b border-surface-border pb-3">
           Security & Password
         </h3>

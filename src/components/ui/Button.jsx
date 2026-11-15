@@ -18,6 +18,7 @@ export function Button({
   ...props
 }) {
   const busy = Boolean(isLoading || loading);
+  const hasElementChild = React.Children.toArray(children).some(React.isValidElement);
   const baseStyles =
     'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none active:scale-[0.98]';
 
@@ -56,7 +57,13 @@ export function Button({
       ) : (
         LeftIcon && <LeftIcon className="w-4 h-4 flex-shrink-0" />
       )}
-      <span className="truncate">{children}</span>
+      {hasElementChild ? (
+        <span className="inline-flex items-center justify-center min-w-0 max-w-full whitespace-nowrap">
+          {children}
+        </span>
+      ) : (
+        <span className="truncate">{children}</span>
+      )}
       {!busy && RightIcon && <RightIcon className="w-4 h-4 flex-shrink-0" />}
     </button>
   );

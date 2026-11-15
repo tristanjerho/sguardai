@@ -148,33 +148,33 @@ export function Notifications() {
                   : 'opacity-90 hover:opacity-100'
                 }`}
             >
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-2xl bg-surface-card border border-surface-border flex items-center justify-center flex-shrink-0 shadow-soft-sm">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-surface-card border border-surface-border flex items-center justify-center flex-shrink-0 shadow-soft-sm">
                   {getIconForType(n.type)}
                 </div>
 
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-heading font-bold text-sm text-ink-primary">
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
+                      <h3 className="font-heading font-bold text-sm text-ink-primary break-words">
                         {n.title}
                       </h3>
                       {!n.read && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300 shrink-0">
                           NEW
                         </span>
                       )}
                     </div>
-                    <span className="text-[11px] text-ink-muted whitespace-nowrap">
+                    <span className="text-[11px] text-ink-muted whitespace-nowrap shrink-0">
                       {formatRelativeTime(n.createdAt)}
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm text-ink-secondary leading-relaxed line-clamp-2">
+                  <p className="text-xs sm:text-sm text-ink-secondary leading-relaxed line-clamp-2 break-words">
                     {n.message}
                   </p>
                 </div>
 
-                <div className="text-ink-muted hover:text-teal-600 transition-colors p-1">
+                <div className="text-ink-muted hover:text-teal-600 transition-colors p-1 shrink-0">
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
@@ -220,12 +220,12 @@ export function Notifications() {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-surface-border">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-surface-border">
               <span className="text-xs text-ink-muted">
                 Received: {formatRelativeTime(selectedNotif.createdAt)}
               </span>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
                 {selectedNotif.type === 'APPOINTMENT' && (
                   <Button
                     variant="primary"

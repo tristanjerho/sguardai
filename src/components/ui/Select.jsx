@@ -22,17 +22,17 @@ export const Select = React.forwardRef(function Select(
   const selectId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
   return (
-    <div className="w-full space-y-1.5">
+    <div className="w-full min-w-0 space-y-1.5">
       {label && (
         <label
           htmlFor={selectId}
-          className="block text-xs font-semibold uppercase tracking-wider text-ink-secondary"
+          className="block text-xs font-semibold uppercase tracking-wider text-ink-secondary break-words"
         >
           {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}
 
-      <div className="relative flex items-center">
+      <div className="relative flex items-center min-w-0">
         <select
           ref={ref}
           id={selectId}
@@ -40,7 +40,7 @@ export const Select = React.forwardRef(function Select(
           required={required}
           className={twMerge(
             clsx(
-              'w-full appearance-none bg-surface-card border rounded-xl py-2.5 px-3.5 pr-10 text-sm text-ink-primary transition-all duration-200 outline-none',
+              'w-full min-w-0 appearance-none bg-surface-card border rounded-xl py-2.5 px-3.5 pr-10 text-sm text-ink-primary transition-all duration-200 outline-none truncate',
               'focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500',
               'disabled:bg-surface-100 disabled:text-ink-muted disabled:cursor-not-allowed',
               error

@@ -3,6 +3,49 @@ import { db } from '../config/firebase';
 import { isCloudinaryConfigured, getCloudinaryUploadUrl, cloudinaryConfig } from '../config/cloudinary';
 import { activityLogService } from './activityLogService';
 
+export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB limit
+export const SUPPORTED_MIME_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'application/dicom',
+  'image/dicom',
+  'image/x-dicom',
+];
+export const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.dcm'];
+
+/**
+ * Validates dental image and radiograph attachments before uploading.
+ * Enforces file size limits, MIME type verification, and non-empty checks.
+ * @param {File|Blob} file
+ * @returns {boolean}
+ */
+export function validateImageFile(file) {
+  if (!file) {
+    throw new Error('Please select a valid radiograph or dental image file.');
+  }
+  if (file.size === 0) {
+    throw new Error('The selected file is empty (0 bytes). Please upload a valid radiograph.');
+  }
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+    throw new Error(`Attachment size (${sizeMb} MB) exceeds the maximum allowed limit of 10 MB.`);
+  }
+
+  const fileType = (file.type || '').toLowerCase();
+  const fileName = (file.name || '').toLowerCase();
+  const hasValidExt = SUPPORTED_EXTENSIONS.some((ext) => fileName.endsWith(ext));
+  const hasValidMime = SUPPORTED_MIME_TYPES.includes(fileType) || fileType.startsWith('image/');
+
+  if (!hasValidExt && !hasValidMime) {
+    throw new Error(
+      `Unsupported file format (${fileType || 'unknown'}). Supported formats are JPEG (.jpg, .jpeg), PNG (.png), WebP (.webp), or DICOM (.dcm).`
+    );
+  }
+  return true;
+}
+
 /**
  * Service for dental images & radiographs
  * Cloudinary stores the image files; Cloud Firestore stores image clinical metadata.
@@ -20,6 +63,8 @@ export const imageService = {
    * @returns {Promise<Object>} Created dentalImage document
    */
   async uploadDentalImage(file, { patientId, type = 'INTRAORAL', toothNumbers = [], uploadedBy, notes = '' }) {
+    validateImageFile(file);
+
     if (!isCloudinaryConfigured()) {
       throw new Error(
         'Cloudinary is not configured. Please set VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in your .env file.'

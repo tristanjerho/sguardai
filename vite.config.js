@@ -97,6 +97,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB
         // Caches ONLY static application assets (JS, CSS, HTML shell, static SVGs/Fonts)
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // STRICT ZERO CLINICAL CACHING: Do NOT cache Firestore, Cloudinary, Auth, or AI endpoints
@@ -146,6 +147,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    chunkSizeWarningLimit: 2500,
   },
   server: {
     port: 3000,

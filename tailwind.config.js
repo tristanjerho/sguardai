@@ -6,6 +6,15 @@ export default {
   ],
   darkMode: 'class',
   theme: {
+    screens: {
+      xs: '480px',
+      sm: '640px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
+      desktop: '1440px',
+      '2xl': '1536px',
+    },
     extend: {
       colors: {
         primary: {
@@ -39,13 +48,16 @@ export default {
           200: 'rgb(var(--color-surface-200) / <alpha-value>)',
           300: 'rgb(var(--color-surface-300) / <alpha-value>)',
           DEFAULT: 'rgb(var(--color-surface-base) / <alpha-value>)',
+          subtle: 'rgb(var(--color-surface-50) / <alpha-value>)',
           card: 'rgb(var(--color-surface-card) / <alpha-value>)',
           border: 'rgb(var(--color-surface-border) / <alpha-value>)',
+          'border-strong': 'rgb(var(--color-surface-300) / <alpha-value>)',
         },
         ink: {
           primary: 'rgb(var(--color-ink-primary) / <alpha-value>)',
           secondary: 'rgb(var(--color-ink-secondary) / <alpha-value>)',
           muted: 'rgb(var(--color-ink-muted) / <alpha-value>)',
+          tertiary: 'rgb(var(--color-ink-muted) / <alpha-value>)',
           inverse: 'rgb(var(--color-ink-inverse) / <alpha-value>)',
         },
         success: {
@@ -74,15 +86,26 @@ export default {
         heading: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
+      borderWidth: {
+        3: '3px',
+      },
+      backdropBlur: {
+        xs: '2px',
+      },
       borderRadius: {
+        xs: '0.25rem',
         '2xl': '1rem',
         '3xl': '1.5rem',
         '4xl': '2rem',
       },
       boxShadow: {
+        '2xs': '0 1px 2px 0 rgba(15, 23, 42, 0.04)',
+        'xs': '0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04)',
+        'soft-xs': '0 1px 4px -1px rgba(13, 148, 136, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
         'soft-sm': '0 2px 8px -2px rgba(13, 148, 136, 0.05), 0 1px 4px -1px rgba(0, 0, 0, 0.04)',
         'soft': '0 10px 25px -5px rgba(15, 118, 110, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03)',
         'soft-lg': '0 20px 35px -10px rgba(15, 118, 110, 0.12), 0 10px 15px -8px rgba(0, 0, 0, 0.05)',
+        'soft-xl': '0 24px 48px -12px rgba(15, 118, 110, 0.16), 0 12px 24px -8px rgba(0, 0, 0, 0.06)',
         'glow': '0 0 20px -3px rgba(20, 184, 166, 0.35)',
         'glow-accent': '0 0 20px -3px rgba(249, 115, 22, 0.35)',
       },

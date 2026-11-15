@@ -14,6 +14,9 @@ import {
   Clock,
   Sparkles,
   ClipboardList,
+  Filter,
+  RotateCcw,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
@@ -52,6 +55,9 @@ export function TreatmentsManager() {
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('ALL');
+  const [procedureFilter, setProcedureFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [dentistFilter, setDentistFilter] = useState('ALL');
 
   // Create Modal State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -84,6 +90,8 @@ export function TreatmentsManager() {
   const [nextAdjustmentDate, setNextAdjustmentDate] = useState('');
   const [dentistNotes, setDentistNotes] = useState('');
   const [planStatus, setPlanStatus] = useState('ACTIVE');
+  const [trtReopenReason, setTrtReopenReason] = useState('');
+  const [trtCompletionConfirmed, setTrtCompletionConfirmed] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Delete Confirmation Modal
@@ -169,11 +177,24 @@ export function TreatmentsManager() {
     setNextAdjustmentDate(t.nextAdjustmentDate || '');
     setDentistNotes(t.dentistNotes || '');
     setPlanStatus(t.status || 'ACTIVE');
+    setTrtReopenReason('');
+    setTrtCompletionConfirmed(false);
   };
 
   const handleSaveTreatment = async (e) => {
     e.preventDefault();
     if (!editModalItem) return;
+
+    const isCurrentlyCompleted = editModalItem.status === 'COMPLETED';
+    const isTransitioningAway = planStatus !== 'COMPLETED' && isCurrentlyCompleted;
+    if (isTransitioningAway && !trtReopenReason.trim()) {
+      toast.error('Please specify a clinical justification to reopen this completed procedure.');
+      return;
+    }
+    if (planStatus === 'COMPLETED' && !isCurrentlyCompleted && !trtCompletionConfirmed) {
+      toast.error('Please check the completion confirmation checkbox before finalizing this treatment.');
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -187,11 +208,14 @@ export function TreatmentsManager() {
           nextAdjustmentDate,
           dentistNotes,
           status: planStatus,
+          reopenReason: trtReopenReason,
         },
         user?.fullName || 'Attending Dentist'
       );
       toast.success(`Updated orthodontic plan for ${editModalItem.patientName}.`);
       setEditModalItem(null);
+      setTrtReopenReason('');
+      setTrtCompletionConfirmed(false);
       await loadTreatments();
     } catch (err) {
       toast.error(err.message || 'Failed to update treatment plan');
@@ -215,17 +239,42 @@ export function TreatmentsManager() {
     }
   };
 
-  // Filtered treatment list
+  // Filtered treatment list with expanded search & multi-criteria filtering
   const filteredTreatments = treatments.filter((t) => {
+    const pCode = t.patientId ? `PT-${t.patientId.slice(0, 4).toUpperCase()}` : '';
+    const sTerm = searchTerm.toLowerCase().trim();
+
     const matchesSearch =
-      (t.patientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (t.treatmentType || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (t.dentistName || '').toLowerCase().includes(searchTerm.toLowerCase());
+      !sTerm ||
+      (t.patientName || '').toLowerCase().includes(sTerm) ||
+      (t.treatmentType || '').toLowerCase().includes(sTerm) ||
+      (t.dentistName || '').toLowerCase().includes(sTerm) ||
+      (t.patientId || '').toLowerCase().includes(sTerm) ||
+      pCode.toLowerCase().includes(sTerm);
 
     const matchesStage = stageFilter === 'ALL' || t.stage === stageFilter;
+    const matchesProcedure = procedureFilter === 'ALL' || t.treatmentType === procedureFilter;
+    const matchesStatus = statusFilter === 'ALL' || t.status === statusFilter;
+    const matchesDentist = dentistFilter === 'ALL' || t.dentistName === dentistFilter;
 
-    return matchesSearch && matchesStage;
+    return matchesSearch && matchesStage && matchesProcedure && matchesStatus && matchesDentist;
   });
+
+  const uniqueDentists = Array.from(new Set(treatments.map((t) => t.dentistName).filter(Boolean)));
+  const hasActiveFilters =
+    searchTerm ||
+    stageFilter !== 'ALL' ||
+    procedureFilter !== 'ALL' ||
+    statusFilter !== 'ALL' ||
+    dentistFilter !== 'ALL';
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setStageFilter('ALL');
+    setProcedureFilter('ALL');
+    setStatusFilter('ALL');
+    setDentistFilter('ALL');
+  };
 
   const activeCount = treatments.filter((t) => t.status === 'ACTIVE').length;
   const completedCount = treatments.filter((t) => t.status === 'COMPLETED' || t.stage === 'COMPLETED').length;
@@ -233,8 +282,8 @@ export function TreatmentsManager() {
   return (
     <div className="space-y-6">
       {/* Header with Title and Create Action */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
+      <div className="page-header-row">
+        <div className="space-y-1 page-header-text">
           <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
             Treatment Plans & Cases
           </h2>
@@ -248,6 +297,7 @@ export function TreatmentsManager() {
           size="md"
           onClick={openCreateModal}
           leftIcon={Plus}
+          className="page-header-action"
         >
           New Treatment Plan
         </Button>
@@ -288,28 +338,98 @@ export function TreatmentsManager() {
         </Card>
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" />
-          <input
-            type="text"
-            placeholder="Search patient, procedure, or dentist..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-surface-card border border-surface-border rounded-xl pl-10 pr-4 py-2 text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-teal-500 transition-colors"
-          />
+      {/* Search and Filters Toolbar */}
+      <div className="space-y-3 bg-surface-card border border-surface-border p-4 rounded-2xl shadow-xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" />
+            <input
+              type="text"
+              placeholder="Search by patient name, ID (e.g. PT-2289), or procedure..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-surface-base border border-surface-border rounded-xl pl-10 pr-4 py-2 text-xs text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-teal-500 transition-colors"
+            />
+          </div>
+
+          {hasActiveFilters && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearAllFilters}
+              leftIcon={RotateCcw}
+              className="text-xs shrink-0"
+            >
+              Clear Filters
+            </Button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+        {/* Multi-Criteria Filters Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-surface-border/60">
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-ink-muted mb-1">
+              Procedure Type
+            </label>
+            <select
+              value={procedureFilter}
+              onChange={(e) => setProcedureFilter(e.target.value)}
+              className="w-full bg-surface-base border border-surface-border rounded-xl p-2 text-xs text-ink-primary outline-none focus:border-teal-500"
+            >
+              <option value="ALL">All Procedures</option>
+              {TREATMENT_PROCEDURES.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-ink-muted mb-1">
+              Case Status
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full bg-surface-base border border-surface-border rounded-xl p-2 text-xs text-ink-primary outline-none focus:border-teal-500"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="COMPLETED">COMPLETED</option>
+              <option value="ON_HOLD">ON_HOLD</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-ink-muted mb-1">
+              Attending Dentist
+            </label>
+            <select
+              value={dentistFilter}
+              onChange={(e) => setDentistFilter(e.target.value)}
+              className="w-full bg-surface-base border border-surface-border rounded-xl p-2 text-xs text-ink-primary outline-none focus:border-teal-500"
+            >
+              <option value="ALL">All Dentists</option>
+              {uniqueDentists.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Milestone Stage Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 border-t border-surface-border/60">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted shrink-0 mr-1">
+            Stage:
+          </span>
           {['ALL', 'INITIAL', 'ALIGNMENT', 'IN_PROGRESS', 'RETENTION', 'COMPLETED'].map((stg) => (
             <button
               key={stg}
+              type="button"
               onClick={() => setStageFilter(stg)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                 stageFilter === stg
-                  ? 'bg-teal-600 text-white shadow-soft dark:bg-[#83A6CE] dark:text-[#0B1B32]'
-                  : 'bg-surface-card text-ink-secondary border border-surface-border hover:bg-surface-50'
+                  ? 'bg-teal-600 text-white shadow-soft dark:bg-teal-500 dark:text-slate-950 font-bold'
+                  : 'bg-surface-base text-ink-secondary border border-surface-border hover:bg-surface-100'
               }`}
             >
               {stg.replace(/_/g, ' ')}
@@ -340,32 +460,34 @@ export function TreatmentsManager() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {filteredTreatments.map((t) => (
-            <Card key={t.id} className="p-5 sm:p-6 transition-all hover:border-teal-300 dark:hover:border-teal-700">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="font-heading font-bold text-base sm:text-lg text-ink-primary">
+            <Card key={t.id} className="p-4 sm:p-5 lg:p-6 transition-all hover:border-teal-300 dark:hover:border-teal-700">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6">
+                <div className="space-y-2 flex-1 min-w-0 w-full">
+                  <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+                    <h3 className="font-heading font-bold text-base sm:text-lg text-ink-primary break-words">
                       {t.patientName}
                     </h3>
-                    <Badge variant={t.status === 'COMPLETED' ? 'success' : 'primary'}>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-ink-secondary">
                       Stage {t.stageNumber || 1} of {t.totalStages || 4} ({t.stage})
-                    </Badge>
+                    </span>
                     {t.status === 'COMPLETED' && (
-                      <Badge variant="success">FINALIZED</Badge>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-ink-secondary">
+                        • FINALIZED
+                      </span>
                     )}
                   </div>
 
-                  <p className="text-sm font-semibold text-teal-700 dark:text-teal-400">
+                  <p className="text-sm font-semibold text-teal-700 dark:text-teal-400 break-words">
                     {t.treatmentType}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-ink-secondary">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-secondary">
                     <span className="flex items-center gap-1 font-semibold text-ink-primary">
-                      <Calendar className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                      <Calendar className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
                       Next Adj: {formatDate(t.nextAdjustmentDate)}
                     </span>
                     <span className="flex items-center gap-1">
-                      <User className="w-3.5 h-3.5 text-ink-muted" />
+                      <User className="w-3.5 h-3.5 text-ink-muted shrink-0" />
                       Doctor: {t.dentistName}
                     </span>
                     {t.startDate && (
@@ -376,14 +498,14 @@ export function TreatmentsManager() {
                   </div>
 
                   {t.dentistNotes && (
-                    <p className="text-xs text-ink-secondary bg-surface-50 dark:bg-surface-100/40 p-3 rounded-xl border border-surface-border italic">
+                    <p className="text-xs text-ink-secondary bg-surface-50 dark:bg-surface-100/40 p-3 rounded-xl border border-surface-border italic break-words">
                       &ldquo;{t.dentistNotes}&rdquo;
                     </p>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row lg:flex-col items-end gap-3 w-full lg:w-auto">
-                  <div className="text-right w-full sm:w-36">
+                <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end justify-between gap-3 w-full lg:w-auto pt-2 lg:pt-0 border-t lg:border-t-0 border-surface-border/60">
+                  <div className="text-left sm:text-right w-full sm:w-36">
                     <span className="text-lg font-heading font-extrabold text-teal-600 dark:text-teal-400">
                       {t.progressPercentage || 0}%
                     </span>
@@ -395,7 +517,7 @@ export function TreatmentsManager() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
                     {t.patientId && (
                       <Link to={`/clinic/patients/${t.patientId}`}>
                         <Button variant="ghost" size="sm" title="View Patient Profile">
@@ -657,6 +779,43 @@ export function TreatmentsManager() {
               <option value="ON_HOLD">ON_HOLD (Temporarily paused)</option>
             </select>
           </div>
+
+          {/* Reopen Checkpoint Validation */}
+          {editModalItem?.status === 'COMPLETED' && planStatus !== 'COMPLETED' && (
+            <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 dark:text-amber-200">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Validation Checkpoint: Reopening Completed Procedure</span>
+              </div>
+              <p className="text-[11px] text-amber-800 dark:text-amber-300">
+                This clinical case was previously marked COMPLETED. State the explicit clinical justification for reopening this plan to prevent accidental status reversal.
+              </p>
+              <textarea
+                value={trtReopenReason}
+                onChange={(e) => setTrtReopenReason(e.target.value)}
+                rows={2}
+                placeholder="e.g. Relapse observed in arch retention; additional alignment phase required..."
+                className="w-full bg-surface-card border border-amber-300 dark:border-amber-700 rounded-xl p-2.5 text-xs text-ink-primary outline-none focus:border-amber-500 resize-none"
+                required
+              />
+            </div>
+          )}
+
+          {/* Completion Checkpoint Confirmation */}
+          {planStatus === 'COMPLETED' && editModalItem?.status !== 'COMPLETED' && (
+            <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-start gap-2.5">
+              <input
+                type="checkbox"
+                id="treatmentsCompletionCheckbox"
+                checked={trtCompletionConfirmed}
+                onChange={(e) => setTrtCompletionConfirmed(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded text-emerald-600 border-surface-border focus:ring-emerald-500 cursor-pointer"
+              />
+              <label htmlFor="treatmentsCompletionCheckbox" className="text-xs text-emerald-900 dark:text-emerald-200 cursor-pointer leading-snug">
+                <strong>Completion Checkpoint:</strong> I confirm that all clinical milestones are finalized, appliances verified, and this case is ready to be locked as COMPLETED.
+              </label>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold uppercase tracking-wider text-ink-secondary">

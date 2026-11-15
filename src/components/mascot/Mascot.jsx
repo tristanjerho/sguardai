@@ -83,7 +83,7 @@ export function Mascot({
       animate={mood === 'cheer' ? cheerAnimation : floatAnimation}
       onClick={onClick}
       className={`inline-block relative select-none cursor-pointer ${className}`}
-      style={{ width, height }}
+      style={{ width: `min(${width}px, 100%)`, height: 'auto', aspectRatio: `${width} / ${height}` }}
       whileHover={{ scale: prefersReducedMotion ? 1 : 1.05 }}
       whileTap={{ scale: 0.95 }}
       aria-label={`Gardy the Smile Guard (${mood} mood)`}

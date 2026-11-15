@@ -442,10 +442,10 @@ export function LabIntakePage() {
   ].filter(Boolean).length;
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white shadow-soft-lg border border-teal-500/20">
-        <div className="space-y-1.5">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white shadow-soft-lg border border-teal-500/20">
+        <div className="space-y-1.5 min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-400/30">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -493,7 +493,7 @@ export function LabIntakePage() {
       </div>
 
       {/* Phase 4 — 6 Live Database Metric Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-6">
+      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-3 sm:gap-4">
         <StatCard
           title="Pending Review"
           value={dashboardCounts.pendingReview}
@@ -541,12 +541,14 @@ export function LabIntakePage() {
       {/* Request Tabs + Search + Multi-Filter Drawer */}
       <div className="space-y-4">
         <div className="space-y-3">
-          <Tabs
-            tabs={tabs}
-            activeTab={activeTab}
-            onChange={setActiveTab}
-            className="w-full min-w-0 flex-nowrap overflow-x-auto"
-          />
+          <div className="min-w-0 w-full">
+            <Tabs
+              tabs={tabs}
+              activeTab={activeTab}
+              onChange={setActiveTab}
+              className="w-full min-w-0 flex-nowrap overflow-x-auto no-scrollbar"
+            />
+          </div>
 
           <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
             <div className="relative w-full sm:w-72 sm:flex-none">
@@ -560,26 +562,28 @@ export function LabIntakePage() {
               />
             </div>
 
-            <Button
-              variant={showFilters || activeFilterCount > 0 ? 'primary' : 'outline'}
-              size="sm"
-              leftIcon={SlidersHorizontal}
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              Filters {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
-            </Button>
-
-            {activeFilterCount > 0 && (
-              <Button variant="ghost" size="sm" leftIcon={RotateCcw} onClick={clearAllFilters}>
-                Reset
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant={showFilters || activeFilterCount > 0 ? 'primary' : 'outline'}
+                size="sm"
+                leftIcon={SlidersHorizontal}
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                Filters {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
               </Button>
-            )}
+
+              {activeFilterCount > 0 && (
+                <Button variant="ghost" size="sm" leftIcon={RotateCcw} onClick={clearAllFilters}>
+                  Reset
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Expandable 6-Criteria Filter Panel */}
         {showFilters && (
-          <Card className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+          <Card className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 desktop:grid-cols-6 gap-3">
             <Select
               label="Status"
               value={statusFilter}
@@ -651,8 +655,8 @@ export function LabIntakePage() {
           />
         ) : (
           <Card className="overflow-hidden shadow-soft-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+            <div className="table-responsive-wrap">
+              <table className="w-full min-w-[780px] text-left border-collapse">
                 <thead>
                   <tr className="border-b border-surface-border bg-surface-50/80 dark:bg-surface-100/60 text-[11px] font-bold uppercase tracking-wider text-ink-secondary">
                     <th className="p-4 pl-6">Request ID &amp; Case Ref</th>
@@ -894,7 +898,7 @@ export function LabIntakePage() {
               placeholder="e.g. Digital margin verified complete"
             />
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+            <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
               <Button type="button" variant="ghost" onClick={() => setAcceptTarget(null)}>
                 Cancel
               </Button>
@@ -932,7 +936,7 @@ export function LabIntakePage() {
             }
             className="w-full bg-surface-card border border-surface-border rounded-xl p-3 text-sm outline-none focus:border-teal-500 resize-none"
           />
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setReasonModal(null)}>
               Cancel
             </Button>
@@ -1006,22 +1010,22 @@ export function LabIntakePage() {
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="font-bold uppercase tracking-wider text-[10px] text-ink-muted">
                 Fabrication Stages (Followed automatically by Quality Check &amp; Ready for Dispatch)
               </p>
               <button
                 type="button"
                 onClick={() => setTplSteps((prev) => [...prev, `Fabrication Step ${prev.length + 1}`])}
-                className="text-teal-600 dark:text-teal-400 font-bold inline-flex items-center gap-1 hover:underline"
+                className="text-teal-600 dark:text-teal-400 font-bold inline-flex items-center gap-1 hover:underline shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Stage
               </button>
             </div>
 
             {tplSteps.map((stepVal, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <span className="font-mono text-ink-muted w-5">{idx + 1}.</span>
+              <div key={idx} className="flex items-center gap-2 min-w-0">
+                <span className="font-mono text-ink-muted w-5 shrink-0">{idx + 1}.</span>
                 <input
                   type="text"
                   required
@@ -1031,13 +1035,13 @@ export function LabIntakePage() {
                       prev.map((v, i) => (i === idx ? e.target.value : v))
                     )
                   }
-                  className="flex-1 bg-surface-card border border-surface-border rounded-xl px-3 py-1.5 text-xs outline-none focus:border-teal-500"
+                  className="min-w-0 flex-1 bg-surface-card border border-surface-border rounded-xl px-3 py-1.5 text-xs outline-none focus:border-teal-500"
                 />
                 {tplSteps.length > 1 && (
                   <button
                     type="button"
                     onClick={() => setTplSteps((prev) => prev.filter((_, i) => i !== idx))}
-                    className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg"
+                    className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg shrink-0"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -1046,7 +1050,7 @@ export function LabIntakePage() {
             ))}
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-surface-border">
             <Button type="button" variant="ghost" onClick={() => setIsWorkflowMgrOpen(false)}>
               Cancel
             </Button>

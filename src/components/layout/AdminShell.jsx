@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { Topbar } from './Topbar';
-import { Sidebar } from './Sidebar';
-import { BottomTabBar } from './BottomTabBar';
+import { AppShell } from './AppShell';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { ROLES } from '../../lib/roles';
@@ -78,24 +76,13 @@ export function AdminShell() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-base text-ink-primary">
-      <Topbar
-        title={getPageTitle()}
-        showMenuButton={false}
-        unreadCount={unreadCount}
-      />
-
-      <div className="hidden lg:block">
-        <Sidebar role={user?.role || ROLES.ADMIN} isOpen={false} />
-      </div>
-
-      <main className="lg:pl-64 p-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:p-6 sm:pb-[calc(7rem+env(safe-area-inset-bottom,0px))] lg:p-8 lg:pb-8 min-h-[calc(100vh-4rem)] transition-all">
-        <div className="max-w-7xl mx-auto">
-          <Outlet />
-        </div>
-      </main>
-      <BottomTabBar role={user?.role || ROLES.ADMIN} />
-    </div>
+    <AppShell
+      title={getPageTitle()}
+      role={user?.role || ROLES.ADMIN}
+      unreadCount={unreadCount}
+      maxWidthClass="max-w-7xl"
+    >
+      <Outlet />
+    </AppShell>
   );
 }
-

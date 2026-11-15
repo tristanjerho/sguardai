@@ -8,6 +8,7 @@ import {
   query,
   where,
   serverTimestamp,
+  arrayUnion,
 } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { ROLES } from '../lib/roles';
@@ -217,6 +218,188 @@ export const patientService = {
       resourceType: 'USER',
       resourceId: patientId,
       entity: `Updated patient chart/profile for ${patientId}`,
+    });
+
+    return this.getById(patientId);
+  },
+
+  /**
+   * Validates completeness of a patient record before finalization.
+   * Checks full name, valid phone, date of birth, privacy consent (RA 10173),
+   * and emergency contact information.
+   * @param {Object} patient
+   * @returns {{ isComplete: boolean, missingFields: string[] }}
+   */
+  validateRecordCompleteness(patient) {
+    if (!patient) return { isComplete: false, missingFields: ['Patient record missing'] };
+    const missing = [];
+    if (!patient.fullName || !patient.fullName.trim()) missing.push('Full Legal Name');
+    if (!patient.phone || !patient.phone.trim()) missing.push('Contact Phone Number');
+    if (!patient.dateOfBirth && !patient.dob) missing.push('Date of Birth');
+    if (!patient.privacyConsent) missing.push('RA 10173 Data Privacy Statutory Consent');
+    if (!patient.emergencyContactName && !patient.emergencyContact?.name && !patient.emergencyContact) {
+      missing.push('Emergency Contact Information');
+    }
+    return {
+      isComplete: missing.length === 0,
+      missingFields: missing,
+    };
+  },
+
+  /**
+   * Finalizes a patient record once completeness validation passes.
+   * Keeps patient record completion separate from treatment completion.
+   */
+  async finalizePatientRecord(patientId, practitionerName = 'Attending Dentist', practitionerId = 'system') {
+    if (!db || !patientId) throw new Error('Firestore is not initialized.');
+    const patient = await this.getById(patientId);
+    const validation = this.validateRecordCompleteness(patient);
+    if (!validation.isComplete) {
+      throw new Error(`Cannot finalize record. Missing required clinical onboarding fields: ${validation.missingFields.join(', ')}`);
+    }
+
+    const docRef = doc(db, 'users', patientId);
+    await updateDoc(docRef, {
+      recordStatus: 'FINALIZED',
+      finalizedAt: serverTimestamp(),
+      finalizedBy: {
+        name: practitionerName,
+        id: practitionerId,
+      },
+      updatedAt: serverTimestamp(),
+    });
+
+    await activityLogService.log({
+      userId: practitionerId,
+      action: 'PATIENT_RECORD_FINALIZED',
+      resourceType: 'USER',
+      resourceId: patientId,
+      entity: `Finalized clinical chart & record for ${patient.fullName || patientId} by ${practitionerName}`,
+    });
+
+    return this.getById(patientId);
+  },
+
+  /**
+   * Amends a finalized patient record with an explicit, auditable clinical reason.
+   */
+  async amendFinalizedRecord(patientId, updates, amendmentReason, practitionerName = 'Attending Dentist', practitionerId = 'system') {
+    if (!db || !patientId) throw new Error('Firestore is not initialized.');
+    if (!amendmentReason || !amendmentReason.trim()) {
+      throw new Error('An authorized clinical amendment reason is required when updating a finalized record.');
+    }
+
+    const amendmentEntry = {
+      amendedAt: new Date().toISOString(),
+      amendedBy: practitionerName,
+      amendedById: practitionerId,
+      reason: amendmentReason.trim(),
+      modifiedFields: Object.keys(updates),
+    };
+
+    const docRef = doc(db, 'users', patientId);
+    await updateDoc(docRef, {
+      ...updates,
+      amendmentHistory: arrayUnion(amendmentEntry),
+      updatedAt: serverTimestamp(),
+    });
+
+    await activityLogService.log({
+      userId: practitionerId,
+      action: 'PATIENT_RECORD_AMENDED',
+      resourceType: 'USER',
+      resourceId: patientId,
+      entity: `Amended finalized chart for ${patientId}: ${amendmentReason.trim()} (by ${practitionerName})`,
+    });
+
+    return this.getById(patientId);
+  },
+
+  /**
+   * Archives a patient record (e.g., historical archive 2010-2015 or inactive case).
+   * Archived records remain accessible for audit/review.
+   */
+  async archivePatient(patientId, reason = 'Historical archive', actorName = 'Admin', actorId = 'system') {
+    if (!db || !patientId) throw new Error('Firestore is not initialized.');
+    const docRef = doc(db, 'users', patientId);
+    const archiveEntry = {
+      action: 'ARCHIVED',
+      timestamp: new Date().toISOString(),
+      by: actorName,
+      byId: actorId,
+      reason,
+    };
+    await updateDoc(docRef, {
+      isArchived: true,
+      archivedAt: serverTimestamp(),
+      archivedReason: reason,
+      archivedBy: actorName,
+      archiveAuditLog: arrayUnion(archiveEntry),
+      updatedAt: serverTimestamp(),
+    });
+
+    await activityLogService.log({
+      userId: actorId,
+      action: 'PATIENT_ARCHIVED',
+      resourceType: 'USER',
+      resourceId: patientId,
+      entity: `Archived patient case file ${patientId} (Reason: ${reason}) by ${actorName}`,
+    });
+
+    return this.getById(patientId);
+  },
+
+  /**
+   * Restores an archived patient record to active status.
+   */
+  async restorePatient(patientId, actorName = 'Admin', actorId = 'system') {
+    if (!db || !patientId) throw new Error('Firestore is not initialized.');
+    const docRef = doc(db, 'users', patientId);
+    const restoreEntry = {
+      action: 'RESTORED',
+      timestamp: new Date().toISOString(),
+      by: actorName,
+      byId: actorId,
+      reason: 'Reactivated patient chart file',
+    };
+    await updateDoc(docRef, {
+      isArchived: false,
+      restoredAt: serverTimestamp(),
+      restoredBy: actorName,
+      archiveAuditLog: arrayUnion(restoreEntry),
+      updatedAt: serverTimestamp(),
+    });
+
+    await activityLogService.log({
+      userId: actorId,
+      action: 'PATIENT_RESTORED',
+      resourceType: 'USER',
+      resourceId: patientId,
+      entity: `Restored archived patient case file ${patientId} to active roster by ${actorName}`,
+    });
+
+    return this.getById(patientId);
+  },
+
+  /**
+   * Assigns or reassigns an attending dentist to a patient case file.
+   */
+  async assignDentist(patientId, dentistId, dentistName, actorName = 'Staff', actorId = 'system') {
+    if (!db || !patientId) throw new Error('Firestore is not initialized.');
+    const docRef = doc(db, 'users', patientId);
+    await updateDoc(docRef, {
+      assignedDentistId: dentistId,
+      assignedDentistName: dentistName,
+      assignedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    await activityLogService.log({
+      userId: actorId,
+      action: 'PATIENT_DENTIST_ASSIGNED',
+      resourceType: 'USER',
+      resourceId: patientId,
+      entity: `Assigned patient ${patientId} to dentist ${dentistName} by ${actorName}`,
     });
 
     return this.getById(patientId);

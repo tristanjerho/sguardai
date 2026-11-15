@@ -32,6 +32,15 @@ export function Onboarding() {
   const initialEmergency = parseInitialEmergency();
   const [emergencyName, setEmergencyName] = useState(initialEmergency.name);
   const [emergencyPhone, setEmergencyPhone] = useState(initialEmergency.phone);
+
+  // Dental History: Root canal follow-up question
+  const [rootCanalTimeframe, setRootCanalTimeframe] = useState(
+    user?.lastRootCanal?.timeframe || 'Never undergone this procedure'
+  );
+  const [rootCanalExactDate, setRootCanalExactDate] = useState(
+    user?.lastRootCanal?.exactDate || ''
+  );
+
   const [hasPrivacyConsent, setHasPrivacyConsent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -118,6 +127,11 @@ export function Onboarding() {
         dateOfBirth,
         medicalHistory: medicalHistory.trim(),
         emergencyContact: combinedEmergencyContact,
+        lastRootCanal: {
+          timeframe: rootCanalTimeframe,
+          exactDate: rootCanalExactDate || null,
+          isPatientReported: true,
+        },
       });
       toast.success('Medical profile & privacy consent recorded successfully!');
       navigate('/patient');
@@ -129,8 +143,8 @@ export function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen py-10 px-4 sm:px-6 bg-gradient-to-br from-teal-50/60 via-surface-base to-orange-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-[100dvh] py-6 sm:py-10 px-3.5 xs:px-4 sm:px-6 bg-gradient-to-br from-teal-50/60 via-surface-base to-orange-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20">
+      <div className="max-w-2xl mx-auto space-y-5 sm:space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex justify-center mb-1">
@@ -144,7 +158,7 @@ export function Onboarding() {
           </p>
         </div>
 
-        <Card className="p-6 sm:p-8 space-y-6 shadow-soft-lg">
+        <Card className="p-4 xs:p-6 sm:p-8 space-y-5 sm:space-y-6 shadow-soft-lg">
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-medium">
               {error}
@@ -240,6 +254,42 @@ export function Onboarding() {
               />
               <p className="text-[11px] text-ink-muted">
                 This information is kept strictly confidential and accessible only to your attending dentist.
+              </p>
+            </div>
+
+            {/* Dental History Follow-up: Root Canal Treatment */}
+            <div className="p-4 rounded-2xl bg-surface-card border border-surface-border space-y-3">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-ink-secondary">
+                Dental History: When was your last root canal treatment?
+              </label>
+              <select
+                value={rootCanalTimeframe}
+                onChange={(e) => setRootCanalTimeframe(e.target.value)}
+                className="w-full bg-surface-base border border-surface-border rounded-xl p-3 text-sm text-ink-primary outline-none focus:border-teal-500"
+              >
+                <option value="Never undergone this procedure">Never undergone this procedure</option>
+                <option value="Within the last 6 months">Within the last 6 months</option>
+                <option value="6 months to 1 year ago">6 months to 1 year ago</option>
+                <option value="More than 1 year ago">More than 1 year ago</option>
+                <option value="I don't remember">I don&apos;t remember</option>
+              </select>
+
+              {rootCanalTimeframe !== 'Never undergone this procedure' && rootCanalTimeframe !== "I don't remember" && (
+                <div className="space-y-1 pt-1">
+                  <label className="block text-[11px] font-medium text-ink-muted">
+                    Exact or Approximate Date (Optional if known)
+                  </label>
+                  <input
+                    type="date"
+                    max={new Date().toISOString().split('T')[0]}
+                    value={rootCanalExactDate}
+                    onChange={(e) => setRootCanalExactDate(e.target.value)}
+                    className="w-full bg-surface-base border border-surface-border rounded-xl p-2.5 text-xs text-ink-primary outline-none focus:border-teal-500"
+                  />
+                </div>
+              )}
+              <p className="text-[11px] text-ink-muted italic">
+                * Distinctly recorded as patient-reported dental history for your attending clinician&apos;s review.
               </p>
             </div>
 

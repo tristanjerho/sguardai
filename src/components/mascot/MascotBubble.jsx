@@ -29,15 +29,15 @@ export function MascotBubble({
         <div className="hidden sm:block absolute -left-2.5 top-8 w-4 h-4 bg-surface-card border-l border-b border-teal-200 dark:border-teal-800/80 transform rotate-45" />
 
         <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
+          <div className="space-y-1 min-w-0 flex-1">
             {badge && (
               <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300">
-                <Sparkles className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                <Sparkles className="w-3 h-3 text-teal-600 dark:text-teal-400 shrink-0" />
                 {badge}
               </span>
             )}
             {title && (
-              <h4 className="font-heading font-bold text-sm sm:text-base text-ink-primary">
+              <h4 className="font-heading font-bold text-sm sm:text-base text-ink-primary break-words">
                 {title}
               </h4>
             )}
@@ -46,7 +46,7 @@ export function MascotBubble({
           {onClose && (
             <button
               onClick={onClose}
-              className="text-ink-muted hover:text-ink-primary p-1 rounded-lg hover:bg-surface-100 transition-colors -mr-1 -mt-1"
+              className="text-ink-muted hover:text-ink-primary p-1 rounded-lg hover:bg-surface-100 transition-colors -mr-1 -mt-1 shrink-0"
               aria-label="Dismiss message"
             >
               <X className="w-4 h-4" />
@@ -54,12 +54,12 @@ export function MascotBubble({
           )}
         </div>
 
-        <p className="text-xs sm:text-sm text-ink-secondary mt-2 leading-relaxed">
+        <p className="text-xs sm:text-sm text-ink-secondary mt-2 leading-relaxed break-words">
           {message}
         </p>
 
         {actionLabel && onAction && (
-          <div className="mt-3.5 pt-2 border-t border-surface-border/50 flex justify-end">
+          <div className="mt-3.5 pt-2 border-t border-surface-border/50 flex flex-wrap justify-end">
             <button
               onClick={onAction}
               className="text-xs font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400 hover:underline flex items-center gap-1"

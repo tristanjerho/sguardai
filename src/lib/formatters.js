@@ -179,3 +179,38 @@ export function isValidPhPhone(value) {
   return false;
 }
 
+/**
+ * Formats a raw user/patient ID or patient object into a clean, short, and memorable Patient ID.
+ * Standard format: "PT-XXXX" (e.g. "PT-2289")
+ * - If patient object has an explicit patientCode or patientNumber, use it.
+ * - Otherwise computes a deterministic 4-digit code from the UID, ensuring consistency across all views.
+ */
+export function formatPatientId(patientOrId) {
+  if (!patientOrId) return 'N/A';
+
+  if (typeof patientOrId === 'object') {
+    if (patientOrId.patientCode) return patientOrId.patientCode;
+    if (patientOrId.patientNumber) return patientOrId.patientNumber;
+  }
+
+  const rawId = typeof patientOrId === 'object'
+    ? (patientOrId.id || patientOrId.uid || '')
+    : String(patientOrId);
+
+  if (!rawId) return 'N/A';
+
+  // If already formatted like PT-1234 or PT-12345
+  if (/^PT-\d{3,6}$/i.test(rawId)) {
+    return rawId.toUpperCase();
+  }
+
+  // Deterministic 4-digit number (1000 - 9999) from the raw string
+  let hash = 0;
+  for (let i = 0; i < rawId.length; i++) {
+    hash = (hash * 31 + rawId.charCodeAt(i)) >>> 0;
+  }
+  const code = (hash % 9000) + 1000;
+  return `PT-${code}`;
+}
+
+

@@ -500,9 +500,9 @@ export function LabOrdersManager() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
+      <div className="page-header-row">
+        <div className="page-header-text">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Live Laboratory Synchronization
@@ -522,6 +522,7 @@ export function LabOrdersManager() {
           size="md"
           onClick={openCreateModal}
           leftIcon={Plus}
+          className="page-header-action"
         >
           New Lab Request
         </Button>
@@ -530,9 +531,9 @@ export function LabOrdersManager() {
       {/* Action Banner 1: Clarification Requested */}
       {clarificationOrders.length > 0 && (
         <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-start gap-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+          <div className="flex items-start gap-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200 page-header-text">
             <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-            <div>
+            <div className="min-w-0">
               <strong>
                 {clarificationOrders.length} laboratory{' '}
                 {clarificationOrders.length === 1 ? 'request needs' : 'requests need'} dentist clarification
@@ -549,7 +550,7 @@ export function LabOrdersManager() {
             size="sm"
             leftIcon={RotateCcw}
             onClick={() => openClarificationModal(clarificationOrders[0])}
-            className="shrink-0"
+            className="page-header-action"
           >
             Respond &amp; Resubmit
           </Button>
@@ -559,9 +560,9 @@ export function LabOrdersManager() {
       {/* Action Banner 2: Wax Try-In Waiting for Chairside Dentist Approval */}
       {tryInOrders.length > 0 && (
         <div className="p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-start gap-3 text-xs sm:text-sm text-sky-900 dark:text-sky-200">
+          <div className="flex items-start gap-3 text-xs sm:text-sm text-sky-900 dark:text-sky-200 page-header-text">
             <Sparkles className="w-5 h-5 text-sky-500 shrink-0 mt-0.5" />
-            <div>
+            <div className="min-w-0">
               <strong>
                 {tryInOrders.length} case {tryInOrders.length === 1 ? 'is' : 'are'} awaiting chairside Try-In approval
               </strong>
@@ -576,7 +577,7 @@ export function LabOrdersManager() {
             variant="primary"
             size="sm"
             onClick={() => openTryInModal(tryInOrders[0])}
-            className="shrink-0"
+            className="page-header-action"
           >
             Review Try-In
           </Button>
@@ -586,9 +587,9 @@ export function LabOrdersManager() {
       {/* Action Banner 3: Ready / Dispatched Appliances Awaiting Physical Clinic Receipt */}
       {awaitingReceiptOrders.length > 0 && (
         <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-start gap-3 text-xs sm:text-sm text-emerald-900 dark:text-emerald-200">
+          <div className="flex items-start gap-3 text-xs sm:text-sm text-emerald-900 dark:text-emerald-200 page-header-text">
             <Truck className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-            <div>
+            <div className="min-w-0">
               <strong>
                 {awaitingReceiptOrders.length}{' '}
                 {awaitingReceiptOrders.length === 1 ? 'appliance is' : 'appliances are'} Ready or Dispatched — awaiting Clinic Receipt confirmation
@@ -604,7 +605,7 @@ export function LabOrdersManager() {
             size="sm"
             leftIcon={CheckCircle2}
             onClick={() => openReceiptModal(awaitingReceiptOrders[0])}
-            className="shrink-0"
+            className="page-header-action"
           >
             Confirm Receipt
           </Button>
@@ -639,9 +640,9 @@ export function LabOrdersManager() {
             return (
               <Card
                 key={order.id}
-                className="p-5 hover:border-teal-500/50 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                className="p-4 sm:p-5 hover:border-teal-500/50 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4"
               >
-                <div className="space-y-2 flex-1">
+                <div className="space-y-2 flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono text-xs font-bold text-teal-600 dark:text-teal-400">
                       {order.requestCode}
@@ -697,7 +698,7 @@ export function LabOrdersManager() {
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-ink-muted">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-ink-muted">
                     <span className="inline-flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" />
                       Requested: {formatDate(order.createdAt)}
@@ -1046,7 +1047,7 @@ export function LabOrdersManager() {
             />
           )}
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex flex-wrap justify-end gap-2 pt-2">
             <Button variant="ghost" type="button" onClick={() => setIsFormOpen(false)}>
               Cancel
             </Button>
@@ -1105,7 +1106,7 @@ export function LabOrdersManager() {
               placeholder="e.g., Ready for patient's 2:00 PM delivery appointment"
             />
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-wrap justify-end gap-2 pt-2">
               <Button variant="ghost" type="button" onClick={() => setReceiptModalOrder(null)}>
                 Cancel
               </Button>
@@ -1167,7 +1168,7 @@ export function LabOrdersManager() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-wrap justify-end gap-2 pt-2">
               <Button variant="ghost" type="button" onClick={() => setIssueModalOrder(null)}>
                 Cancel
               </Button>
@@ -1188,7 +1189,7 @@ export function LabOrdersManager() {
       >
         {tryInModalOrder && (
           <form onSubmit={submitTryInDecision} className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <button
                 type="button"
                 onClick={() => setTryInApproved(true)}
@@ -1231,7 +1232,7 @@ export function LabOrdersManager() {
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-wrap justify-end gap-2 pt-2">
               <Button variant="ghost" type="button" onClick={() => setTryInModalOrder(null)}>
                 Cancel
               </Button>

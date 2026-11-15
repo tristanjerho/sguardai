@@ -302,9 +302,9 @@ export function BookAppointment() {
               <span className="text-[11px] font-bold uppercase tracking-wider text-teal-800 dark:text-[#83A6CE]">
                 Booking ID: {bookedAppointment.id}
               </span>
-              <Badge status={bookedAppointment.status} showDot size="sm">
+              <span className="text-xs font-semibold uppercase tracking-wider text-ink-secondary">
                 {bookedAppointment.status}
-              </Badge>
+              </span>
             </div>
             <p className="text-sm font-heading font-bold text-ink-primary">
               {bookedAppointment.serviceName}
@@ -343,7 +343,7 @@ export function BookAppointment() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 sm:space-y-5 pb-36 sm:pb-24">
+    <div className="max-w-2xl mx-auto space-y-4 sm:space-y-5 pb-48 md:pb-8">
       {/* 3. Compact Header */}
       <div className="space-y-1">
         <h2 className="text-xl sm:text-2xl font-heading font-extrabold text-ink-primary tracking-tight">
@@ -647,8 +647,8 @@ export function BookAppointment() {
             </div>
           </div>
 
-          {/* Desktop Continue button (in-flow) */}
-          <div className="hidden lg:flex justify-end pt-2">
+          {/* Desktop / Tablet Continue button (in-flow) */}
+          <div className="hidden md:flex justify-end pt-2">
             <Button
               variant="primary"
               size="md"
@@ -725,7 +725,7 @@ export function BookAppointment() {
             )}
           </Card>
 
-          <div className="hidden lg:flex items-center justify-between pt-2">
+          <div className="hidden md:flex items-center justify-between pt-2">
             <Button variant="outline" size="md" onClick={() => setCurrentStep(1)} leftIcon={ArrowLeft}>
               Back
             </Button>
@@ -807,7 +807,7 @@ export function BookAppointment() {
             </div>
           </Card>
 
-          <div className="hidden lg:flex items-center justify-between pt-2">
+          <div className="hidden md:flex items-center justify-between pt-2">
             <Button variant="outline" size="md" onClick={() => setCurrentStep(2)} leftIcon={ArrowLeft}>
               Back
             </Button>
@@ -825,14 +825,14 @@ export function BookAppointment() {
         </div>
       )}
 
-      {/* 10. Sticky Mobile Booking Action Bar (Docked above BottomTabBar) */}
+      {/* 10. Sticky Mobile Booking Action Bar (Cleared above BottomTabBar & center FAB on < md) */}
       <div
-        className="fixed left-0 right-0 z-20 bg-surface-card/95 dark:bg-[#0D1E4C]/95 backdrop-blur-md border-t border-surface-border dark:border-[#26415E]/80 px-4 py-2.5 shadow-soft-xl lg:hidden"
+        className="fixed left-0 right-0 z-20 bg-surface-card/95 dark:bg-[#0D1E4C]/95 backdrop-blur-md border-t border-surface-border dark:border-[#26415E]/80 px-3 xs:px-4 py-2.5 shadow-soft-xl md:hidden"
         style={{
-          bottom: 'max(4.25rem, calc(4rem + env(safe-area-inset-bottom, 0px)))',
+          bottom: 'max(4.875rem, calc(4.875rem + env(safe-area-inset-bottom, 0px)))',
         }}
       >
-        <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+        <div className="max-w-2xl mx-auto flex items-center justify-between gap-2 xs:gap-3">
           <div className="min-w-0 flex-1">
             <span className="block text-[10px] uppercase font-bold tracking-wider text-ink-muted dark:text-[#83A6CE]">
               {currentStep === 1 ? 'Selected Service' : currentStep === 2 ? 'Date & Slot' : 'Final Step'}

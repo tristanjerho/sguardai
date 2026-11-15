@@ -173,8 +173,8 @@ export function Records() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
+      <div className="page-header-row">
+        <div className="space-y-1 page-header-text">
           <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
             Dental Records & Diagnostic Imaging
           </h2>
@@ -183,7 +183,7 @@ export function Records() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Badge variant="primary" size="md">
             Clinical Verified Scans
           </Badge>
@@ -308,7 +308,7 @@ export function Records() {
                   size="sm"
                   leftIcon={RotateCw}
                   onClick={handleRotate}
-                  className="h-8 px-2.5 text-xs font-semibold hidden sm:inline-flex"
+                  className="h-8 px-2.5 text-xs font-semibold inline-flex"
                   title="Rotate 90 degrees"
                 >
                   Rotate
@@ -327,7 +327,7 @@ export function Records() {
                   variant={isInverted ? 'primary' : 'outline'}
                   size="sm"
                   onClick={() => setIsInverted(!isInverted)}
-                  className="h-8 px-2.5 text-xs font-semibold hidden sm:inline-flex"
+                  className="h-8 px-2.5 text-xs font-semibold inline-flex"
                   title="Invert negative colors"
                 >
                   Invert
@@ -372,7 +372,7 @@ export function Records() {
               style={{
                 touchAction: zoom > 1 ? 'none' : 'pan-y',
               }}
-              className={`relative rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 h-[45vh] sm:h-[60vh] flex items-center justify-center select-none ${
+              className={`relative rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 h-[42dvh] sm:h-[58dvh] flex items-center justify-center select-none ${
                 zoom > 1 ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'
               }`}
             >
@@ -383,13 +383,13 @@ export function Records() {
                   willChange: 'transform',
                   transition: isDragging ? 'none' : 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)',
                 }}
-                className="max-h-[42vh] sm:max-h-[56vh] max-w-[90vw] flex items-center justify-center origin-center pointer-events-none transform-gpu"
+                className="max-h-[40dvh] sm:max-h-[54dvh] max-w-full flex items-center justify-center origin-center pointer-events-none transform-gpu"
               >
                 <img
                   src={selectedRecord.secureUrl || selectedRecord.imageUrl}
                   alt={selectedRecord.type}
                   draggable={false}
-                  className="max-h-[40vh] sm:max-h-[54vh] w-auto object-contain rounded-xl shadow-2xl pointer-events-none select-none"
+                  className="max-h-[38dvh] sm:max-h-[52dvh] w-auto object-contain rounded-xl shadow-2xl pointer-events-none select-none"
                 />
               </div>
 

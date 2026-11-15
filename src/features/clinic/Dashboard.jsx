@@ -60,6 +60,7 @@ export function ClinicDashboard() {
   // Time-range and history navigation states
   const [timeRangeMode, setTimeRangeMode] = useState('week'); // 'week' | '30days' | 'monthly'
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = last week, etc.
+  const [selectedCalendarDateYmd, setSelectedCalendarDateYmd] = useState(() => toLocalYMD(new Date()));
   const [queueTab, setQueueTab] = useState('PENDING'); // 'PENDING' | 'CONFIRMED' | 'PAST' | 'ALL'
 
   useEffect(() => {
@@ -160,8 +161,13 @@ export function ClinicDashboard() {
         ).length;
         const pending = dayAppts.filter((a) => a.status === 'PENDING').length;
 
+        const monthNum = dayDate.getMonth() + 1;
+        const dayNumFormatted = String(dayNum).padStart(2, '0');
+        const dateStr = `${monthNum}/${dayNumFormatted}`;
+
         return {
-          day: `${dayShort} ${dayNum}`,
+          day: dateStr,
+          dateStr,
           dayShort,
           fullDate: dayDate.toLocaleDateString('en-US', {
             weekday: 'long',
@@ -169,10 +175,15 @@ export function ClinicDashboard() {
             day: 'numeric',
             year: 'numeric',
           }),
+          monthYear: dayDate.toLocaleDateString('en-US', {
+            month: 'long',
+            year: 'numeric',
+          }),
           count: dayAppts.length,
           confirmed,
           pending,
           ymd,
+          appts: dayAppts,
         };
       });
 
@@ -307,6 +318,13 @@ export function ClinicDashboard() {
     };
   }, [appointments, timeRangeMode, weekOffset]);
 
+  // Selected calendar day info for the interactive week strip
+  const selectedDayInfo = useMemo(() => {
+    if (timeRangeMode !== 'week' || !chartData || chartData.length === 0) return null;
+    const found = chartData.find((d) => d.ymd === selectedCalendarDateYmd);
+    return found || chartData[0];
+  }, [timeRangeMode, chartData, selectedCalendarDateYmd]);
+
   // Filtered appointments list for the Queue card
   const displayedAppointments = useMemo(() => {
     const todayYmd = toLocalYMD(new Date());
@@ -343,8 +361,8 @@ export function ClinicDashboard() {
   return (
     <div className="space-y-6">
       {/* Top Welcome Banner for Clinic */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
+      <div className="page-header-row">
+        <div className="page-header-text">
           <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
             Clinical Overview
           </h2>
@@ -353,7 +371,7 @@ export function ClinicDashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
           <Link to="/clinic/ai-workstation">
             <Button variant="accent" size="sm" leftIcon={BrainCircuit}>
               Open AI Workstation
@@ -425,7 +443,7 @@ export function ClinicDashboard() {
             </div>
 
             {/* Time-Range Selector Buttons */}
-            <div className="flex items-center gap-1 bg-surface-100 dark:bg-surface-200/50 p-1 rounded-xl border border-surface-border self-start sm:self-auto">
+            <div className="flex flex-wrap items-center gap-1 bg-surface-100 dark:bg-surface-200/50 p-1 rounded-xl border border-surface-border self-start sm:self-auto max-w-full">
               <button
                 type="button"
                 onClick={() => {
@@ -466,9 +484,9 @@ export function ClinicDashboard() {
           </CardHeader>
 
           {/* Subheader Toolbar: Week Navigation Controls & Quick Stats */}
-          <div className="px-6 pb-2 pt-0 flex flex-wrap items-center justify-between gap-3 border-b border-surface-border/50">
+          <div className="px-4 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2.5 border-b border-surface-border/50">
             {timeRangeMode === 'week' ? (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <button
                   type="button"
                   onClick={() => setWeekOffset((prev) => prev - 1)}
@@ -509,7 +527,7 @@ export function ClinicDashboard() {
             )}
 
             {/* Metric snapshot for the active view period */}
-            <div className="flex items-center gap-3 text-xs">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
               <span className="text-ink-secondary">
                 Period Total:{' '}
                 <strong className="text-ink-primary font-heading font-bold">
@@ -531,22 +549,106 @@ export function ClinicDashboard() {
             </div>
           </div>
 
-          <CardContent className="pt-4">
+          <CardContent className="pt-4 space-y-4">
+            {/* Interactive Week Calendar Date Strip (scrollable strip on < sm, 7-col grid on sm+) */}
+            {timeRangeMode === 'week' && chartData && chartData.length > 0 && (
+              <div className="flex sm:grid sm:grid-cols-7 gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-1">
+                {chartData.map((d) => {
+                  const isSelected = selectedDayInfo?.ymd === d.ymd;
+                  return (
+                    <button
+                      key={d.ymd}
+                      type="button"
+                      onClick={() => setSelectedCalendarDateYmd(d.ymd)}
+                      className={`min-w-[68px] sm:min-w-0 shrink-0 flex flex-col items-center justify-center p-2 rounded-xl border transition-all text-xs cursor-pointer ${
+                        isSelected
+                          ? 'bg-teal-50 dark:bg-teal-950/60 border-teal-500 text-teal-900 dark:text-teal-200 ring-2 ring-teal-500/30 font-bold'
+                          : 'bg-surface-base border-surface-border hover:border-teal-400/50 text-ink-primary'
+                      }`}
+                    >
+                      <span className="text-[10px] uppercase font-bold text-ink-muted">{d.dayShort}</span>
+                      <span className="text-sm font-extrabold my-0.5">{d.day}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                          d.count > 0
+                            ? 'bg-teal-600 text-white'
+                            : 'bg-surface-subtle text-ink-muted'
+                        }`}
+                      >
+                        {d.count} {d.count === 1 ? 'visit' : 'visits'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             <SimpleBarChart data={chartData} />
+
+            {/* Selected Date Details Panel */}
+            {timeRangeMode === 'week' && selectedDayInfo && (
+              <div className="p-3.5 rounded-2xl bg-surface-subtle border border-surface-border space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-surface-border/60 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <span className="font-heading font-bold text-sm text-ink-primary">
+                      {selectedDayInfo.fullDate}
+                    </span>
+                    <span className="text-xs font-semibold text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800/50">
+                      {selectedDayInfo.monthYear}
+                    </span>
+                  </div>
+                  <div className="text-xs text-ink-secondary">
+                    <span className="font-bold text-ink-primary">{selectedDayInfo.count}</span> Scheduled ({selectedDayInfo.confirmed} Confirmed, {selectedDayInfo.pending} Pending)
+                  </div>
+                </div>
+
+                {!selectedDayInfo.appts || selectedDayInfo.appts.length === 0 ? (
+                  <p className="text-xs text-ink-muted py-3 text-center italic">
+                    No appointments scheduled for {selectedDayInfo.day} ({selectedDayInfo.fullDate}).
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {selectedDayInfo.appts.map((apt) => (
+                      <div
+                        key={apt.id}
+                        className="p-3 rounded-xl bg-surface-base border border-surface-border text-xs space-y-1 shadow-xs"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-bold text-ink-primary">{apt.patientName}</span>
+                          <span className="text-[10px] font-semibold text-ink-secondary uppercase tracking-wider shrink-0">
+                            {apt.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-teal-700 dark:text-teal-400 font-semibold text-[11px]">
+                          <Clock className="w-3 h-3" />
+                          <span>{apt.timeSlot}</span>
+                          <span>•</span>
+                          <span className="text-ink-secondary truncate">{apt.procedureName || apt.serviceName || 'Consultation'}</span>
+                        </div>
+                        <div className="text-[11px] text-ink-muted">
+                          Attending: {apt.dentistName || 'Attending Dentist'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Chairside Queue & Past Visits Quick Records */}
         <Card>
           <CardHeader className="pb-3 border-b border-surface-border/50">
-            <div className="flex items-center justify-between">
+            <div className="w-full flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-orange-500" />
+                <Clock className="w-5 h-5 text-orange-500 shrink-0" />
                 <CardTitle>Patient Visits</CardTitle>
               </div>
               <Link
                 to="/clinic/queue"
-                className="text-xs font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400"
+                className="text-xs font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400 shrink-0"
               >
                 View Full Queue
               </Link>
@@ -606,13 +708,13 @@ export function ClinicDashboard() {
                   key={apt.id}
                   className="p-4 space-y-1.5 hover:bg-surface-50/50 dark:hover:bg-surface-200/20 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-3">
                     <p className="font-heading font-bold text-sm text-ink-primary">
                       {apt.patientName}
                     </p>
-                    <Badge status={apt.status} size="sm">
-                      {apt.timeSlot || apt.status}
-                    </Badge>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-ink-secondary shrink-0">
+                      {apt.timeSlot ? `${apt.timeSlot} • ${apt.status}` : apt.status}
+                    </span>
                   </div>
                   <p className="text-xs text-ink-secondary">
                     {apt.serviceName || apt.procedureName || 'Dental Consultation'}
@@ -648,9 +750,9 @@ export function ClinicDashboard() {
               <p className="p-6 text-xs text-center text-ink-muted">No active orthodontic plans.</p>
             ) : (
               treatments.map((t) => (
-                <div key={t.id} className="p-4 flex items-center justify-between gap-4">
-                  <div className="space-y-1 flex-1">
-                    <p className="font-heading font-bold text-sm text-ink-primary">
+                <div key={t.id} className="p-4 flex items-center justify-between gap-3 sm:gap-4 min-w-0">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <p className="font-heading font-bold text-sm text-ink-primary truncate">
                       {t.patientName}
                     </p>
                     <p className="text-xs text-ink-secondary line-clamp-1">{t.treatmentType}</p>
@@ -663,7 +765,7 @@ export function ClinicDashboard() {
                     <span className="text-sm font-heading font-extrabold text-teal-600 dark:text-teal-400">
                       {t.progressPercentage}%
                     </span>
-                    <div className="w-16 h-2 rounded-full bg-surface-200 dark:bg-surface-300 mt-1 overflow-hidden">
+                    <div className="w-14 sm:w-16 h-2 rounded-full bg-surface-200 dark:bg-surface-300 mt-1 overflow-hidden">
                       <div
                         className="h-full bg-teal-500 rounded-full"
                         style={{ width: `${t.progressPercentage}%` }}
@@ -695,18 +797,18 @@ export function ClinicDashboard() {
               <p className="p-6 text-xs text-center text-ink-muted">No lab orders in fabrication.</p>
             ) : (
               labOrders.slice(0, 4).map((order) => (
-                <div key={order.id} className="p-4 flex items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-heading font-bold text-sm text-ink-primary">
+                <div key={order.id} className="p-4 flex items-center justify-between gap-3 sm:gap-4 min-w-0">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-heading font-bold text-sm text-ink-primary break-words">
                         {order.patientName}
                       </p>
                       <Badge status={order.status} size="sm" showDot>
                         {order.status}
                       </Badge>
                     </div>
-                    <p className="text-xs text-ink-secondary">{order.applianceType}</p>
-                    <p className="text-[11px] text-ink-muted">
+                    <p className="text-xs text-ink-secondary break-words">{order.applianceType}</p>
+                    <p className="text-[11px] text-ink-muted break-words">
                       Target Delivery: {formatDate(order.targetDeliveryDate)} • {order.vendor}
                     </p>
                   </div>

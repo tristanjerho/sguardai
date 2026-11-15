@@ -45,17 +45,17 @@ export function ActivityLogs() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
+      <div className="page-header-row">
+        <div className="page-header-text">
           <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
-            Clinic Activity & Security Logs
+            Clinic Activity &amp; Security Logs
           </h2>
           <p className="text-sm text-ink-secondary">
             Immutable auditable timeline of administrative actions, clinical approvals, and authentication events.
           </p>
         </div>
 
-        <Button variant="outline" size="sm" onClick={loadLogs} leftIcon={RefreshCw}>
+        <Button variant="outline" size="sm" onClick={loadLogs} leftIcon={RefreshCw} className="page-header-action">
           Refresh Audit Trail
         </Button>
       </div>
@@ -83,8 +83,8 @@ export function ActivityLogs() {
         />
       ) : (
         <Card className="overflow-hidden shadow-soft-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="table-responsive-wrap">
+            <table className="w-full min-w-[680px] text-left border-collapse">
               <thead>
                 <tr className="border-b border-surface-border bg-surface-50/80 dark:bg-surface-100/60 text-[11px] font-bold uppercase tracking-wider text-ink-secondary">
                   <th className="p-4 pl-6">Timestamp</th>

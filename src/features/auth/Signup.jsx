@@ -90,8 +90,8 @@ export function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-teal-50/50 via-surface-base to-orange-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-[100dvh] flex items-center justify-center p-3.5 xs:p-4 sm:p-6 bg-gradient-to-br from-teal-50/50 via-surface-base to-orange-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20">
+      <div className="w-full max-w-md space-y-5 sm:space-y-6">
         <div className="text-center space-y-2">
           <div className="inline-flex justify-center mb-1">
             <Logo size="xl" showText={false} />
@@ -100,11 +100,11 @@ export function Signup() {
             Create Patient Account
           </h1>
           <p className="text-sm text-ink-secondary">
-            Join SmileGuard for digital dental charts & orthodontic tracking
+            Join SmileGuard for digital dental charts &amp; orthodontic tracking
           </p>
         </div>
 
-        <Card className="p-6 sm:p-8 space-y-5 shadow-soft-lg">
+        <Card className="p-4 xs:p-6 sm:p-8 space-y-5 shadow-soft-lg">
           {error && (
             <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-medium flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />

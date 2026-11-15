@@ -46,7 +46,7 @@ export function Modal({
   return (
     <AnimatePresence>
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -74,29 +74,29 @@ export function Modal({
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
             className={twMerge(
               clsx(
-                'relative w-full z-10 bg-surface-card border border-surface-border rounded-3xl shadow-soft-lg overflow-hidden my-8 max-h-[90vh] flex flex-col',
+                'relative w-full z-10 bg-surface-card border border-surface-border rounded-2xl sm:rounded-3xl shadow-soft-lg overflow-hidden my-auto max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh] flex flex-col',
                 resolvedMaxWidth,
                 className
               )
             )}
           >
             {(title || showCloseButton) && (
-              <div className="flex items-start justify-between p-6 pb-4 border-b border-surface-border shrink-0">
-                <div>
+              <div className="flex items-start justify-between gap-3 p-4 sm:p-6 pb-3 sm:pb-4 border-b border-surface-border shrink-0">
+                <div className="min-w-0 flex-1">
                   {title && (
-                    <h3 id="modal-title" className="text-xl font-heading font-bold text-ink-primary">
+                    <h3 id="modal-title" className="text-base sm:text-xl font-heading font-bold text-ink-primary break-words">
                       {title}
                     </h3>
                   )}
                   {description && (
-                    <p className="text-sm text-ink-secondary mt-1">{description}</p>
+                    <p className="text-xs sm:text-sm text-ink-secondary mt-1 break-words">{description}</p>
                   )}
                 </div>
                 {showCloseButton && (
                   <button
                     type="button"
                     onClick={onClose}
-                    className="p-2 -mr-2 -mt-2 rounded-xl text-ink-muted hover:text-ink-primary hover:bg-surface-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                    className="p-2 -mr-1.5 -mt-1 rounded-xl text-ink-muted hover:text-ink-primary hover:bg-surface-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 shrink-0"
                     aria-label="Close dialog"
                   >
                     <X className="w-5 h-5" />
@@ -105,7 +105,7 @@ export function Modal({
               </div>
             )}
 
-            <div className="p-6 overflow-y-auto">{children}</div>
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0">{children}</div>
           </motion.div>
         </div>
       )}

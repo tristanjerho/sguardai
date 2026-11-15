@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { Topbar } from './Topbar';
-import { Sidebar } from './Sidebar';
-import { BottomTabBar } from './BottomTabBar';
+import { AppShell } from './AppShell';
 import { ROLES } from '../../lib/roles';
 import { notificationService } from '../../services/notificationService';
 import { useAuth } from '../../hooks/useAuth';
@@ -63,31 +61,13 @@ export function PatientShell() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-base text-ink-primary">
-      <Topbar
-        title={getPageTitle()}
-        showMenuButton={false}
-        unreadCount={unreadCount}
-      />
-
-      <Sidebar
-        role={ROLES.PATIENT}
-        isOpen={false}
-        onClose={() => { }}
-      />
-
-      <main
-        className="lg:pl-64 p-3.5 sm:p-6 lg:p-8 lg:pb-8 min-h-[calc(100vh-4rem)] transition-all"
-        style={{
-          paddingBottom: 'max(7.5rem, calc(6rem + env(safe-area-inset-bottom, 0px)))',
-        }}
-      >
-        <div className="max-w-6xl mx-auto">
-          <Outlet />
-        </div>
-      </main>
-
-      <BottomTabBar />
-    </div>
+    <AppShell
+      title={getPageTitle()}
+      role={ROLES.PATIENT}
+      unreadCount={unreadCount}
+      maxWidthClass="max-w-6xl"
+    >
+      <Outlet />
+    </AppShell>
   );
 }

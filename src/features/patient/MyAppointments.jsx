@@ -14,7 +14,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { appointmentService } from '../../services/appointmentService';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Tabs } from '../../components/ui/Tabs';
@@ -143,8 +142,8 @@ export function MyAppointments() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
+      <div className="page-header-row">
+        <div className="page-header-text">
           <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
             My Appointments
           </h2>
@@ -153,8 +152,8 @@ export function MyAppointments() {
           </p>
         </div>
 
-        <Link to="/patient/book">
-          <Button variant="primary" size="md" rightIcon={Plus}>
+        <Link to="/patient/book" className="page-header-action">
+          <Button variant="primary" size="md" rightIcon={Plus} className="w-full sm:w-auto justify-center">
             Book New Visit
           </Button>
         </Link>
@@ -188,9 +187,9 @@ export function MyAppointments() {
                     <h3 className="font-heading font-bold text-base sm:text-lg text-ink-primary">
                       {apt.serviceName}
                     </h3>
-                    <Badge status={apt.status} showDot>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-ink-secondary">
                       {apt.status}
-                    </Badge>
+                    </span>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs text-ink-secondary">
@@ -287,7 +286,7 @@ export function MyAppointments() {
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex flex-wrap items-center justify-end gap-2.5 sm:gap-3 pt-2">
             <Button variant="ghost" size="md" onClick={() => setCancelModalItem(null)}>
               Keep Booking
             </Button>
@@ -358,7 +357,7 @@ export function MyAppointments() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-surface-border">
+          <div className="flex flex-wrap items-center justify-end gap-2.5 sm:gap-3 pt-4 border-t border-surface-border">
             <Button variant="ghost" size="md" onClick={() => setRescheduleModalItem(null)}>
               Cancel
             </Button>

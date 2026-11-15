@@ -62,10 +62,10 @@ export function ToothDetailsModal({
     >
       <form onSubmit={handleSave} className="space-y-5">
         {/* Tooth Header Card */}
-        <div className="p-4 rounded-xl bg-surface-subtle border border-surface-border flex items-center justify-between">
+        <div className="p-3.5 sm:p-4 rounded-xl bg-surface-subtle border border-surface-border flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className="text-xs font-mono font-bold text-ink-secondary">FDI NOTATION</div>
-            <div className="text-xl font-heading font-black text-ink-primary">Tooth #{tooth.toothNumber}</div>
+            <div className="text-lg sm:text-xl font-heading font-black text-ink-primary">Tooth #{tooth.toothNumber}</div>
           </div>
           <Badge
             variant={condition === 'HEALTHY' ? 'success' : condition === 'CARIES' ? 'danger' : 'primary'}
@@ -80,7 +80,7 @@ export function ToothDetailsModal({
           <label className="text-xs font-heading font-bold text-ink-primary">
             Pathological Condition / Clinical State
           </label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 xs:grid-cols-2 gap-2">
             {Object.entries(TOOTH_CONDITIONS).map(([key, info]) => {
               const isSelected = condition === key;
               return (
@@ -138,7 +138,7 @@ export function ToothDetailsModal({
           <label className="text-xs font-heading font-bold text-ink-primary">
             Treatment Plan Status
           </label>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {['NONE', 'PLANNED', 'IN_PROGRESS', 'COMPLETED'].map((status) => (
               <button
                 key={status}
@@ -173,7 +173,7 @@ export function ToothDetailsModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-surface-border">
+        <div className="flex flex-wrap items-center justify-end gap-2.5 sm:gap-3 pt-3 border-t border-surface-border">
           <Button variant="outline" size="sm" type="button" onClick={onClose}>
             {readOnly ? 'Close' : 'Cancel'}
           </Button>

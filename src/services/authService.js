@@ -24,6 +24,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db, firebaseConfig } from '../config/firebase';
 import { ROLES } from '../lib/roles';
+import { formatPatientId } from '../lib/formatters';
 import { activityLogService } from './activityLogService';
 
 /**
@@ -54,6 +55,7 @@ export const authService = {
       const initialProfile = {
         id: uid,
         uid: uid,
+        patientCode: formatPatientId(uid),
         email: normalizedEmail,
         fullName: credential.user.displayName || normalizedEmail.split('@')[0],
         role: ROLES.PATIENT,
@@ -124,6 +126,7 @@ export const authService = {
       const initialProfile = {
         id: uid,
         uid: uid,
+        patientCode: formatPatientId(uid),
         email: credential.user.email ? credential.user.email.toLowerCase() : '',
         fullName: credential.user.displayName || credential.user.email?.split('@')[0] || 'Patient',
         role: ROLES.PATIENT, // Strictly PATIENT
@@ -197,6 +200,7 @@ export const authService = {
     const newUserData = {
       id: uid,
       uid: uid,
+      patientCode: formatPatientId(uid),
       email: normalizedEmail,
       fullName: fullName.trim(),
       role: ROLES.PATIENT,
@@ -251,6 +255,11 @@ export const authService = {
       dateOfBirth: onboardingData.dateOfBirth || '',
       medicalHistory: onboardingData.medicalHistory || '',
       emergencyContact: onboardingData.emergencyContact || '',
+      lastRootCanal: onboardingData.lastRootCanal || {
+        timeframe: 'Never undergone this procedure',
+        exactDate: null,
+        isPatientReported: true,
+      },
       isOnboarded: true,
       privacyConsent: {
         consented: true,

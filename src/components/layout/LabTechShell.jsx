@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { Topbar } from './Topbar';
-import { Sidebar } from './Sidebar';
-import { BottomTabBar } from './BottomTabBar';
+import { AppShell } from './AppShell';
 import { ROLES } from '../../lib/roles';
 import { LAB_ORDER_STATUS } from '../../lib/constants';
 import { useAuth } from '../../hooks/useAuth';
@@ -84,23 +82,13 @@ export function LabTechShell() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-base text-ink-primary">
-      <Topbar
-        title={getPageTitle()}
-        showMenuButton={false}
-        unreadCount={unreadCount}
-      />
-
-      <div className="hidden lg:block">
-        <Sidebar role={user?.role || ROLES.LAB_TECH} isOpen={false} />
-      </div>
-
-      <main className="lg:pl-64 p-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] sm:p-5 sm:pb-[calc(7rem+env(safe-area-inset-bottom,0px))] lg:p-6 lg:pb-6 min-h-[calc(100vh-4rem)] transition-all overflow-x-hidden">
-        <div className="w-full max-w-[1680px] mx-auto">
-          <Outlet />
-        </div>
-      </main>
-      <BottomTabBar role={user?.role || ROLES.LAB_TECH} />
-    </div>
+    <AppShell
+      title={getPageTitle()}
+      role={user?.role || ROLES.LAB_TECH}
+      unreadCount={unreadCount}
+      maxWidthClass="max-w-[1440px]"
+    >
+      <Outlet />
+    </AppShell>
   );
 }

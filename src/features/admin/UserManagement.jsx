@@ -114,10 +114,10 @@ export function UserManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
+      <div className="page-header-row">
+        <div className="page-header-text">
           <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
-            User Access & Staff Management
+            User Access &amp; Staff Management
           </h2>
           <p className="text-sm text-ink-secondary">
             Provision clinical practitioner accounts, assign security roles, and enforce account statuses.
@@ -129,6 +129,7 @@ export function UserManagement() {
           size="md"
           onClick={() => setIsCreateOpen(true)}
           leftIcon={UserPlus}
+          className="page-header-action"
         >
           Add Staff Account
         </Button>
@@ -153,8 +154,8 @@ export function UserManagement() {
         <TableSkeleton rows={6} />
       ) : (
         <Card className="overflow-hidden shadow-soft-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="table-responsive-wrap">
+            <table className="w-full min-w-[680px] text-left border-collapse">
               <thead>
                 <tr className="border-b border-surface-border bg-surface-50/80 dark:bg-surface-100/60 text-[11px] font-bold uppercase tracking-wider text-ink-secondary">
                   <th className="p-4 pl-6">User / Practitioner</th>
@@ -285,6 +286,7 @@ export function UserManagement() {
               onChange={(e) => setNewRole(e.target.value)}
               options={[
                 { value: ROLES.DENTIST, label: 'DENTIST (Clinical Access)' },
+                { value: ROLES.RECEPTIONIST, label: 'RECEPTIONIST (Front Desk & Scheduling)' },
                 { value: ROLES.LAB_TECH, label: 'LAB_TECH (Laboratory Admin & CAD/CAM Portal)' },
                 { value: ROLES.ADMIN, label: 'ADMIN (Clinic Management)' },
                 { value: ROLES.SUPERADMIN, label: 'SUPERADMIN (Full Platform Access)' },
@@ -315,8 +317,8 @@ export function UserManagement() {
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-surface-border">
-            <Button variant="ghost" size="md" onClick={() => setIsCreateOpen(false)}>
+          <div className="flex flex-wrap justify-end gap-3 pt-3 border-t border-surface-border">
+            <Button type="button" variant="ghost" size="md" onClick={() => setIsCreateOpen(false)}>
               Cancel
             </Button>
             <Button
@@ -346,13 +348,14 @@ export function UserManagement() {
             options={[
               { value: ROLES.PATIENT, label: 'PATIENT' },
               { value: ROLES.DENTIST, label: 'DENTIST' },
+              { value: ROLES.RECEPTIONIST, label: 'RECEPTIONIST' },
               { value: ROLES.LAB_TECH, label: 'LAB_TECH' },
               { value: ROLES.ADMIN, label: 'ADMIN' },
               { value: ROLES.SUPERADMIN, label: 'SUPERADMIN' },
             ]}
           />
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-surface-border">
+          <div className="flex flex-wrap justify-end gap-3 pt-3 border-t border-surface-border">
             <Button variant="ghost" size="md" onClick={() => setRoleModalUser(null)}>
               Cancel
             </Button>

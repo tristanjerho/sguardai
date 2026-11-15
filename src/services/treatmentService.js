@@ -318,8 +318,40 @@ export const treatmentService = {
       });
     }
 
+    // Validation Checkpoint: Completed procedures cannot simply be changed back to Planned/Active
+    const isCurrentlyCompleted = current.status === 'COMPLETED' || current.stage === 'COMPLETED';
+    const isTransitioningAway = updates.status && updates.status !== 'COMPLETED' && isCurrentlyCompleted;
+
+    if (isTransitioningAway && !updates.reopenReason?.trim()) {
+      throw new Error(
+        'Validation Checkpoint: A completed treatment cannot simply be changed back to Planned or In Progress without an explicit clinical reopening reason and attending practitioner authorization.'
+      );
+    }
+
+    const reopenHistory = Array.isArray(current.reopenHistory) ? [...current.reopenHistory] : [];
+    if (isTransitioningAway && updates.reopenReason) {
+      reopenHistory.push({
+        reopenedBy: dentistName,
+        reopenedAt: new Date().toISOString(),
+        reason: updates.reopenReason.trim(),
+        previousStatus: current.status || 'COMPLETED',
+        newStatus: updates.status,
+      });
+    }
+
+    let completionData = {};
+    if (updates.status === 'COMPLETED' && current.status !== 'COMPLETED') {
+      completionData = {
+        completedAt: serverTimestamp(),
+        completedByDentist: dentistName,
+        completedDate: updates.completedDate || new Date().toISOString().split('T')[0],
+      };
+    }
+
     const updatePayload = {
       ...updates,
+      ...completionData,
+      reopenHistory,
       stageNumber: targetStageNum,
       totalStages: targetTotal,
       stages: updatedStages,

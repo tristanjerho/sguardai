@@ -20,11 +20,13 @@ export function ProgressRing({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center relative select-none">
+    <div
+      className="flex flex-col items-center justify-center relative select-none mx-auto max-w-full"
+      style={{ width: `min(${size}px, 100%)`, aspectRatio: '1 / 1' }}
+    >
       <svg
-        width={size}
-        height={size}
-        className="transform -rotate-90 origin-center"
+        viewBox={`0 0 ${size} ${size}`}
+        className="w-full h-full transform -rotate-90 origin-center"
       >
         {/* Background track */}
         <circle
@@ -52,15 +54,15 @@ export function ProgressRing({
       </svg>
 
       {/* Center content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary">
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-3 pointer-events-none">
+        <span className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary leading-none">
           {Math.round(clampedPercentage)}%
         </span>
-        <span className="text-[11px] font-semibold text-ink-secondary mt-0.5">
+        <span className="text-[11px] font-semibold text-ink-secondary mt-1">
           {label}
         </span>
         {sublabel && (
-          <span className="text-[10px] text-ink-muted">{sublabel}</span>
+          <span className="text-[10px] text-ink-muted truncate max-w-full">{sublabel}</span>
         )}
       </div>
     </div>

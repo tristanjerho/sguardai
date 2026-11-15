@@ -30,8 +30,8 @@ export function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-teal-50/50 via-surface-base to-orange-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-[100dvh] flex items-center justify-center p-3.5 xs:p-4 sm:p-6 bg-gradient-to-br from-teal-50/50 via-surface-base to-orange-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950/20">
+      <div className="w-full max-w-md space-y-5 sm:space-y-6">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 mb-2">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-teal-600 to-teal-400 flex items-center justify-center text-white shadow-soft">
@@ -46,7 +46,7 @@ export function ForgotPassword() {
           </p>
         </div>
 
-        <Card className="p-6 sm:p-8 space-y-6 shadow-soft-lg">
+        <Card className="p-4 xs:p-6 sm:p-8 space-y-6 shadow-soft-lg">
           {isSubmitted ? (
             <div className="text-center space-y-4 py-2">
               <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mx-auto">

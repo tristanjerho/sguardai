@@ -56,7 +56,7 @@ export function SimpleBarChart({ data = [], xKey = 'day', valueKey = 'count' }) 
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full h-64 flex flex-col items-center justify-center text-center p-6 border border-dashed border-surface-border rounded-2xl bg-surface-50/40 dark:bg-surface-100/10">
+      <div className="w-full h-56 sm:h-64 flex flex-col items-center justify-center text-center p-4 sm:p-6 border border-dashed border-surface-border rounded-2xl bg-surface-50/40 dark:bg-surface-100/10">
         <Calendar className="w-8 h-8 text-ink-muted mb-2 opacity-50" />
         <p className="text-sm font-medium text-ink-primary">No appointments recorded</p>
         <p className="text-xs text-ink-muted mt-0.5">There are no records for this period.</p>
@@ -65,9 +65,9 @@ export function SimpleBarChart({ data = [], xKey = 'day', valueKey = 'count' }) 
   }
 
   return (
-    <div className="w-full h-64">
+    <div className="w-full h-56 sm:h-64 min-w-0">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+        <BarChart data={data} margin={{ top: 10, right: 8, left: -16, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
           <XAxis
             dataKey={xKey}

@@ -23,6 +23,7 @@ import {
   FileDown,
   Printer,
   Share2,
+  History,
 } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
 import { aiService } from '../../services/aiService';
@@ -32,6 +33,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { useAuth } from '../../hooks/useAuth';
+import { formatPatientId } from '../../lib/formatters';
 
 export function AiWorkstation() {
   const { user } = useAuth();
@@ -232,7 +234,7 @@ export function AiWorkstation() {
   const handleDownloadReport = () => {
     if (!analysisResult) return;
     const currentPatient = (patients || []).find((p) => p.id === selectedPatientId) || null;
-    const patientName = currentPatient?.fullName || currentPatient?.name || (selectedPatientId ? `Patient #${selectedPatientId.slice(0, 8)}` : 'Walk-in Direct Assessment');
+    const patientName = currentPatient?.fullName || currentPatient?.name || (selectedPatientId ? `Patient #${formatPatientId(selectedPatientId)}` : 'Walk-in Direct Assessment');
     const timestamp = new Date().toLocaleString();
     const primaryClass = analysisResult.prediction?.class || 'N/A';
     const confidence = analysisResult.prediction?.confidence_percentage || (analysisResult.prediction?.confidence ? (analysisResult.prediction.confidence * 100).toFixed(1) : 0);
@@ -452,8 +454,8 @@ export function AiWorkstation() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
+      <div className="page-header-row">
+        <div className="page-header-text">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <Badge variant="primary" size="sm">
               Clinical Diagnostic Engine
@@ -481,59 +483,35 @@ export function AiWorkstation() {
           onClick={handleRunAnalysis}
           leftIcon={BrainCircuit}
           disabled={!displayImageUrl}
+          className="page-header-action"
         >
           {isAnalyzing ? 'Running Model Inference...' : analysisResult ? 'Re-run Model Inference' : 'Run AI Analysis'}
         </Button>
       </div>
 
-      {/* Model Specifications & Performance Bar */}
-      {modelInfo && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 rounded-xl bg-surface-base border border-surface-border shadow-xs">
-            <span className="text-[11px] text-ink-muted uppercase font-bold tracking-wider">Architecture</span>
-            <p className="text-sm font-bold text-ink-primary mt-0.5">{modelInfo.architecture || 'EfficientNetB0'}</p>
-          </div>
-          <div className="p-3 rounded-xl bg-surface-base border border-surface-border shadow-xs">
-            <span className="text-[11px] text-ink-muted uppercase font-bold tracking-wider">Trained Classes</span>
-            <p className="text-sm font-bold text-teal-600 dark:text-teal-400 mt-0.5">{modelInfo.num_classes || 6} Categories</p>
-          </div>
-          <div className="p-3 rounded-xl bg-surface-base border border-surface-border shadow-xs">
-            <span className="text-[11px] text-ink-muted uppercase font-bold tracking-wider">Held-Out Test Accuracy</span>
-            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-              {modelInfo.evaluation?.test_accuracy ? `${(modelInfo.evaluation.test_accuracy * 100).toFixed(1)}%` : 'Active'}
-            </p>
-          </div>
-          <div className="p-3 rounded-xl bg-surface-base border border-surface-border shadow-xs">
-            <span className="text-[11px] text-ink-muted uppercase font-bold tracking-wider">Grad-CAM Target</span>
-            <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">top_conv (Conv2D)</p>
-          </div>
-        </div>
-      )}
-
-      {/* Mandatory SaMD Disclaimer Banner */}
+      {/* Mandatory Clinical Decision Support Disclaimer Banner */}
       <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
         <div className="text-xs space-y-1">
           <p className="font-heading font-bold text-amber-900 dark:text-amber-200">
-            Mandatory Clinical Decision Support Disclaimer (FDA / DOH Class II SaMD)
+            Clinical Decision Support Notice
           </p>
           <p className="text-amber-800 dark:text-amber-300 leading-relaxed">
-            SmileGuard utilizes a trained convolutional neural network for radiographic screening.
-            All findings, class probabilities, and Grad-CAM activations must be corroborated by a licensed dental practitioner before definitive diagnosis or surgical intervention.
+            AI findings, condition predictions, and visual heatmaps are assistive clinical decision-support suggestions and do not constitute a definitive or final diagnosis. All interpretations must be corroborated by a licensed dental practitioner before prescribing treatment.
           </p>
         </div>
       </div>
 
       {/* Workstation Controls: Radiograph Source Selector */}
       <Card className="p-4 sm:p-6 shadow-soft space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-surface-border flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-heading font-bold text-ink-primary">Radiograph Source:</span>
-            <div className="inline-flex rounded-lg p-0.5 bg-surface-subtle border border-surface-border">
+        <div className="flex items-center justify-between pb-3 border-b border-surface-border flex-wrap gap-2.5">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <span className="text-xs font-heading font-bold text-ink-primary shrink-0">Radiograph Source:</span>
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:inline-flex rounded-lg p-0.5 bg-surface-subtle border border-surface-border w-full sm:w-auto gap-0.5">
               <button
                 type="button"
                 onClick={() => setInputMode('upload')}
-                className={`text-xs px-3 py-1 rounded-md font-semibold transition-all ${
+                className={`text-xs px-3 py-1.5 sm:py-1 rounded-md font-semibold transition-all text-center ${
                   inputMode === 'upload'
                     ? 'bg-teal-600 text-white shadow-xs'
                     : 'text-ink-secondary hover:text-ink-primary'
@@ -544,7 +522,7 @@ export function AiWorkstation() {
               <button
                 type="button"
                 onClick={() => setInputMode('patient')}
-                className={`text-xs px-3 py-1 rounded-md font-semibold transition-all ${
+                className={`text-xs px-3 py-1.5 sm:py-1 rounded-md font-semibold transition-all text-center ${
                   inputMode === 'patient'
                     ? 'bg-teal-600 text-white shadow-xs'
                     : 'text-ink-secondary hover:text-ink-primary'
@@ -630,7 +608,7 @@ export function AiWorkstation() {
                   <option value="">-- Select Patient to Bind --</option>
                   {patients.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.fullName} (ID: {p.id.slice(0, 8)})
+                      {p.fullName} (ID: {formatPatientId(p)})
                     </option>
                   ))}
                 </select>
@@ -653,7 +631,7 @@ export function AiWorkstation() {
                 >
                   {patients.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.fullName} (ID: {p.id.slice(0, 8)})
+                      {p.fullName} (ID: {formatPatientId(p)})
                     </option>
                   ))}
                 </select>
@@ -689,14 +667,14 @@ export function AiWorkstation() {
         {/* Left: Radiograph Inspection Viewer */}
         <div className="lg:col-span-7 space-y-4">
           <Card className="overflow-hidden shadow-soft-lg">
-            <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-surface-border">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-teal-600" />
-                Radiograph Viewer & Grad-CAM Overlay
+            <CardHeader className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-4 p-4 sm:p-5 pb-3 border-b border-surface-border w-full">
+              <CardTitle className="text-sm flex items-center gap-2 min-w-0">
+                <ImageIcon className="w-4 h-4 text-teal-600 shrink-0" />
+                <span>Radiograph Viewer & Grad-CAM Overlay</span>
               </CardTitle>
               {analysisResult?.gradcam?.heatmapUrl && (
-                <div className="flex items-center gap-2">
-                  <Sliders className="w-3.5 h-3.5 text-ink-muted" />
+                <div className="flex items-center gap-2 shrink-0 max-w-full">
+                  <Sliders className="w-3.5 h-3.5 text-ink-muted shrink-0" />
                   <span className="text-[11px] text-ink-muted font-mono">Heatmap: {heatmapOpacity}%</span>
                   <input
                     type="range"
@@ -704,13 +682,13 @@ export function AiWorkstation() {
                     max="100"
                     value={heatmapOpacity}
                     onChange={(e) => setHeatmapOpacity(Number(e.target.value))}
-                    className="w-24 accent-teal-600 cursor-pointer"
+                    className="w-20 sm:w-24 accent-teal-600 cursor-pointer ml-1"
                   />
                 </div>
               )}
             </CardHeader>
 
-            <CardContent className="p-0 bg-slate-950 min-h-[420px] flex items-center justify-center relative">
+            <CardContent className="p-0 bg-slate-950 min-h-[260px] sm:min-h-[380px] lg:min-h-[420px] flex items-center justify-center relative">
               {displayImageUrl ? (
                 <div className="relative w-full h-full flex items-center justify-center p-4">
                   <img
@@ -739,20 +717,22 @@ export function AiWorkstation() {
           {/* Grad-CAM Explainability Details */}
           {analysisResult && analysisResult.xray_validation?.is_valid && (
             analysisResult.gradcam?.available && analysisResult.gradcam?.heatmapUrl ? (
-              <div className="p-3 rounded-xl bg-surface-subtle border border-surface-border text-xs flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-surface-subtle border border-surface-border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span className="font-semibold text-ink-primary">Model Attention Visualization:</span>
+                  <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span className="font-semibold text-ink-primary">AI Attention Map:</span>
                   <span className="text-ink-secondary">
-                    Grad-CAM visualization of image regions contributing to the model&apos;s prediction (Layer: <code className="font-mono bg-surface-base px-1 py-0.5 rounded text-[11px]">{analysisResult.gradcam.targetLayer || analysisResult.gradcam.target_layer || 'top_conv'}</code>).
+                    Color heatmap highlights radiographic anatomical regions contributing most to the AI findings.
                   </span>
                 </div>
-                <Badge variant="neutral" size="sm">Pre-Softmax Logits</Badge>
+                <span className="text-[11px] font-semibold text-teal-700 dark:text-teal-400 shrink-0">
+                  Visual Heatmap Active
+                </span>
               </div>
             ) : (
-              <div className="p-3 rounded-xl bg-surface-subtle border border-surface-border text-xs text-ink-muted flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-500" />
-                <span>Grad-CAM unavailable for this analysis.</span>
+              <div className="p-3.5 rounded-xl bg-surface-subtle border border-surface-border text-xs text-ink-muted flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Heatmap visualization unavailable for this image.</span>
               </div>
             )
           )}
@@ -760,12 +740,18 @@ export function AiWorkstation() {
 
         {/* Right: AI Diagnostic Observations, Class Probabilities & Clinician Sign-Off */}
         <div className="lg:col-span-5 space-y-4">
-          <Card className="p-6 shadow-soft space-y-4">
-            <CardHeader className="p-0">
+          <Card className="p-4 sm:p-6 shadow-soft space-y-4">
+            <CardHeader className="p-0 pb-3 border-b border-surface-border/60 flex flex-wrap items-center justify-between gap-2.5 sm:gap-4 w-full">
               <CardTitle className="text-base flex items-center gap-2">
-                <BrainCircuit className="w-4 h-4 text-teal-600" />
-                AI Inference Findings
+                <BrainCircuit className="w-4 h-4 text-teal-600 shrink-0" />
+                <span>AI Diagnostic Findings</span>
               </CardTitle>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Review Status:</span>
+                <span className={`text-xs font-semibold ${dentistVerification.signed ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  {dentistVerification.signed ? 'Verified by Dentist ✓' : 'Pending Review'}
+                </span>
+              </div>
             </CardHeader>
 
             <CardContent className="p-0 space-y-4">
@@ -818,25 +804,25 @@ export function AiWorkstation() {
                   <div className="space-y-4">
                     {/* Stage 1 Validation Badge */}
                     {analysisResult.xray_validation?.is_valid && (
-                      <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-200 font-bold">
+                      <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-200 font-bold min-w-0">
                           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>Stage 1: Validated Dental OPG Radiograph</span>
+                          <span className="break-words">Stage 1: Validated Dental OPG Radiograph</span>
                         </div>
-                        <Badge variant="success" size="sm">
+                        <Badge variant="success" size="sm" className="shrink-0">
                           {analysisResult.xray_validation.confidence}% Verified
                         </Badge>
                       </div>
                     )}
 
                     {/* Primary Diagnosis Box */}
-                    <div className="p-4 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 space-y-2">
-                      <div className="flex items-center justify-between">
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="text-[11px] uppercase font-bold text-teal-800 dark:text-teal-300 tracking-wider">
-                          Primary Neural Prediction
+                          AI Diagnostic Suggestion
                         </span>
-                        <Badge variant="primary" size="md">
-                          {analysisResult.prediction?.confidence_percentage}% Confidence
+                        <Badge variant="primary" size="md" className="shrink-0">
+                          {analysisResult.prediction?.confidence_percentage}% Match Confidence
                         </Badge>
                       </div>
                       <div className="text-lg font-heading font-extrabold text-teal-950 dark:text-teal-100">
@@ -854,20 +840,20 @@ export function AiWorkstation() {
                         onClick={() => handleAskAssistant(analysisResult)}
                         className="w-full mt-2 py-2 px-3 rounded-xl bg-teal-600/10 hover:bg-teal-600/20 border border-teal-500/30 text-teal-800 dark:text-teal-200 text-xs font-heading font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 shadow-xs"
                       >
-                        <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                        <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
                         <span>Ask Gardy Assistant About These Findings</span>
                       </button>
                     </div>
 
-                    {/* Complete Softmax Class Probabilities Breakdown */}
+                    {/* Differential AI Assessment Breakdown */}
                     {analysisResult.ranked_predictions && (
                       <div className="space-y-2 pt-2 border-t border-surface-border">
-                        <div className="flex items-center justify-between text-xs font-heading font-bold text-ink-primary">
+                        <div className="flex items-center justify-between gap-3 text-xs font-heading font-bold text-ink-primary">
                           <span className="flex items-center gap-1.5">
-                            <BarChart2 className="w-3.5 h-3.5 text-teal-600" />
-                            Class Probability Distribution (Softmax)
+                            <BarChart2 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                            Differential AI Assessment
                           </span>
-                          <span className="text-[11px] font-normal text-ink-muted">Sum: 100%</span>
+                          <span className="text-[11px] font-normal text-ink-muted shrink-0">Sum: 100%</span>
                         </div>
 
                         <div className="space-y-2">
@@ -875,11 +861,11 @@ export function AiWorkstation() {
                             const isTop = idx === 0;
                             return (
                               <div key={item.class} className="space-y-1">
-                                <div className="flex justify-between text-xs">
+                                <div className="flex justify-between items-center gap-3 text-xs">
                                   <span className={`font-medium ${isTop ? 'font-bold text-teal-700 dark:text-teal-300' : 'text-ink-secondary'}`}>
                                     {item.class}
                                   </span>
-                                  <span className="font-mono text-[11px] text-ink-primary font-bold">
+                                  <span className="font-mono text-[11px] text-ink-primary font-bold shrink-0">
                                     {item.percentage.toFixed(1)}%
                                   </span>
                                 </div>
@@ -913,12 +899,12 @@ export function AiWorkstation() {
 
                     {/* CNN Result Export & Downloads Toolbar */}
                     <div className="p-3.5 rounded-2xl bg-teal-50/70 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-800 space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs font-heading font-bold text-teal-900 dark:text-teal-200">
-                          <FileDown className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 text-xs font-heading font-bold text-teal-900 dark:text-teal-200 min-w-0">
+                          <FileDown className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
                           <span>Download & Export CNN Results</span>
                         </div>
-                        <span className="text-[10px] uppercase tracking-wider font-semibold text-teal-700 dark:text-teal-300 bg-teal-100 dark:bg-teal-900/60 px-2 py-0.5 rounded-md">
+                        <span className="text-[10px] uppercase tracking-wider font-semibold text-teal-700 dark:text-teal-300 bg-teal-100 dark:bg-teal-900/60 px-2 py-0.5 rounded-md shrink-0">
                           AI Artifacts
                         </span>
                       </div>
@@ -1007,6 +993,65 @@ export function AiWorkstation() {
           </Card>
         </div>
       </div>
+
+      {/* Patient Radiograph & Diagnostic History */}
+      {selectedPatientId && (
+        <Card className="p-4 sm:p-6 shadow-soft space-y-4">
+          <CardHeader className="p-0 pb-3 border-b border-surface-border/60 flex flex-wrap items-center justify-between gap-2.5 sm:gap-4 w-full">
+            <CardTitle className="text-base flex items-center gap-2">
+              <History className="w-4 h-4 text-teal-600 shrink-0" />
+              <span>Patient Radiograph & Diagnostic History</span>
+            </CardTitle>
+            <span className="text-xs text-ink-muted shrink-0">
+              {patientImages.length} {patientImages.length === 1 ? 'record' : 'records'} on file
+            </span>
+          </CardHeader>
+          <CardContent className="p-0">
+            {patientImages.length === 0 ? (
+              <p className="text-xs text-ink-muted py-6 text-center italic bg-surface-subtle/40 rounded-xl border border-surface-border">
+                No previous radiographs on file for this patient. Upload a scan above to establish baseline imaging.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {patientImages.map((img) => (
+                  <div
+                    key={img.id}
+                    onClick={() => {
+                      setSelectedImageUrl(img.secureUrl || img.imageUrl);
+                      setUploadedFile(null);
+                      setUploadedFilePreview('');
+                      setAnalysisResult(null);
+                    }}
+                    className={`group cursor-pointer rounded-xl border p-2.5 transition-all text-left bg-surface-base hover:border-teal-500 hover:shadow-soft-sm ${
+                      selectedImageUrl === (img.secureUrl || img.imageUrl)
+                        ? 'border-teal-600 ring-2 ring-teal-500/20'
+                        : 'border-surface-border'
+                    }`}
+                  >
+                    <div className="h-28 rounded-lg bg-slate-950 overflow-hidden relative mb-2">
+                      <img
+                        src={img.secureUrl || img.imageUrl}
+                        alt={img.type || 'Dental scan'}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <span className="absolute bottom-1 right-1 text-[10px] font-bold bg-slate-900/80 text-teal-300 px-1.5 py-0.5 rounded">
+                        {img.type}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold text-ink-primary truncate">{img.title || `${img.type} Radiograph`}</p>
+                    <p className="text-[11px] text-ink-muted">{formatDate(img.createdAt)}</p>
+                    {img.notes && (
+                      <p className="text-[11px] text-ink-secondary line-clamp-2 mt-1 italic">
+                        {img.notes}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -433,8 +433,8 @@ export function LabOrdersQueue() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="-mx-4 flex flex-col justify-between gap-4 border-y border-l-2 border-surface-border bg-surface-subtle px-5 py-5 sm:-mx-5 sm:flex-row sm:items-center sm:px-6 lg:-mx-6 lg:px-8">
-        <div>
+      <div className="rounded-2xl sm:rounded-3xl border border-surface-border border-l-4 border-l-teal-500 bg-surface-subtle p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="page-header-text">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-2">
             <Badge variant="primary" size="sm">
               Service-Specific Fabrication Pipeline
@@ -460,6 +460,7 @@ export function LabOrdersQueue() {
           size="sm"
           leftIcon={ArrowLeft}
           onClick={() => navigate('/lab')}
+          className="page-header-action"
         >
           Order Intake &amp; Admin {incomingCount > 0 ? `(${incomingCount} Incoming)` : ''}
         </Button>
@@ -468,11 +469,11 @@ export function LabOrdersQueue() {
       {/* Incoming Prescriptions Banner */}
       {incomingCount > 0 && (
         <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
-            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-300">
+          <div className="flex items-center gap-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200 page-header-text">
+            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-300 shrink-0">
               <Inbox className="w-4 h-4" />
             </div>
-            <div>
+            <div className="min-w-0">
               <strong>
                 {incomingCount} incoming {incomingCount === 1 ? 'request is' : 'requests are'} waiting in Pending Review / Clarification!
               </strong>
@@ -487,7 +488,7 @@ export function LabOrdersQueue() {
             variant="primary"
             size="sm"
             rightIcon={ArrowRight}
-            className="shrink-0"
+            className="page-header-action"
             onClick={() => navigate('/lab')}
           >
             Open Intake Queue
@@ -495,9 +496,9 @@ export function LabOrdersQueue() {
         </div>
       )}
 
-      {/* Workflow Selector Tabs (Wraps cleanly with zero horizontal scrollbar) */}
-      <div className="space-y-2">
-        <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-1 sm:flex-wrap">
+      {/* Workflow Selector Tabs (Scrollable bar on mobile, wraps cleanly on sm+) */}
+      <div className="space-y-2 min-w-0">
+        <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:flex-wrap">
           {workflowTabs.map((tab) => {
             const active = selectedBoard === tab.id;
             return (
@@ -863,7 +864,7 @@ export function LabOrdersQueue() {
               placeholder="e.g., Articulated cast verified, starting Stage 1"
             />
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-wrap justify-end gap-2 pt-2">
               <Button variant="ghost" type="button" onClick={() => setStartModalOrder(null)}>
                 Cancel
               </Button>
@@ -918,7 +919,7 @@ export function LabOrdersQueue() {
               placeholder="Optional fabrication update for this milestone..."
             />
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-wrap justify-end gap-2 pt-2">
               <Button variant="ghost" type="button" onClick={() => setStageModalData(null)}>
                 Cancel
               </Button>
@@ -944,7 +945,7 @@ export function LabOrdersQueue() {
               <strong>Clinical Disclaimer:</strong> Laboratory Quality Check verifies prescription compliance and bench workmanship; it does not replace clinical evaluation or chairside fitting by the attending dentist.
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <button
                 type="button"
                 onClick={() => setQcDecision('PASS')}
@@ -1013,7 +1014,7 @@ export function LabOrdersQueue() {
               required={qcDecision === 'FAIL'}
             />
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-wrap justify-end gap-2 pt-2">
               <Button variant="ghost" type="button" onClick={() => setQcModalOrder(null)}>
                 Cancel
               </Button>
@@ -1081,7 +1082,7 @@ export function LabOrdersQueue() {
               placeholder="e.g., Hydrated in sealed pouch with bite registration"
             />
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-wrap justify-end gap-2 pt-2">
               <Button variant="ghost" type="button" onClick={() => setDispatchModalOrder(null)}>
                 Cancel
               </Button>

@@ -15,8 +15,8 @@ export function FirebaseSetupScreen() {
   ];
 
   return (
-    <div className="min-h-screen bg-surface-base flex items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-xl space-y-6">
+    <div className="min-h-[100dvh] bg-surface-base flex items-center justify-center p-3.5 xs:p-4 sm:p-6">
+      <div className="w-full max-w-xl space-y-5 sm:space-y-6">
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 mb-2 border border-amber-200 dark:border-amber-800">
             <KeyRound className="w-7 h-7" />
@@ -33,15 +33,15 @@ export function FirebaseSetupScreen() {
         <Card className="shadow-soft-lg">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
               Environment Variables Status (.env)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="divide-y divide-surface-border rounded-xl border border-surface-border overflow-hidden">
               {envStatus.map((item) => (
-                <div key={item.label} className="p-3 bg-surface-card flex items-center justify-between text-xs">
-                  <span className="font-mono text-ink-primary">{item.label}</span>
+                <div key={item.label} className="p-3 bg-surface-card flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <span className="font-mono text-ink-primary break-all">{item.label}</span>
                   {item.exists ? (
                     <span className="flex items-center gap-1 text-emerald-600 font-semibold">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Configured
