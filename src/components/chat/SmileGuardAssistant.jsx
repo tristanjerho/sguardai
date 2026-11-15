@@ -517,17 +517,16 @@ export function SmileGuardAssistant() {
 
   const roleBadge = getRoleBadge();
 
-  // Floating button bottom offset for mobile when portal BottomTabBar or sticky booking bar is mounted
-  const isPortalRoute = /^\/(patient|clinic|lab|admin)/.test(location.pathname);
-  const isPatientPortal = location.pathname.startsWith('/patient');
+  // Floating button bottom offset for mobile/tablet when portal BottomTabBar or sticky booking bar is mounted
+  const hasBottomTabBar = /^\/(patient|clinic|lab|admin)/.test(location.pathname);
   const isBookingPage = location.pathname === '/patient/book';
-  const isPatient = isPatientPortal || userRole === ROLES.PATIENT;
+  const isPatient = location.pathname.startsWith('/patient') || userRole === ROLES.PATIENT;
 
-  // On the booking page, elevate launcher higher and keep it compact so it doesn't overlap the sticky booking bar or service cards
+  // Elevate launcher above BottomTabBar (<lg) across all portals so it never covers navigation tabs
   const bottomLauncherClass = isBookingPage
-    ? 'bottom-[calc(9.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-3 md:right-6'
-    : isPortalRoute
-      ? 'bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:bottom-6 right-3 md:right-6'
+    ? 'bottom-[calc(9.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-6 right-3 sm:right-6'
+    : hasBottomTabBar
+      ? 'bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:bottom-6 right-3 sm:right-6'
       : 'bottom-4 sm:bottom-6 right-3 sm:right-6';
 
   // Dimension classes depending on maximized toggle
@@ -540,7 +539,7 @@ export function SmileGuardAssistant() {
       {/* =========================================================================
           FLOATING LAUNCHER BUTTON
           ========================================================================= */}
-      <div className={`fixed z-40 ${bottomLauncherClass} transition-all duration-300`}>
+      <div className={`fixed z-30 ${bottomLauncherClass} transition-all duration-300`}>
         <motion.button
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
@@ -587,9 +586,9 @@ export function SmileGuardAssistant() {
             exit={{ opacity: 0, y: 20, scale: 0.96 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className={`fixed z-50 left-2 right-2 sm:left-auto sm:right-6 ${
-              isPortalRoute
-                ? 'bottom-[calc(4.875rem+env(safe-area-inset-bottom,0px))] md:bottom-6'
-                : 'bottom-3 md:bottom-6'
+              hasBottomTabBar
+                ? 'bottom-[calc(4.875rem+env(safe-area-inset-bottom,0px))] lg:bottom-6'
+                : 'bottom-3 sm:bottom-6'
             } ${panelDimensionsClass} rounded-2xl sm:rounded-3xl bg-surface-card dark:bg-[#0B1B32] border border-surface-border dark:border-[#26415E]/90 shadow-2xl overflow-hidden flex flex-col font-sans backdrop-blur-xl transition-all duration-300`}
           >
             {/* Header */}

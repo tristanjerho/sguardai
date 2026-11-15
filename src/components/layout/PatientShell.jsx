@@ -10,6 +10,7 @@ import { triggerDeviceNotification, requestNotificationPermission } from '../../
 export function PatientShell() {
   const { user } = useAuth();
   const toast = useToast();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 

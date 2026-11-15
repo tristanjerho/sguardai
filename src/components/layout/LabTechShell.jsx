@@ -15,6 +15,7 @@ import {
 export function LabTechShell() {
   const { user } = useAuth();
   const toast = useToast();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 
@@ -86,7 +87,7 @@ export function LabTechShell() {
       title={getPageTitle()}
       role={user?.role || ROLES.LAB_TECH}
       unreadCount={unreadCount}
-      maxWidthClass="max-w-[1440px]"
+      maxWidthClass="max-w-[1680px]"
     >
       <Outlet />
     </AppShell>
