@@ -122,8 +122,8 @@ export async function triggerDeviceNotification(title, message, options = {}) {
 
   const notifOptions = {
     body: message,
-    icon: '/pwa-192x192.png',
-    badge: '/pwa-192x192.png',
+    icon: '/logo-icon.png',
+    badge: '/notification-badge.png',
     tag: uniqueTag,
     renotify: true,
     requireInteraction: Boolean(options.urgent),
@@ -151,8 +151,8 @@ export async function triggerDeviceNotification(title, message, options = {}) {
   try {
     const notif = new Notification(title, {
       body: message,
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-192x192.png',
+      icon: '/logo-icon.png',
+      badge: '/notification-badge.png',
       tag: uniqueTag,
       requireInteraction: Boolean(options.urgent),
     });

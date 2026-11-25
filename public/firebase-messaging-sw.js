@@ -41,8 +41,8 @@ importScripts('https://www.gstatic.com/firebasejs/11.0.2/firebase-messaging-comp
 
         self.registration.showNotification(title, {
           body,
-          icon: '/pwa-192x192.png',
-          badge: '/pwa-192x192.png',
+          icon: '/logo-icon.png',
+          badge: '/notification-badge.png',
           tag,
           renotify: true,
           vibrate: [200, 100, 200],

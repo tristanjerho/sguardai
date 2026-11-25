@@ -151,8 +151,8 @@ async function sendFcmMessage(projectId, accessToken, token, payload) {
           notification: {
             title: payload.title,
             body: payload.body,
-            icon: '/pwa-192x192.png',
-            badge: '/pwa-192x192.png',
+            icon: '/logo-icon.png',
+            badge: '/notification-badge.png',
             tag: payload.tag || `sg-${Date.now()}`,
             renotify: true,
           },

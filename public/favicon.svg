@@ -1,35 +1,142 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
   <defs>
-    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0d9488"/>
-      <stop offset="100%" stop-color="#0f766e"/>
+    <linearGradient id="iconBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F766E" />
+      <stop offset="52%" stop-color="#14B8A6" />
+      <stop offset="100%" stop-color="#06B6D4" />
     </linearGradient>
+
+    <radialGradient id="iconBgGlow" cx="30%" cy="20%" r="70%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </radialGradient>
+
+    <linearGradient id="bodyGrad" x1="25%" y1="0%" x2="75%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="45%" stop-color="#FAFCFD" />
+      <stop offset="80%" stop-color="#F1F5F9" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+
+    <radialGradient id="bodyShadow" cx="50%" cy="88%" r="48%">
+      <stop offset="0%" stop-color="#94A3B8" stop-opacity="0.25" />
+      <stop offset="60%" stop-color="#CBD5E1" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </radialGradient>
+
+    <linearGradient id="armGradLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="60%" stop-color="#F8FAFC" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+
+    <linearGradient id="armGradRight" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="60%" stop-color="#F8FAFC" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </linearGradient>
+
     <linearGradient id="toothGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#f0fdfa"/>
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="75%" stop-color="#F0FDFA" />
+      <stop offset="100%" stop-color="#CCFBF1" />
     </linearGradient>
-    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.35"/>
+
+    <radialGradient id="eyeGrad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </radialGradient>
+
+    <filter id="mascotShadow" x="-15%" y="-15%" width="130%" height="135%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#042F2E" flood-opacity="0.28" />
     </filter>
   </defs>
-  
-  <!-- Background rounded rectangle -->
-  <rect width="512" height="512" rx="112" fill="#0f172a"/>
-  
-  <!-- Shield outline with gradient -->
-  <path d="M 256 64 C 336 64 416 92 416 192 C 416 332 288 424 256 448 C 224 424 96 332 96 192 C 96 92 176 64 256 64 Z" 
-        fill="url(#shieldGrad)" 
-        filter="url(#dropShadow)"/>
 
-  <!-- Inner stylized tooth outline -->
-  <path d="M 256 140 C 290 140 328 152 334 186 C 342 226 330 274 316 322 C 304 362 278 368 266 330 C 260 312 252 312 246 330 C 234 368 208 362 196 322 C 182 274 170 226 178 186 C 184 152 222 140 256 140 Z" 
-        fill="url(#toothGrad)"/>
+  <!-- Rounded Teal Brand Badge -->
+  <rect x="0" y="0" width="800" height="800" rx="180" fill="url(#iconBgGrad)" />
+  <rect x="0" y="0" width="800" height="800" rx="180" fill="url(#iconBgGlow)" />
 
-  <!-- Clinical cross in center of tooth -->
-  <rect x="244" y="196" width="24" height="64" rx="6" fill="#0d9488"/>
-  <rect x="224" y="216" width="64" height="24" rx="6" fill="#0d9488"/>
+  <!-- Gardy Mascot Centered in Adaptive Safe Zone -->
+  <g transform="translate(400, 415) scale(1.02) translate(-400, -405)" filter="url(#mascotShadow)">
+    <!-- Bright Sparkles Above Head -->
+    <g id="sparkles">
+      <path d="M 400 115 Q 400 144 429 144 Q 400 144 400 173 Q 400 144 371 144 Q 400 144 400 115 Z" fill="#FFFFFF" />
+      <path d="M 326 154 Q 326 171 343 171 Q 326 171 326 188 Q 326 171 309 171 Q 326 171 326 154 Z" fill="#CCFBF1" transform="rotate(-12, 326, 171)" />
+      <path d="M 474 154 Q 474 171 491 171 Q 474 171 474 188 Q 474 171 457 171 Q 474 171 474 154 Z" fill="#CCFBF1" transform="rotate(12, 474, 171)" />
+      <path d="M 285 192 Q 285 203 296 203 Q 285 203 285 214 Q 285 203 274 203 Q 285 203 285 192 Z" fill="#99F6E4" opacity="0.95" />
+      <path d="M 515 192 Q 515 203 526 203 Q 515 203 515 214 Q 515 203 504 203 Q 515 203 515 192 Z" fill="#99F6E4" opacity="0.95" />
+    </g>
 
-  <!-- Sparkle stars -->
-  <path d="M 360 110 L 366 126 L 382 132 L 366 138 L 360 154 L 354 138 L 338 132 L 354 126 Z" fill="#f59e0b"/>
-  <path d="M 140 280 L 144 290 L 154 294 L 144 298 L 140 308 L 136 298 L 126 294 L 136 290 Z" fill="#38bdf8"/>
+    <!-- Main Pearly White Body -->
+    <path d="
+      M 260, 340
+      C 260, 210  540, 210  540, 340
+      C 540, 470  530, 560  470, 620
+      C 440, 650  415, 630  400, 595
+      C 385, 630  360, 650  330, 620
+      C 270, 560  260, 470  260, 340 Z"
+      fill="url(#bodyGrad)"
+      stroke="#0F766E"
+      stroke-opacity="0.35"
+      stroke-width="8"
+      stroke-linejoin="round" />
+
+    <path d="
+      M 260, 340
+      C 260, 210  540, 210  540, 340
+      C 540, 470  530, 560  470, 620
+      C 440, 650  415, 630  400, 595
+      C 385, 630  360, 650  330, 620
+      C 270, 560  260, 470  260, 340 Z"
+      fill="url(#bodyShadow)" />
+
+    <!-- Facial Features -->
+    <g transform="translate(330, 340)">
+      <ellipse cx="0" cy="0" rx="22" ry="26" fill="url(#eyeGrad)" />
+      <circle cx="-6" cy="-8" r="9.5" fill="#FFFFFF" />
+      <circle cx="7" cy="9" r="4.5" fill="#FFFFFF" />
+    </g>
+    <g transform="translate(470, 340)">
+      <ellipse cx="0" cy="0" rx="22" ry="26" fill="url(#eyeGrad)" />
+      <circle cx="-6" cy="-8" r="9.5" fill="#FFFFFF" />
+      <circle cx="7" cy="9" r="4.5" fill="#FFFFFF" />
+    </g>
+
+    <!-- Rosy Cheeks -->
+    <ellipse cx="300" cy="374" rx="26" ry="15" fill="#FF76A0" opacity="0.58" />
+    <ellipse cx="500" cy="374" rx="26" ry="15" fill="#FF76A0" opacity="0.58" />
+
+    <!-- Happy Smile -->
+    <path d="M 368 366 Q 400 400 432 366" fill="none" stroke="#0F172A" stroke-width="9" stroke-linecap="round" />
+
+    <!-- Back Arms -->
+    <path d="M 262 440 C 230 450 240 540 315 540 C 335 540 350 520 345 500 C 340 480 300 460 262 440 Z"
+          fill="url(#armGradLeft)" stroke="#0F766E" stroke-opacity="0.35" stroke-width="6" />
+    <path d="M 538 440 C 570 450 560 540 485 540 C 465 540 450 520 455 500 C 460 480 500 460 538 440 Z"
+          fill="url(#armGradRight)" stroke="#0F766E" stroke-opacity="0.35" stroke-width="6" />
+
+    <!-- Little Hugged Tooth -->
+    <g transform="translate(400, 502)">
+      <path d="
+        M -38, -38
+        C -48, -38 -53, -10 -48, 12
+        C -43, 32 -32, 48 -24, 48
+        C -16, 48 -13, 32 0, 27
+        C 13, 32 16, 48 24, 48
+        C 32, 48 43, 32 48, 12
+        C 53, -10 48, -38 38, -38
+        C 22, -38 16, -27 0, -27
+        C -16, -27 -22, -38 -38, -38 Z"
+        fill="url(#toothGrad)" stroke="#0D9488" stroke-width="7" />
+      <circle cx="-13" cy="-2" r="4.5" fill="#0D9488" />
+      <circle cx="13" cy="-2" r="4.5" fill="#0D9488" />
+      <path d="M -6 8 Q 0 14 6 8" fill="none" stroke="#0D9488" stroke-width="3.5" stroke-linecap="round" />
+    </g>
+
+    <!-- Front Paws -->
+    <path d="M 260 435 C 240 480 280 545 325 530 C 350 522 355 490 338 480 C 310 465 285 450 260 435 Z"
+          fill="url(#armGradLeft)" stroke="#0F766E" stroke-opacity="0.35" stroke-width="6" />
+    <path d="M 540 435 C 560 480 520 545 475 530 C 450 522 445 490 462 480 C 490 465 515 450 540 435 Z"
+          fill="url(#armGradRight)" stroke="#0F766E" stroke-opacity="0.35" stroke-width="6" />
+  </g>
 </svg>

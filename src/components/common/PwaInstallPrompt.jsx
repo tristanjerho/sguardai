@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Download, X, Share, Smartphone, PlusSquare, Sparkles } from 'lucide-react';
+import { Download, X, Share, PlusSquare, Sparkles } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { SmileGuardMascot } from './SmileGuardMascot';
 
 export function PwaInstallPrompt() {
   const location = useLocation();
@@ -81,8 +82,8 @@ export function PwaInstallPrompt() {
       <div className="p-3 sm:p-4 rounded-2xl bg-surface-card/95 backdrop-blur-md border border-teal-500/30 shadow-soft-xl text-ink-primary space-y-2.5 sm:space-y-3">
         <div className="flex items-start justify-between gap-2.5">
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-            <div className="hidden xs:flex w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-teal-600 to-teal-400 items-center justify-center text-white shrink-0 shadow-soft-sm">
-              <Smartphone className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div className="hidden xs:flex w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-teal-600 via-teal-500 to-cyan-500 p-1 items-center justify-center shrink-0 shadow-soft-sm ring-1 ring-teal-700/15">
+              <SmileGuardMascot className="w-full h-full object-contain drop-shadow-sm" showShadow={false} size={null} />
             </div>
             <div className="min-w-0">
               <div className="text-xs font-heading font-extrabold text-ink-primary flex flex-wrap items-center gap-1.5 leading-snug">

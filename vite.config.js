@@ -75,7 +75,14 @@ export default defineConfig({
     devChatApiPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: [
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'logo-icon.png',
+        'notification-badge.png',
+      ],
       manifest: {
         name: 'SmileGuard AI - Clinical Dental & Orthodontic Care',
         short_name: 'SmileGuard AI',
