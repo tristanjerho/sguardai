@@ -7,10 +7,10 @@ by the trained CNN model from real test images.
 import sys
 import json
 from pathlib import Path
+from typing import Any
 import numpy as np
 from PIL import Image
-import tensorflow as tf
-from tensorflow import keras
+import keras
 
 # Add backend dir to path for imports
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -40,7 +40,7 @@ def run_verification():
 
     # 1. Load trained model & class names
     print(f"[*] 1. Loading trained model from: {MODEL_FILE}")
-    model = keras.models.load_model(MODEL_FILE)
+    model: Any = keras.models.load_model(str(MODEL_FILE))
     print(f"    - Model input shape: {model.input_shape}")
     print(f"    - Model output shape: {model.output_shape}")
 

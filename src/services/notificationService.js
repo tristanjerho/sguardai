@@ -10,6 +10,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { pushService } from './pushService';
 
 /**
  * Service for patient and staff notifications in Cloud Firestore
@@ -78,21 +79,51 @@ export const notificationService = {
   },
 
   /**
-   * Creates a notification for a user in Firestore
+   * Creates a notification for a user in Firestore and triggers a non-blocking
+   * background Web Push (FCM) so closed browsers and locked phones receive it too.
    * @param {Object} data
    * @returns {Promise<Object>}
    */
-  async create({ userId, title, message, type = 'GENERAL' }) {
+  async create({
+    userId,
+    title,
+    message,
+    type = 'GENERAL',
+    link = '',
+    orderId = '',
+    appointmentId = '',
+    priority = 'NORMAL',
+    sendPush = true,
+  }) {
     if (!db || !userId) return null;
     const newNotif = {
       userId,
       title,
       message,
       type,
+      link,
+      orderId,
+      appointmentId,
+      priority,
       read: false,
       createdAt: serverTimestamp(),
     };
     const docRef = await addDoc(collection(db, 'notifications'), newNotif);
+
+    // Fire-and-forget Layer 2 background Web Push (FCM)
+    if (sendPush) {
+      pushService
+        .dispatchPushToUsers([userId], {
+          title,
+          body: message,
+          url: link || '/',
+          type,
+          priority,
+          tag: `notif-${docRef.id}`,
+        })
+        .catch(() => {});
+    }
+
     return { id: docRef.id, ...newNotif, createdAt: new Date().toISOString() };
   },
 

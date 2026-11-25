@@ -25,7 +25,7 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException, status, Requ
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import tensorflow as tf
-from tensorflow import keras
+import keras
 
 # Constrain thread allocations to prevent high RAM spikes on cloud free tiers
 tf.config.threading.set_inter_op_parallelism_threads(1)
@@ -76,16 +76,16 @@ async def root():
     }
 
 # Global models and interpreters
-pathology_model = None
-pathology_interpreter = None
-pathology_classes = []
-pathology_metadata = {}
+pathology_model: Any = None
+pathology_interpreter: Any = None
+pathology_classes: List[str] = []
+pathology_metadata: Dict[str, Any] = {}
 
-validator_model = None
-validator_interpreter = None
-validator_classes = []
-validator_metadata = {}
-validation_threshold = 0.60
+validator_model: Any = None
+validator_interpreter: Any = None
+validator_classes: List[str] = []
+validator_metadata: Dict[str, Any] = {}
+validation_threshold: float = 0.60
 
 def run_tflite_predict(interpreter, input_tensor: np.ndarray) -> np.ndarray:
     input_details = interpreter.get_input_details()
@@ -110,7 +110,7 @@ def load_resources():
 
     if validator_model is None and validator_interpreter is None and VALIDATOR_MODEL_FILE.exists():
         print(f"[*] Loading Stage-1 Keras Validator from {VALIDATOR_MODEL_FILE}...")
-        validator_model = keras.models.load_model(VALIDATOR_MODEL_FILE, compile=False)
+        validator_model = keras.models.load_model(str(VALIDATOR_MODEL_FILE), compile=False)
         print("[OK] Stage-1 Keras Validator loaded.")
 
     if VALIDATOR_CLASSES_FILE.exists() and not validator_classes:
@@ -136,7 +136,7 @@ def load_resources():
     if PATHOLOGY_MODEL_FILE.exists() and pathology_model is None:
         try:
             print(f"[*] Loading Stage-2 Keras Pathology from {PATHOLOGY_MODEL_FILE}...")
-            pathology_model = keras.models.load_model(PATHOLOGY_MODEL_FILE, compile=False)
+            pathology_model = keras.models.load_model(str(PATHOLOGY_MODEL_FILE), compile=False)
             print("[OK] Stage-2 Keras Pathology model loaded.")
         except Exception as e:
             print(f"[!] Warning: Keras model load skipped: {e}")
@@ -193,8 +193,10 @@ def process_and_infer(pil_img: Image.Image, source_name: str = "Uploaded Image")
     try:
         if validator_interpreter is not None:
             val_probs = run_tflite_predict(validator_interpreter, img_array)
-        else:
+        elif validator_model is not None:
             val_probs = validator_model.predict(img_array, verbose=0)[0]
+        else:
+            raise RuntimeError("Validator model is not loaded.")
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -236,8 +238,10 @@ def process_and_infer(pil_img: Image.Image, source_name: str = "Uploaded Image")
     try:
         if pathology_interpreter is not None:
             pathology_probs = run_tflite_predict(pathology_interpreter, img_array)
-        else:
+        elif pathology_model is not None:
             pathology_probs = pathology_model.predict(img_array, verbose=0)[0]
+        else:
+            raise RuntimeError("Pathology model is not loaded.")
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -341,11 +345,10 @@ async def predict_endpoint(
     patientId: Optional[str] = Form(None),
     radiographType: Optional[str] = Form("OPG")
 ):
-    pil_img = None
     source_name = "Uploaded File"
 
     if file is not None:
-        source_name = file.filename
+        source_name = file.filename or "Uploaded File"
         try:
             contents = await file.read()
             pil_img = Image.open(io.BytesIO(contents))

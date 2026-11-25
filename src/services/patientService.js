@@ -15,6 +15,62 @@ import { ROLES } from '../lib/roles';
 import { imageService } from './imageService';
 import { activityLogService } from './activityLogService';
 
+/** Default inactivity threshold (1 year = 365 days) for flagging patients eligible for archiving */
+export const INACTIVITY_THRESHOLD_DAYS = 365;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Safely converts Firestore Timestamp, Date, YYYY-MM-DD string, or ISO string to epoch milliseconds.
+ * @param {any} val
+ * @returns {number|null}
+ */
+export function toTimestampMs(val) {
+  if (!val) return null;
+  if (typeof val === 'number') return Number.isFinite(val) ? val : null;
+  if (typeof val?.toMillis === 'function') return val.toMillis();
+  if (typeof val?.toDate === 'function') {
+    const d = val.toDate();
+    return Number.isNaN(d.getTime()) ? null : d.getTime();
+  }
+  if (typeof val?.seconds === 'number') return val.seconds * 1000;
+  if (val instanceof Date) return Number.isNaN(val.getTime()) ? null : val.getTime();
+  if (typeof val === 'string') {
+    const ymd = val.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (ymd) {
+      const local = new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]));
+      return Number.isNaN(local.getTime()) ? null : local.getTime();
+    }
+    const parsed = new Date(val);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.getTime();
+  }
+  return null;
+}
+
+/**
+ * Formats an inactivity duration in days into a clear clinical label (e.g. "1 yr, 3 mos ago").
+ * @param {number|null} days
+ * @returns {string}
+ */
+export function formatInactivityDuration(days) {
+  if (days === null || days === undefined || !Number.isFinite(days)) {
+    return 'No clinic activity recorded';
+  }
+  if (days < 1) return 'Today';
+  if (days === 1) return '1 day ago';
+  if (days < 30) return `${days} days ago`;
+  const totalMonths = Math.floor(days / 30.4375);
+  if (totalMonths < 12) {
+    return `${totalMonths} ${totalMonths === 1 ? 'mo' : 'mos'} ago`;
+  }
+  const years = Math.floor(days / 365);
+  const remMonths = Math.floor((days % 365) / 30.4375);
+  if (remMonths === 0) {
+    return `${years} ${years === 1 ? 'yr' : 'yrs'} ago`;
+  }
+  return `${years} ${years === 1 ? 'yr' : 'yrs'}, ${remMonths} ${remMonths === 1 ? 'mo' : 'mos'} ago`;
+}
+
 /**
  * Service for patient clinical profiles, diagnostic records, and brushing habit tracker
  */
@@ -403,5 +459,168 @@ export const patientService = {
     });
 
     return this.getById(patientId);
+  },
+
+  /**
+   * Builds a complete archive & inactivity overview for all registered patients by
+   * cross-referencing appointments and stored radiographs/documents.
+   * Flags active patients whose last clinic activity was >= thresholdDays (default 365 days / 1 year).
+   * @param {number} [thresholdDays=INACTIVITY_THRESHOLD_DAYS]
+   * @returns {Promise<Array<Object>>}
+   */
+  async listArchiveOverview(thresholdDays = INACTIVITY_THRESHOLD_DAYS) {
+    if (!db) return [];
+
+    const [patients, appointmentsSnap, imagesSnap] = await Promise.all([
+      this.listPatients(),
+      getDocs(collection(db, 'appointments')).catch(() => null),
+      getDocs(collection(db, 'dentalImages')).catch(() => null),
+    ]);
+
+    const apptsByPatient = new Map();
+    if (appointmentsSnap) {
+      appointmentsSnap.forEach((docSnap) => {
+        const data = { id: docSnap.id, ...docSnap.data() };
+        if (!data.patientId) return;
+        const list = apptsByPatient.get(data.patientId) || [];
+        list.push(data);
+        apptsByPatient.set(data.patientId, list);
+      });
+    }
+
+    const docsByPatient = new Map();
+    if (imagesSnap) {
+      imagesSnap.forEach((docSnap) => {
+        const data = { id: docSnap.id, ...docSnap.data() };
+        if (!data.patientId) return;
+        const list = docsByPatient.get(data.patientId) || [];
+        list.push(data);
+        docsByPatient.set(data.patientId, list);
+      });
+    }
+
+    const nowMs = Date.now();
+
+    return patients.map((p) => {
+      const pAppts = apptsByPatient.get(p.id) || [];
+      const pDocs = docsByPatient.get(p.id) || [];
+
+      const completedAppts = pAppts.filter((a) => a.status === 'COMPLETED');
+      const activeOrPastAppts = pAppts.filter(
+        (a) => a.status !== 'CANCELLED' && a.status !== 'REJECTED'
+      );
+
+      const getLatestApptMs = (list) => {
+        let best = null;
+        let bestAppt = null;
+        list.forEach((a) => {
+          const ms =
+            toTimestampMs(a.date) ??
+            toTimestampMs(a.completedAt) ??
+            toTimestampMs(a.updatedAt) ??
+            toTimestampMs(a.createdAt);
+          if (ms !== null && ms <= nowMs && (best === null || ms > best)) {
+            best = ms;
+            bestAppt = a;
+          }
+        });
+        return { ms: best, appt: bestAppt };
+      };
+
+      const latestCompleted = getLatestApptMs(completedAppts);
+      const latestAnyAppt = getLatestApptMs(activeOrPastAppts);
+      const explicitLastVisitMs = toTimestampMs(p.lastVisitAt);
+
+      let latestDocMs = null;
+      pDocs.forEach((img) => {
+        const ms = toTimestampMs(img.createdAt);
+        if (ms !== null && (latestDocMs === null || ms > latestDocMs)) {
+          latestDocMs = ms;
+        }
+      });
+
+      const createdMs = toTimestampMs(p.createdAt);
+
+      let lastVisitMs = null;
+      let lastVisitSource = 'UNKNOWN';
+      let latestProcedure = '';
+
+      if (latestCompleted.ms !== null) {
+        lastVisitMs = latestCompleted.ms;
+        lastVisitSource = 'COMPLETED_VISIT';
+        latestProcedure =
+          latestCompleted.appt?.procedureName || latestCompleted.appt?.serviceName || '';
+      } else if (explicitLastVisitMs !== null) {
+        lastVisitMs = explicitLastVisitMs;
+        lastVisitSource = 'LAST_VISIT_FIELD';
+      } else if (latestAnyAppt.ms !== null) {
+        lastVisitMs = latestAnyAppt.ms;
+        lastVisitSource = 'APPOINTMENT';
+        latestProcedure =
+          latestAnyAppt.appt?.procedureName || latestAnyAppt.appt?.serviceName || '';
+      } else if (latestDocMs !== null) {
+        lastVisitMs = latestDocMs;
+        lastVisitSource = 'IMAGING';
+      } else if (createdMs !== null) {
+        lastVisitMs = createdMs;
+        lastVisitSource = 'REGISTRATION';
+      }
+
+      // If explicit lastVisitAt is even newer than latestCompleted, prefer the more recent one
+      if (explicitLastVisitMs !== null && (lastVisitMs === null || explicitLastVisitMs > lastVisitMs)) {
+        lastVisitMs = explicitLastVisitMs;
+      }
+
+      const daysSinceLastVisit =
+        lastVisitMs !== null ? Math.max(0, Math.floor((nowMs - lastVisitMs) / DAY_MS)) : null;
+      const yearsSinceLastVisit =
+        daysSinceLastVisit !== null ? Number((daysSinceLastVisit / 365).toFixed(1)) : null;
+      const isInactiveEligible =
+        !p.isArchived && daysSinceLastVisit !== null && daysSinceLastVisit >= thresholdDays;
+
+      return {
+        ...p,
+        lastVisitMs,
+        lastVisitDate: lastVisitMs !== null ? new Date(lastVisitMs).toISOString() : null,
+        lastVisitSource,
+        daysSinceLastVisit,
+        yearsSinceLastVisit,
+        inactivityLabel: formatInactivityDuration(daysSinceLastVisit),
+        isInactiveEligible,
+        visitCount: pAppts.length,
+        completedVisitCount: completedAppts.length,
+        documentCount: pDocs.length,
+        latestProcedure,
+      };
+    });
+  },
+
+  /**
+   * Bulk-archives multiple patient records (e.g., all patients inactive for 1+ year).
+   * @param {Array<string>} patientIds
+   * @param {string} reason
+   * @param {string} actorName
+   * @param {string} actorId
+   * @returns {Promise<{ succeeded: Array<string>, failed: Array<{ id: string, error: string }> }>}
+   */
+  async archivePatientsBulk(
+    patientIds,
+    reason = 'Inactive for 1+ year — moved to historical archive',
+    actorName = 'Attending Dentist',
+    actorId = 'system'
+  ) {
+    const succeeded = [];
+    const failed = [];
+
+    for (const pid of patientIds || []) {
+      try {
+        await this.archivePatient(pid, reason, actorName, actorId);
+        succeeded.push(pid);
+      } catch (err) {
+        failed.push({ id: pid, error: err?.message || 'Failed to archive' });
+      }
+    }
+
+    return { succeeded, failed };
   },
 };

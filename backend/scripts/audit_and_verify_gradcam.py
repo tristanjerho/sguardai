@@ -12,6 +12,7 @@ import sys
 import glob
 import json
 from pathlib import Path
+from typing import Any
 from PIL import Image
 import numpy as np
 import cv2
@@ -19,8 +20,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-import tensorflow as tf
-from tensorflow import keras
+import keras
 
 # Set up backend imports
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -45,8 +45,8 @@ def run_audit():
 
     # 1. Load Models
     print("[*] 1. Loading Trained Neural Networks...")
-    pathology_model = keras.models.load_model(PATHOLOGY_MODEL_FILE)
-    validator_model = keras.models.load_model(VALIDATOR_MODEL_FILE)
+    pathology_model: Any = keras.models.load_model(str(PATHOLOGY_MODEL_FILE))
+    validator_model: Any = keras.models.load_model(str(VALIDATOR_MODEL_FILE))
     
     with open(PATHOLOGY_CLASSES_FILE, "r") as f:
         pathology_classes = json.load(f)
@@ -115,9 +115,8 @@ def run_audit():
     print(f"Discovered {len(opg_samples)} real test radiographs across different pathology classes.")
 
     plot_rows = len(opg_samples)
-    fig, axes = plt.subplots(plot_rows, 3, figsize=(15, 4 * plot_rows))
-    if plot_rows == 1:
-        axes = np.expand_dims(axes, axis=0)
+    fig, axes_raw = plt.subplots(plot_rows, 3, figsize=(15, 4 * plot_rows))
+    axes: Any = np.atleast_2d(axes_raw)
 
     for i, (f_path, ground_truth) in enumerate(opg_samples):
         p = Path(f_path)
@@ -156,12 +155,12 @@ def run_audit():
         axes[i, 1].axis('off')
 
         # Plot 3: Composite Overlay
-        h_u8 = np.uint8(255 * overlay_dict["raw_heatmap"])
+        h_u8 = np.asarray(255 * overlay_dict["raw_heatmap"], dtype=np.uint8)
         colored_h = cv2.applyColorMap(h_u8, cv2.COLORMAP_JET)
-        colored_h_rgb = cv2.cvtColor(colored_h, cv2.COLOR_BGR2RGB)
+        colored_h_rgb = np.asarray(cv2.cvtColor(colored_h, cv2.COLOR_BGR2RGB))
         orig_resized = orig_img.convert("RGB").resize((colored_h_rgb.shape[1], colored_h_rgb.shape[0]), Image.Resampling.BILINEAR)
         orig_np = np.array(orig_resized)
-        blended = cv2.addWeighted(orig_np, 0.55, colored_h_rgb, 0.45, 0)
+        blended = np.asarray(cv2.addWeighted(orig_np, 0.55, colored_h_rgb, 0.45, 0))
 
         axes[i, 2].imshow(blended)
         axes[i, 2].set_title(f"Composite Decision Overlay\nModel Attention on {pred_class} ({confidence*100:.1f}%)", fontsize=11, fontweight='bold')
@@ -169,7 +168,7 @@ def run_audit():
 
     plt.suptitle("SmileGuard AI - Mathematically Verified Pre-Softmax Grad-CAM Analysis", fontsize=14, fontweight='bold', y=0.995)
     plt.tight_layout()
-    plt.savefig(PROOF_PNG, dpi=200, bbox_inches='tight')
+    plt.savefig(str(PROOF_PNG), dpi=200, bbox_inches='tight')
     plt.close()
 
     print(f"\n[*] Saved Comparative Visual Sanity Proof to: {PROOF_PNG}")

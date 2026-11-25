@@ -168,18 +168,70 @@ export const appointmentService = {
     await notificationService.create({
       userId: actualPatientId,
       title: 'Booking Request Submitted 📋',
-      message: `Your appointment request for ${effectiveProcedure} with ${appointmentData.dentistName} on ${date} at ${timeSlot} is PENDING confirmation.`,
+      message: `Your appointment request for ${effectiveProcedure} with ${newRecord.dentistName} on ${date} at ${timeSlot} is PENDING confirmation.`,
       type: 'APPOINTMENT',
+      link: '/patient/appointments',
+      appointmentId: docRef.id,
     });
 
-    // Notify Dentist if specific dentist selected
-    if (dentistId) {
-      await notificationService.create({
-        userId: dentistId,
-        title: 'New Booking Request 📅',
-        message: `${newRecord.patientName} requested ${effectiveProcedure} on ${date} at ${timeSlot}.`,
-        type: 'APPOINTMENT',
-      });
+    // Notify Dentist (assigned dentist, or all active dentists if unassigned) via In-App + Layer 2 FCM Push + Layer 3 SMS
+    try {
+      const targetDentists = [];
+      if (dentistId) {
+        const dentistSnap = await getDoc(doc(db, 'users', dentistId)).catch(() => null);
+        targetDentists.push({
+          id: dentistId,
+          fullName: dentistSnap?.exists() ? dentistSnap.data().fullName : newRecord.dentistName,
+          phone: dentistSnap?.exists() ? dentistSnap.data().phone : '',
+        });
+      } else {
+        const dentistQuery = query(collection(db, 'users'), where('role', '==', 'DENTIST'));
+        const dentistDocs = await getDocs(dentistQuery);
+        dentistDocs.forEach((d) => {
+          const data = d.data();
+          if (!data.deactivated) {
+            targetDentists.push({ id: d.id, fullName: data.fullName || 'Doctor', phone: data.phone || '' });
+          }
+        });
+      }
+
+      await Promise.allSettled(
+        targetDentists.flatMap((dent) => {
+          const tasks = [
+            notificationService.create({
+              userId: dent.id,
+              title: 'New Booking Request 📅',
+              message: `${newRecord.patientName} requested ${effectiveProcedure} on ${date} at ${timeSlot}.`,
+              type: 'APPOINTMENT',
+              link: '/clinic/queue',
+              appointmentId: docRef.id,
+              priority: 'HIGH',
+            }),
+          ];
+
+          if (dent.phone) {
+            tasks.push(
+              smsService.sendSms({
+                to: dent.phone,
+                eventType: 'DENTIST_NEW_BOOKING',
+                templateData: {
+                  dentistName: dent.fullName || newRecord.dentistName || 'Doctor',
+                  patientName: newRecord.patientName,
+                  procedure: effectiveProcedure,
+                  date,
+                  timeSlot,
+                },
+                recipientUserId: dent.id,
+                appointmentId: docRef.id,
+              })
+            );
+          }
+
+          return tasks;
+        })
+      );
+    } catch (dentNotifyErr) {
+      console.warn('Non-critical dentist booking alert warning:', dentNotifyErr);
     }
 
     return {
@@ -255,6 +307,18 @@ export const appointmentService = {
       } else if (status === 'COMPLETED') {
         notifTitle = 'Clinical Visit Completed ✅';
         notifMessage = `Your clinical appointment with ${appointment.dentistName} has concluded. Your chart has been updated.`;
+
+        // Best-effort: stamp lastVisitAt on the patient profile for 1-year inactivity tracking
+        try {
+          if (db) {
+            await updateDoc(doc(db, 'users', appointment.patientId), {
+              lastVisitAt: appointment.date || new Date().toISOString(),
+              updatedAt: serverTimestamp(),
+            });
+          }
+        } catch (visitStampErr) {
+          console.warn('Could not update patient lastVisitAt (non-blocking):', visitStampErr);
+        }
       } else if (status === 'CANCELLED') {
         notifTitle = 'Appointment Cancelled';
         notifMessage = `The appointment for ${appointment.date} at ${appointment.timeSlot} has been cancelled.`;

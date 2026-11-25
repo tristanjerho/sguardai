@@ -191,8 +191,9 @@ export function SmileGuardMascot({
               C 385, 630  360, 650  330, 620
               C 270, 560  260, 470  260, 340 Z"
             fill="url(#sgBodyGrad)"
-            stroke="rgba(148, 163, 184, 0.45)"
-            strokeWidth="3.5"
+            stroke="#0F766E"
+            strokeOpacity="0.65"
+            strokeWidth="10"
             strokeLinejoin="round"
           />
           <path
@@ -255,16 +256,18 @@ export function SmileGuardMascot({
           <path
             d="M 262 440 C 230 450 240 540 315 540 C 335 540 350 520 345 500 C 340 480 300 460 262 440 Z"
             fill="url(#sgArmGradLeft)"
-            stroke="rgba(148, 163, 184, 0.4)"
-            strokeWidth="2.5"
+            stroke="#0F766E"
+            strokeOpacity="0.55"
+            strokeWidth="7"
           />
 
           {/* Back of Right Arm */}
           <path
             d="M 538 440 C 570 450 560 540 485 540 C 465 540 450 520 455 500 C 460 480 500 460 538 440 Z"
             fill="url(#sgArmGradRight)"
-            stroke="rgba(148, 163, 184, 0.4)"
-            strokeWidth="2.5"
+            stroke="#0F766E"
+            strokeOpacity="0.55"
+            strokeWidth="7"
           />
 
           {/* LIL' HUGGED TOOTH */}
@@ -282,7 +285,7 @@ export function SmileGuardMascot({
                 C -15, -25 -20, -35 -35, -35 Z"
               fill="url(#sgToothGrad)"
               stroke="#0D9488"
-              strokeWidth="2.5"
+              strokeWidth="5.5"
             />
 
             <path
@@ -316,16 +319,18 @@ export function SmileGuardMascot({
           <path
             d="M 260 435 C 240 480 280 545 325 530 C 350 522 355 490 338 480 C 310 465 285 450 260 435 Z"
             fill="url(#sgArmGradLeft)"
-            stroke="rgba(148, 163, 184, 0.4)"
-            strokeWidth="2.5"
+            stroke="#0F766E"
+            strokeOpacity="0.55"
+            strokeWidth="7"
           />
 
           {/* Front Right Paws/Hands Overlay */}
           <path
             d="M 540 435 C 560 480 520 545 475 530 C 450 522 445 490 462 480 C 490 465 515 450 540 435 Z"
             fill="url(#sgArmGradRight)"
-            stroke="rgba(148, 163, 184, 0.4)"
-            strokeWidth="2.5"
+            stroke="#0F766E"
+            strokeOpacity="0.55"
+            strokeWidth="7"
           />
 
           {/* Highlights on Shoulders/Arms */}

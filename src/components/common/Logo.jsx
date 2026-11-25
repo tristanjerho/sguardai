@@ -28,19 +28,21 @@ export function Logo({
   textClassName = '',
 }) {
   const sizeMap = {
-    xs: { icon: 'w-6 h-6', text: 'text-xs font-bold', gap: 'gap-1.5' },
-    sm: { icon: 'w-7 h-7 sm:w-8 sm:h-8', text: 'text-sm font-bold', gap: 'gap-2' },
-    md: { icon: 'w-8 h-8 sm:w-9 sm:h-9', text: 'text-base xs:text-lg sm:text-xl font-bold', gap: 'gap-2 sm:gap-2.5' },
-    lg: { icon: 'w-11 h-11 sm:w-12 sm:h-12', text: 'text-2xl sm:text-3xl font-bold', gap: 'gap-3' },
-    xl: { icon: 'w-16 h-16 sm:w-20 sm:h-20', text: 'text-3xl sm:text-4xl font-bold', gap: 'gap-3.5' },
+    xs: { icon: 'w-6 h-6 rounded-lg p-0.5', text: 'text-xs font-bold', gap: 'gap-1.5' },
+    sm: { icon: 'w-7 h-7 sm:w-8 sm:h-8 rounded-lg p-0.5', text: 'text-sm font-bold', gap: 'gap-2' },
+    md: { icon: 'w-8 h-8 sm:w-9 sm:h-9 rounded-xl p-1', text: 'text-base xs:text-lg sm:text-xl font-bold', gap: 'gap-2 sm:gap-2.5' },
+    lg: { icon: 'w-11 h-11 sm:w-12 sm:h-12 rounded-2xl p-1.5', text: 'text-2xl sm:text-3xl font-bold', gap: 'gap-3' },
+    xl: { icon: 'w-16 h-16 sm:w-20 sm:h-20 rounded-2xl p-2', text: 'text-3xl sm:text-4xl font-bold', gap: 'gap-3.5' },
   };
 
   const currentSize = sizeMap[size] || sizeMap.md;
   const iconClasses = twMerge(currentSize.icon, iconClassName);
 
   const iconElement = useMascot ? (
-    <div className={`${iconClasses} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200`}>
-      <SmileGuardMascot className="w-full h-full object-contain" showShadow={false} size={null} />
+    <div
+      className={`${iconClasses} bg-gradient-to-br from-teal-600 via-teal-500 to-cyan-500 shadow-sm ring-1 ring-teal-700/15 dark:ring-teal-300/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200`}
+    >
+      <SmileGuardMascot className="w-full h-full object-contain drop-shadow-sm" showShadow={false} size={null} />
     </div>
   ) : (
     <img

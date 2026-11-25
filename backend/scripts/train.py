@@ -10,17 +10,18 @@ SmileGuard AI - Real CNN Training Pipeline
 import os
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers, regularizers
-from tensorflow.keras.applications import EfficientNetB0
+import keras
+from keras import layers, regularizers
+from keras.applications import EfficientNetB0
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, precision_recall_fscore_support
 
@@ -52,8 +53,8 @@ def build_datasets():
     if not train_dir.exists() or not val_dir.exists() or not test_dir.exists():
         raise FileNotFoundError("Processed dataset directories not found. Run prepare_dataset.py first.")
 
-    train_ds = tf.keras.utils.image_dataset_from_directory(
-        train_dir,
+    train_ds: Any = keras.utils.image_dataset_from_directory(
+        str(train_dir),
         image_size=IMAGE_SIZE,
         batch_size=BATCH_SIZE,
         label_mode='categorical',
@@ -61,38 +62,39 @@ def build_datasets():
         seed=42
     )
 
-    val_ds = tf.keras.utils.image_dataset_from_directory(
-        val_dir,
+    val_ds: Any = keras.utils.image_dataset_from_directory(
+        str(val_dir),
         image_size=IMAGE_SIZE,
         batch_size=BATCH_SIZE,
         label_mode='categorical',
         shuffle=False
     )
 
-    test_ds = tf.keras.utils.image_dataset_from_directory(
-        test_dir,
+    test_ds: Any = keras.utils.image_dataset_from_directory(
+        str(test_dir),
         image_size=IMAGE_SIZE,
         batch_size=BATCH_SIZE,
         label_mode='categorical',
         shuffle=False
     )
 
-    class_names = train_ds.class_names
+    class_names: list[str] = list(getattr(train_ds, "class_names", []))
     num_classes = len(class_names)
     print(f"[*] Loaded datasets with {num_classes} classes: {class_names}")
 
     # Compute class weights to address dental pathology class imbalance
-    labels = []
+    label_list: list[Any] = []
     for _, y in train_ds:
-        labels.extend(np.argmax(y.numpy(), axis=1))
-    labels = np.array(labels)
+        label_list.extend(np.argmax(y.numpy(), axis=1))
+    labels = np.array(label_list)
 
+    unique_classes = np.unique(labels)
     class_weights_arr = compute_class_weight(
         class_weight='balanced',
-        classes=np.unique(labels),
+        classes=unique_classes,
         y=labels
     )
-    class_weight_dict = {i: float(w) for i, w in enumerate(class_weights_arr)}
+    class_weight_dict = {int(cls_idx): float(w) for cls_idx, w in zip(unique_classes, class_weights_arr)}
     print(f"[*] Computed balanced class weights: {class_weight_dict}")
 
     # Optimize data pipeline caching/prefetching
@@ -217,7 +219,7 @@ def train():
     )
 
     # Save final best model
-    model.save(MODEL_FILE)
+    model.save(str(MODEL_FILE))
     print(f"\n[*] Successfully saved trained model to {MODEL_FILE}")
 
     # ==========================================================
@@ -227,9 +229,9 @@ def train():
     print("[*] EVALUATING ON ISOLATED HELD-OUT TEST DATASET...")
     print("="*50)
 
-    y_true_all = []
-    y_pred_all = []
-    y_probs_all = []
+    y_true_all: list[Any] = []
+    y_pred_all: list[Any] = []
+    y_probs_all: list[Any] = []
 
     for images, labels in test_ds:
         preds = model.predict(images, verbose=0)
@@ -239,15 +241,18 @@ def train():
 
     y_true = np.array(y_true_all)
     y_pred = np.array(y_pred_all)
-    y_probs = np.array(y_probs_all)
 
     test_accuracy = float(accuracy_score(y_true, y_pred))
-    precision, recall, f1, support = precision_recall_fscore_support(
+    precision_raw, recall_raw, f1_raw, _ = precision_recall_fscore_support(
         y_true, y_pred, average='weighted', zero_division=0
     )
-    report_dict = classification_report(
+    precision = float(precision_raw)
+    recall = float(recall_raw)
+    f1 = float(f1_raw)
+    report_raw = classification_report(
         y_true, y_pred, target_names=class_names, output_dict=True, zero_division=0
     )
+    report_dict: dict[str, Any] = report_raw if isinstance(report_raw, dict) else {}
     conf_mat = confusion_matrix(y_true, y_pred).tolist()
 
     print(f"[*] Held-out Test Accuracy: {test_accuracy*100:.2f}%")
@@ -260,7 +265,7 @@ def train():
     # Save Confusion Matrix plot
     fig, ax = plt.subplots(figsize=(8, 6))
     cm_arr = np.array(conf_mat)
-    cax = ax.imshow(cm_arr, interpolation='nearest', cmap=plt.cm.Blues)
+    cax = ax.imshow(cm_arr, interpolation='nearest', cmap="Blues")
     plt.title("SmileGuard AI - Confusion Matrix (Held-out Test Set)")
     fig.colorbar(cax)
     tick_marks = np.arange(len(class_names))
@@ -271,22 +276,24 @@ def train():
     thresh = cm_arr.max() / 2.
     for i in range(cm_arr.shape[0]):
         for j in range(cm_arr.shape[1]):
-            ax.text(j, i, format(cm_arr[i, j], 'd'),
+            ax.text(j, i, format(int(cm_arr[i, j]), 'd'),
                     ha="center", va="center",
                     color="white" if cm_arr[i, j] > thresh else "black")
     
     plt.xlabel("Predicted Label")
     plt.ylabel("True Label")
     plt.tight_layout()
-    plt.savefig(CONFUSION_MATRIX_PNG, dpi=200)
+    plt.savefig(str(CONFUSION_MATRIX_PNG), dpi=200)
     plt.close()
     print(f"[*] Saved Confusion Matrix plot to {CONFUSION_MATRIX_PNG}")
 
     # Combine training curves and save plot
-    acc = history1.history['accuracy'] + history2.history['accuracy']
-    val_acc = history1.history['val_accuracy'] + history2.history['val_accuracy']
-    loss = history1.history['loss'] + history2.history['loss']
-    val_loss = history1.history['val_loss'] + history2.history['val_loss']
+    h1: dict[str, Any] = history1.history if history1 is not None else {}
+    h2: dict[str, Any] = history2.history if history2 is not None else {}
+    acc = h1.get('accuracy', []) + h2.get('accuracy', [])
+    val_acc = h1.get('val_accuracy', []) + h2.get('val_accuracy', [])
+    loss = h1.get('loss', []) + h2.get('loss', [])
+    val_loss = h1.get('val_loss', []) + h2.get('val_loss', [])
 
     plt.figure(figsize=(12, 4))
     plt.subplot(1, 2, 1)
@@ -307,7 +314,7 @@ def train():
     plt.ylabel('Loss')
     plt.legend()
     plt.tight_layout()
-    plt.savefig(TRAINING_CURVES_PNG, dpi=200)
+    plt.savefig(str(TRAINING_CURVES_PNG), dpi=200)
     plt.close()
     print(f"[*] Saved Training Curves plot to {TRAINING_CURVES_PNG}")
 
@@ -334,14 +341,14 @@ def train():
         },
         "training": {
             "phase1_epochs": PHASE1_EPOCHS,
-            "phase2_epochs": len(history2.history['accuracy']),
-            "total_epochs": PHASE1_EPOCHS + len(history2.history['accuracy']),
+            "phase2_epochs": len(h2.get('accuracy', [])),
+            "total_epochs": PHASE1_EPOCHS + len(h2.get('accuracy', [])),
             "batch_size": BATCH_SIZE,
             "optimizer": "Adam",
             "loss_function": "categorical_crossentropy",
             "class_weights_applied": class_weight_dict,
             "training_duration_seconds": round(time.time() - start_time, 2),
-            "training_completed_at": datetime.utcnow().isoformat() + "Z"
+            "training_completed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         },
         "evaluation": {
             "test_dataset_size": ds_summary["splits"]["test_count"],

@@ -29,7 +29,7 @@ def generate_gradcam_heatmap(
         layer_name: Name of the convolutional target layer
     """
     import tensorflow as tf
-    from tensorflow import keras
+    import keras
 
     target_layer_name = "top_activation"
     base_model = None
@@ -79,7 +79,7 @@ def generate_gradcam_heatmap(
                     pred_index = int(tf.argmax(full_softmax[0]))
 
                 with tf.GradientTape() as tape:
-                    conv_outputs = conv_feature_model(img_array)
+                    conv_outputs: Any = conv_feature_model(img_array)
                     tape.watch(conv_outputs)
 
                     x = avg_pool(conv_outputs)
@@ -87,23 +87,23 @@ def generate_gradcam_heatmap(
                     x = dense_features(x)
                     x = top_dropout(x, training=False)
 
-                    logits = tf.matmul(x, W) + b
-                    target_logit = logits[:, pred_index]
+                    logits: Any = tf.matmul(x, W) + b
+                    target_logit: Any = logits[:, pred_index]
 
-                grads = tape.gradient(target_logit, conv_outputs)
+                grads: Any = tape.gradient(target_logit, conv_outputs)
                 if grads is not None:
                     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
                     conv_outputs_val = conv_outputs[0]
-                    cam = tf.reduce_sum(tf.multiply(pooled_grads, conv_outputs_val), axis=-1)
-                    cam = np.maximum(cam.numpy(), 0)
+                    cam_tensor: Any = tf.reduce_sum(tf.multiply(pooled_grads, conv_outputs_val), axis=-1)
+                    cam = np.maximum(np.asarray(cam_tensor), 0)
 
-                    max_val = np.max(cam)
+                    max_val = float(np.max(cam))
                     if max_val > 0:
                         cam = cam / max_val
                     else:
                         cam = np.zeros_like(cam)
 
-                    return cam, int(pred_index), float(target_logit[0].numpy()), target_layer_name
+                    return cam, int(pred_index), float(np.asarray(target_logit[0])), target_layer_name
     except Exception:
         pass
 
@@ -126,15 +126,15 @@ def generate_spatial_activation_map(
     gray = (gray - gray.min()) / (gray.max() - gray.min() + 1e-7)
 
     # Multi-scale edge & gradient filters to identify structural boundaries
-    sobelx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
-    sobely = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+    sobelx = np.asarray(cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3), dtype=np.float32)
+    sobely = np.asarray(cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3), dtype=np.float32)
     grad_mag = np.sqrt(sobelx**2 + sobely**2)
-    grad_mag = cv2.GaussianBlur(grad_mag, (9, 9), 0)
+    grad_mag = np.asarray(cv2.GaussianBlur(grad_mag, (9, 9), 0), dtype=np.float32)
     grad_mag = (grad_mag - grad_mag.min()) / (grad_mag.max() - grad_mag.min() + 1e-7)
 
     # Anatomical focal weighting
     # Highlight high-density tooth structures and radiolucency transitions
-    focal_core = cv2.GaussianBlur(gray, (19, 19), 0)
+    focal_core = np.asarray(cv2.GaussianBlur(gray, (19, 19), 0), dtype=np.float32)
     combined = 0.55 * focal_core + 0.45 * grad_mag
 
     # Apply non-linear power curve for sharp, localized focal hotspots (suppresses low background noise)
@@ -168,17 +168,20 @@ def create_gradcam_overlay(
     orig_np = np.array(pil_img_resized.convert("RGB"))
 
     # Smooth & upscale heatmap to high resolution
-    resized_heatmap = cv2.resize(heatmap, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
+    resized_heatmap = np.asarray(
+        cv2.resize(heatmap, (new_w, new_h), interpolation=cv2.INTER_CUBIC),
+        dtype=np.float32
+    )
     resized_heatmap = np.clip(resized_heatmap, 0.0, 1.0)
-    heatmap_uint8 = np.uint8(255 * resized_heatmap)
+    heatmap_uint8 = np.asarray(255 * resized_heatmap, dtype=np.uint8)
 
     # Apply Google TURBO colormap for enhanced dynamic range & high focal contrast
     # TURBO provides distinct color transitions (Deep Blue -> Cyan -> Green -> Yellow -> Red Hot)
     colored_heatmap = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_TURBO)
-    colored_heatmap_rgb = cv2.cvtColor(colored_heatmap, cv2.COLOR_BGR2RGB)
+    colored_heatmap_rgb = np.asarray(cv2.cvtColor(colored_heatmap, cv2.COLOR_BGR2RGB))
 
     # Composite blended overlay with crisp anatomical detail
-    overlay_rgb = cv2.addWeighted(orig_np, 1.0 - alpha, colored_heatmap_rgb, alpha, 0)
+    overlay_rgb = np.asarray(cv2.addWeighted(orig_np, 1.0 - alpha, colored_heatmap_rgb, alpha, 0))
 
     def to_b64_url(img_rgb_arr: np.ndarray) -> str:
         pil_res = Image.fromarray(img_rgb_arr)

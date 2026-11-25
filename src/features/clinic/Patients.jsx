@@ -125,19 +125,26 @@ export function PatientsDirectory() {
           </p>
         </div>
 
-        {/* Search Input */}
-        <div className="relative w-full sm:w-80 shrink-0">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" />
-          <input
-            type="text"
-            placeholder="Search by name, Patient ID, phone, or dentist..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full bg-surface-card border border-surface-border rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-ink-primary placeholder:text-ink-muted outline-none focus:border-teal-500 shadow-soft-sm"
-          />
+        {/* Search Input & Archive Shortcut */}
+        <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2.5 w-full sm:w-auto shrink-0">
+          <div className="relative w-full sm:w-72">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted" />
+            <input
+              type="text"
+              placeholder="Search by name, Patient ID, phone, or dentist..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full bg-surface-card border border-surface-border rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-ink-primary placeholder:text-ink-muted outline-none focus:border-teal-500 shadow-soft-sm"
+            />
+          </div>
+          <Link to="/clinic/archive" className="shrink-0">
+            <Button variant="secondary" size="sm" leftIcon={Archive} className="w-full xs:w-auto">
+              Patient Archive
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -201,13 +208,8 @@ export function PatientsDirectory() {
               : 'There are currently no patient records registered.'
           }
           icon={Users}
-          action={
-            hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={clearFilters}>
-                Reset Filter Settings
-              </Button>
-            )
-          }
+          actionLabel={hasActiveFilters ? 'Reset Filter Settings' : undefined}
+          onAction={hasActiveFilters ? clearFilters : undefined}
         />
       ) : (
         <Card className="overflow-hidden shadow-soft-sm">

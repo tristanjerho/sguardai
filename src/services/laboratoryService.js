@@ -26,6 +26,7 @@ import {
 } from '../lib/labWorkflows';
 import { activityLogService } from './activityLogService';
 import { notificationService } from './notificationService';
+import { smsService } from './smsService';
 
 function toIsoDate(val, fallbackIso = null) {
   if (!val) return fallbackIso;
@@ -118,12 +119,16 @@ function makeCommunicationEntry({ type, message, actorName, actorRole }) {
   };
 }
 
-async function notifyLabStaff(title, message, targetVendor = '') {
+async function notifyLabStaff(title, message, targetVendor = '', meta = {}) {
   if (!db) return;
   try {
     const q = query(collection(db, 'users'), where('role', '==', ROLES.LAB_TECH));
     const snap = await getDocs(q);
     const promises = [];
+    const notifLink = meta.link || (meta.orderId ? `/lab/requests/${meta.orderId}` : '/lab');
+    const notifType = meta.type || 'LAB_ORDER';
+    const priority = meta.priority || 'NORMAL';
+
     snap.forEach((userDoc) => {
       const u = userDoc.data();
       if (u.deactivated) return;
@@ -133,9 +138,27 @@ async function notifyLabStaff(title, message, targetVendor = '') {
           userId: userDoc.id,
           title,
           message,
-          type: 'LAB_ORDER',
+          type: notifType,
+          link: notifLink,
+          orderId: meta.orderId || '',
+          priority,
         })
       );
+
+      // Layer 3: Optional SMS phone fallback if lab staff has a Philippine mobile number on file
+      if (meta.smsEvent && u.phone) {
+        promises.push(
+          smsService
+            .sendSms({
+              to: u.phone,
+              eventType: meta.smsEvent,
+              templateData: meta.smsData || {},
+              recipientUserId: userDoc.id,
+              orderId: meta.orderId || '',
+            })
+            .catch(() => {})
+        );
+      }
     });
     await Promise.allSettled(promises);
   } catch (err) {
@@ -143,15 +166,47 @@ async function notifyLabStaff(title, message, targetVendor = '') {
   }
 }
 
-async function notifyDentist(dentistId, title, message) {
+async function notifyDentist(dentistId, title, message, meta = {}) {
   if (!db || !dentistId) return;
   try {
+    const notifLink =
+      meta.link || (meta.orderId ? `/clinic/lab-orders/${meta.orderId}` : '/clinic/lab-orders');
+    const notifType = meta.type || 'LAB_ORDER';
+    const priority = meta.priority || 'NORMAL';
+
     await notificationService.create({
       userId: dentistId,
       title,
       message,
-      type: 'LAB_ORDER',
+      type: notifType,
+      link: notifLink,
+      orderId: meta.orderId || '',
+      priority,
     });
+
+    // Layer 3: Optional SMS phone fallback to Dentist's registered mobile number
+    if (meta.smsEvent) {
+      try {
+        const dentistSnap = await getDoc(doc(db, 'users', dentistId));
+        if (dentistSnap.exists()) {
+          const dentistData = dentistSnap.data();
+          if (dentistData?.phone) {
+            await smsService.sendSms({
+              to: dentistData.phone,
+              eventType: meta.smsEvent,
+              templateData: {
+                dentistName: dentistData.fullName || dentistData.name || 'Doctor',
+                ...(meta.smsData || {}),
+              },
+              recipientUserId: dentistId,
+              orderId: meta.orderId || '',
+            });
+          }
+        }
+      } catch (smsErr) {
+        console.warn('Non-critical dentist SMS fallback warning:', smsErr);
+      }
+    }
   } catch (err) {
     console.warn('Non-critical dentist notification warning:', err);
   }
@@ -500,7 +555,19 @@ export const laboratoryService = {
     await notifyLabStaff(
       newOrder.priority === 'RUSH' ? '🚨 RUSH Laboratory Request' : '🧪 New Laboratory Request',
       `Dr. ${newOrder.dentistName} submitted ${newOrder.applianceType} (Due: ${dueStr || 'TBD'}).`,
-      newOrder.vendor
+      newOrder.vendor,
+      {
+        type: 'LAB_ORDER',
+        orderId: docRef.id,
+        link: `/lab/requests/${docRef.id}`,
+        priority: newOrder.priority === 'RUSH' ? 'HIGH' : 'NORMAL',
+        smsEvent: newOrder.priority === 'RUSH' ? 'LAB_RUSH_ORDER' : undefined,
+        smsData: {
+          requestCode: newOrder.requestCode || docRef.id.slice(0, 6),
+          dentistName: newOrder.dentistName,
+          applianceType: newOrder.applianceType,
+        },
+      }
     );
 
     return reconcileLabOrder({
@@ -669,7 +736,19 @@ export const laboratoryService = {
     await notifyDentist(
       currentOrder.dentistId,
       '⚠️ Laboratory Clarification Requested',
-      `${currentOrder.requestCode} (${currentOrder.applianceType}): "${cleanMsg}"`
+      `${currentOrder.requestCode} (${currentOrder.applianceType}): "${cleanMsg}"`,
+      {
+        type: 'LAB_MESSAGE',
+        orderId,
+        link: `/clinic/lab-orders/${orderId}`,
+        priority: 'HIGH',
+        smsEvent: 'DENTIST_LAB_MESSAGE',
+        smsData: {
+          requestCode: currentOrder.requestCode,
+          senderName: actor.name || 'Laboratory',
+          preview: cleanMsg,
+        },
+      }
     );
 
     return this.getById(orderId, actor);
@@ -768,7 +847,19 @@ export const laboratoryService = {
     await notifyLabStaff(
       '🔄 Clinic Responded to Clarification',
       `Dr. ${actor.name} updated ${currentOrder.requestCode} (${currentOrder.applianceType}) with requested details.`,
-      currentOrder.vendor
+      currentOrder.vendor,
+      {
+        type: 'LAB_MESSAGE',
+        orderId,
+        link: `/lab/requests/${orderId}`,
+        priority: 'HIGH',
+        smsEvent: 'LAB_NEW_MESSAGE',
+        smsData: {
+          requestCode: currentOrder.requestCode,
+          dentistName: `Dr. ${actor.name}`,
+          preview: 'Clarification details updated & resubmitted',
+        },
+      }
     );
 
     return this.getById(orderId, actor);
@@ -1608,7 +1699,19 @@ export const laboratoryService = {
     await notifyLabStaff(
       '🚨 Clinic Reported Delivery / Specification Issue',
       `Dr. ${actor.name} reported "${issueType}" on ${currentOrder.requestCode} (${currentOrder.applianceType}).`,
-      currentOrder.vendor
+      currentOrder.vendor,
+      {
+        type: 'LAB_MESSAGE',
+        orderId,
+        link: `/lab/requests/${orderId}`,
+        priority: 'HIGH',
+        smsEvent: 'LAB_ISSUE_REPORTED',
+        smsData: {
+          requestCode: currentOrder.requestCode,
+          dentistName: `Dr. ${actor.name}`,
+          issueType,
+        },
+      }
     );
 
     return this.getById(orderId, actor);
@@ -1715,7 +1818,18 @@ export const laboratoryService = {
     await notifyDentist(
       currentOrder.dentistId,
       '🔧 Laboratory Issue Resolution Update',
-      `${currentOrder.requestCode} (${currentOrder.applianceType}): ${resolutionNotes.trim()}`
+      `${currentOrder.requestCode} (${currentOrder.applianceType}): ${resolutionNotes.trim()}`,
+      {
+        type: 'LAB_MESSAGE',
+        orderId,
+        link: `/clinic/lab-orders/${orderId}`,
+        priority: 'HIGH',
+        smsEvent: 'DENTIST_LAB_UPDATE',
+        smsData: {
+          requestCode: currentOrder.requestCode,
+          summary: resolutionNotes.trim(),
+        },
+      }
     );
 
     return this.getById(orderId, actor);
@@ -1745,15 +1859,39 @@ export const laboratoryService = {
 
     if (actor.role === ROLES.DENTIST) {
       await notifyLabStaff(
-        `💬 Clinic Note on ${currentOrder.requestCode}`,
+        `💬 Clinic Message on ${currentOrder.requestCode}`,
         `Dr. ${actor.name}: "${message.trim()}"`,
-        currentOrder.vendor
+        currentOrder.vendor,
+        {
+          type: 'LAB_MESSAGE',
+          orderId,
+          link: `/lab/requests/${orderId}`,
+          priority: 'HIGH',
+          smsEvent: 'LAB_NEW_MESSAGE',
+          smsData: {
+            requestCode: currentOrder.requestCode,
+            dentistName: `Dr. ${actor.name}`,
+            preview: message.trim(),
+          },
+        }
       );
     } else {
       await notifyDentist(
         currentOrder.dentistId,
-        `💬 Laboratory Update on ${currentOrder.requestCode}`,
-        `${actor.name}: "${message.trim()}"`
+        `💬 Laboratory Message on ${currentOrder.requestCode}`,
+        `${actor.name}: "${message.trim()}"`,
+        {
+          type: 'LAB_MESSAGE',
+          orderId,
+          link: `/clinic/lab-orders/${orderId}`,
+          priority: 'HIGH',
+          smsEvent: 'DENTIST_LAB_MESSAGE',
+          smsData: {
+            requestCode: currentOrder.requestCode,
+            senderName: actor.name || 'Laboratory',
+            preview: message.trim(),
+          },
+        }
       );
     }
 

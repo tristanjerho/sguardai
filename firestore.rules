@@ -2,7 +2,70 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Authentication and Identity Helpers
+    // =========================================================================
+    // Assumed Data Model (Users & Clinical Collections)
+    // =========================================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (Firebase Auth UID, or admin-provisioned doc ID)
+    // Fields:
+    //   - id, uid: string (immutable after create)
+    //   - email: string (immutable for non-admins)
+    //   - role: string ('PATIENT' | 'DENTIST' | 'LAB_TECH' | 'ADMIN' | 'SUPERADMIN', immutable except ADMIN/SUPERADMIN)
+    //   - deactivated: bool (ADMIN/SUPERADMIN only)
+    //   - assignedVendor: string (ADMIN/SUPERADMIN only, scopes LAB_TECH accounts)
+    //   - createdAt: timestamp (immutable after create)
+    //   - fullName, phone, address, dateOfBirth, dob, gender, bloodType: string
+    //   - medicalHistory, notes, clinicalNotes: string
+    //   - allergies, medications: string | list
+    //   - emergencyContact: string | map; emergencyContactName, emergencyContactPhone, emergencyContactRelation: string
+    //   - lastRootCanal: map | string; privacyConsent: bool | map; privacyConsentDate: timestamp | string; isOnboarded: bool
+    //   - isArchived: bool; archivedAt, restoredAt, finalizedAt, assignedAt, lastVisitAt, updatedAt: timestamp | string
+    //   - archivedReason, archivedBy, restoredBy: string
+    //   - archiveAuditLog, amendmentHistory: list (max 200 entries)
+    //   - recordStatus: string ('DRAFT' | 'ACTIVE' | 'FINALIZED' | 'AMENDED')
+    //   - finalizedBy: map | string
+    //   - assignedDentistId, assignedDentistName: string
+    //
+    // Subcollection: users/{userId}/pushTokens/{tokenId}
+    // Document ID: {tokenId} (deterministic hash of FCM registration token)
+    // Fields:
+    //   - token: string (required, length 11..512) - FCM Web Push registration token
+    //   - updatedAt: timestamp (required) - last token sync timestamp
+    //   - createdAt: timestamp (optional) - initial token registration timestamp
+    //   - platform: string (optional, max 64 chars) - device platform identifier
+    //   - userAgent: string (optional, max 512 chars) - truncated browser user-agent
+    //
+    // Collection: smsLogs
+    // Document ID: {logId} (auto-generated)
+    // Fields:
+    //   - recipientPhone: string (required, 1..32 chars) - normalized recipient mobile
+    //   - eventType: string (required, 1..64 chars) - SMS template/event identifier
+    //   - message: string (required, 1..1000 chars) - dispatched SMS text
+    //   - status: string (required, 'SENT' | 'FAILED' | 'SIMULATED' | 'SUPPRESSED_DUPLICATE')
+    //   - patientId, appointmentId, recipientUserId, orderId: string | null (optional, max 128 chars)
+    //   - displayPhone, provider: string | null (optional, max 64 chars)
+    //   - providerResponse: string | null (optional, max 4000 chars)
+    //   - error: string | null (optional, max 1000 chars)
+    //   - sentAt: timestamp | string | null (optional, max 64 chars)
+    //   - timestamp: timestamp | null (optional)
+    //
+    // Other Collections (preserved):
+    //   - appointments/{appointmentId}
+    //   - odontograms/{patientId}
+    //   - treatmentPlans/{treatmentId}
+    //   - dentalImages/{imageId}
+    //   - labOrders/{orderId} (+ subcollection internalNotes/{noteId})
+    //   - labWorkflows/{workflowId}
+    //   - notifications/{notificationId}
+    //   - brushStreaks/{patientId}
+    //   - auditLogs/{logId}
+    //   - chatSessions/{sessionId}
+    // =========================================================================
+
+    // =========================================================================
+    // Authentication, Identity, and Validation Helpers
+    // =========================================================================
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -11,12 +74,17 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function userDocExists() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
     function hasRole(role) {
-      return isAuthenticated() && getUserData().role == role;
+      return userDocExists() && getUserData().get('role', '') == role;
     }
 
     function isSuperAdmin() {
@@ -39,24 +107,243 @@ service cloud.firestore {
       return hasRole('PATIENT');
     }
 
+    // Field-level validators evaluated when a key is modified in an update
+    function isValidModifiedString(changedKeys, field, maxLen) {
+      return !changedKeys.hasAny([field]) ||
+        !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        (request.resource.data[field] is string && request.resource.data[field].size() <= maxLen);
+    }
+
+    function isValidModifiedBool(changedKeys, field) {
+      return !changedKeys.hasAny([field]) ||
+        !(field in request.resource.data) ||
+        request.resource.data[field] is bool;
+    }
+
+    function isValidModifiedList(changedKeys, field, maxSize) {
+      return !changedKeys.hasAny([field]) ||
+        !(field in request.resource.data) ||
+        (request.resource.data[field] is list && request.resource.data[field].size() <= maxSize);
+    }
+
+    function isValidModifiedTimestampOrString(changedKeys, field, maxLen) {
+      return !changedKeys.hasAny([field]) ||
+        !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        request.resource.data[field] is timestamp ||
+        (request.resource.data[field] is string && request.resource.data[field].size() <= maxLen);
+    }
+
+    function isValidModifiedMapOrString(changedKeys, field, maxKeys, maxLen) {
+      return !changedKeys.hasAny([field]) ||
+        !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        (request.resource.data[field] is map && request.resource.data[field].size() <= maxKeys) ||
+        (request.resource.data[field] is string && request.resource.data[field].size() <= maxLen);
+    }
+
+    function isValidModifiedStringOrList(changedKeys, field, maxLen, maxSize) {
+      return !changedKeys.hasAny([field]) ||
+        !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        (request.resource.data[field] is string && request.resource.data[field].size() <= maxLen) ||
+        (request.resource.data[field] is list && request.resource.data[field].size() <= maxSize);
+    }
+
+    function isValidModifiedPrivacyConsent(changedKeys) {
+      return !changedKeys.hasAny(['privacyConsent']) ||
+        !('privacyConsent' in request.resource.data) ||
+        request.resource.data.privacyConsent == null ||
+        request.resource.data.privacyConsent is bool ||
+        (request.resource.data.privacyConsent is map && request.resource.data.privacyConsent.size() <= 10);
+    }
+
+    function isValidModifiedRecordStatus(changedKeys) {
+      return !changedKeys.hasAny(['recordStatus']) ||
+        !('recordStatus' in request.resource.data) ||
+        request.resource.data.recordStatus in ['DRAFT', 'ACTIVE', 'FINALIZED', 'AMENDED'];
+    }
+
+    // Domain Validator: Self-registration as PATIENT
+    function isValidPatientSelfCreate(userId) {
+      return isOwner(userId) &&
+        request.resource.data.get('role', '') == 'PATIENT' &&
+        (!('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid) &&
+        (!('id' in request.resource.data) || request.resource.data.id == userId) &&
+        (!('deactivated' in request.resource.data) || request.resource.data.deactivated == false) &&
+        (!('isArchived' in request.resource.data) || request.resource.data.isArchived == false) &&
+        (!('fullName' in request.resource.data) || (request.resource.data.fullName is string && request.resource.data.fullName.size() <= 200)) &&
+        (!('email' in request.resource.data) || (request.resource.data.email is string && request.resource.data.email.size() <= 254)) &&
+        (!('phone' in request.resource.data) || (request.resource.data.phone is string && request.resource.data.phone.size() <= 50)) &&
+        (!('medicalHistory' in request.resource.data) || (request.resource.data.medicalHistory is string && request.resource.data.medicalHistory.size() <= 5000));
+    }
+
+    // Domain Validator: User updating own profile (cannot change role, deactivation, or clinical lock/archive fields)
+    function isValidOwnerUserUpdate() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return request.resource.data.get('role', '') == resource.data.get('role', '') &&
+        !changedKeys.hasAny([
+          'role', 'deactivated', 'uid', 'id', 'createdAt', 'assignedVendor',
+          'isArchived', 'archivedAt', 'archivedReason', 'archivedBy',
+          'restoredAt', 'restoredBy', 'archiveAuditLog',
+          'recordStatus', 'finalizedAt', 'finalizedBy', 'amendmentHistory'
+        ]) &&
+        isValidModifiedString(changedKeys, 'fullName', 200) &&
+        isValidModifiedString(changedKeys, 'phone', 50) &&
+        isValidModifiedString(changedKeys, 'address', 500) &&
+        isValidModifiedString(changedKeys, 'dateOfBirth', 50) &&
+        isValidModifiedString(changedKeys, 'dob', 50) &&
+        isValidModifiedString(changedKeys, 'medicalHistory', 5000) &&
+        isValidModifiedString(changedKeys, 'notes', 5000);
+    }
+
+    // Domain Validator: Authenticated DENTIST updating a PATIENT clinical/archive record
+    function isValidDentistPatientUpdate() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      let allowedClinicalKeys = [
+        'isArchived', 'archivedAt', 'archivedReason', 'archivedBy',
+        'restoredAt', 'restoredBy', 'archiveAuditLog',
+        'lastVisitAt',
+        'recordStatus', 'finalizedAt', 'finalizedBy', 'amendmentHistory',
+        'assignedDentistId', 'assignedDentistName', 'assignedAt',
+        'medicalHistory', 'allergies', 'medications', 'notes', 'clinicalNotes',
+        'lastRootCanal',
+        'fullName', 'phone', 'address', 'dateOfBirth', 'dob', 'gender', 'bloodType',
+        'emergencyContact', 'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelation',
+        'privacyConsent', 'privacyConsentDate', 'isOnboarded',
+        'updatedAt'
+      ];
+      return resource.data.get('role', '') == 'PATIENT' &&
+        request.resource.data.get('role', '') == 'PATIENT' &&
+        request.resource.data.role == resource.data.role &&
+        !changedKeys.hasAny(['role', 'deactivated', 'email', 'uid', 'id', 'createdAt', 'assignedVendor']) &&
+        changedKeys.hasOnly(allowedClinicalKeys) &&
+        isValidModifiedBool(changedKeys, 'isArchived') &&
+        isValidModifiedTimestampOrString(changedKeys, 'archivedAt', 64) &&
+        isValidModifiedString(changedKeys, 'archivedReason', 500) &&
+        isValidModifiedString(changedKeys, 'archivedBy', 200) &&
+        isValidModifiedTimestampOrString(changedKeys, 'restoredAt', 64) &&
+        isValidModifiedString(changedKeys, 'restoredBy', 200) &&
+        isValidModifiedList(changedKeys, 'archiveAuditLog', 200) &&
+        isValidModifiedTimestampOrString(changedKeys, 'lastVisitAt', 64) &&
+        isValidModifiedRecordStatus(changedKeys) &&
+        isValidModifiedTimestampOrString(changedKeys, 'finalizedAt', 64) &&
+        isValidModifiedMapOrString(changedKeys, 'finalizedBy', 10, 200) &&
+        isValidModifiedList(changedKeys, 'amendmentHistory', 200) &&
+        isValidModifiedString(changedKeys, 'assignedDentistId', 128) &&
+        isValidModifiedString(changedKeys, 'assignedDentistName', 200) &&
+        isValidModifiedTimestampOrString(changedKeys, 'assignedAt', 64) &&
+        isValidModifiedString(changedKeys, 'medicalHistory', 5000) &&
+        isValidModifiedStringOrList(changedKeys, 'allergies', 2000, 100) &&
+        isValidModifiedStringOrList(changedKeys, 'medications', 2000, 100) &&
+        isValidModifiedString(changedKeys, 'notes', 5000) &&
+        isValidModifiedString(changedKeys, 'clinicalNotes', 5000) &&
+        isValidModifiedMapOrString(changedKeys, 'lastRootCanal', 10, 300) &&
+        isValidModifiedString(changedKeys, 'fullName', 200) &&
+        isValidModifiedString(changedKeys, 'phone', 50) &&
+        isValidModifiedString(changedKeys, 'address', 500) &&
+        isValidModifiedString(changedKeys, 'dateOfBirth', 50) &&
+        isValidModifiedString(changedKeys, 'dob', 50) &&
+        isValidModifiedString(changedKeys, 'gender', 50) &&
+        isValidModifiedString(changedKeys, 'bloodType', 20) &&
+        isValidModifiedMapOrString(changedKeys, 'emergencyContact', 10, 300) &&
+        isValidModifiedString(changedKeys, 'emergencyContactName', 200) &&
+        isValidModifiedString(changedKeys, 'emergencyContactPhone', 50) &&
+        isValidModifiedString(changedKeys, 'emergencyContactRelation', 100) &&
+        isValidModifiedPrivacyConsent(changedKeys) &&
+        isValidModifiedTimestampOrString(changedKeys, 'privacyConsentDate', 64) &&
+        isValidModifiedBool(changedKeys, 'isOnboarded') &&
+        isValidModifiedTimestampOrString(changedKeys, 'updatedAt', 64);
+    }
+
+    // Optional nullable field helpers for document-level domain validators
+    function isValidOptionalNullableString(data, field, maxLen) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isValidOptionalNullableTimestampOrString(data, field, maxLen) {
+      return !(field in data) ||
+        data[field] == null ||
+        data[field] is timestamp ||
+        (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    // Domain Validator: User FCM Web Push device token (used on both create and update)
+    function isValidPushToken(data) {
+      return data.keys().hasOnly(['token', 'platform', 'userAgent', 'updatedAt', 'createdAt']) &&
+        data.keys().hasAll(['token', 'updatedAt']) &&
+        data.token is string &&
+        data.token.size() > 10 &&
+        data.token.size() <= 512 &&
+        data.updatedAt is timestamp &&
+        (!('createdAt' in data) || data.createdAt is timestamp) &&
+        (!('platform' in data) || (data.platform is string && data.platform.size() <= 64)) &&
+        (!('userAgent' in data) || (data.userAgent is string && data.userAgent.size() <= 512));
+    }
+
+    // Domain Validator: SMS delivery audit log (used on both create and update)
+    function isValidSmsLog(data) {
+      return data.keys().hasOnly([
+          'recipientPhone', 'eventType', 'message', 'status',
+          'patientId', 'appointmentId', 'recipientUserId', 'orderId',
+          'displayPhone', 'provider', 'providerResponse', 'error',
+          'sentAt', 'timestamp'
+        ]) &&
+        data.keys().hasAll(['recipientPhone', 'eventType', 'message', 'status']) &&
+        data.recipientPhone is string &&
+        data.recipientPhone.size() > 0 &&
+        data.recipientPhone.size() <= 32 &&
+        data.eventType is string &&
+        data.eventType.size() > 0 &&
+        data.eventType.size() <= 64 &&
+        data.message is string &&
+        data.message.size() > 0 &&
+        data.message.size() <= 1000 &&
+        data.status in ['SENT', 'FAILED', 'SIMULATED', 'SUPPRESSED_DUPLICATE'] &&
+        isValidOptionalNullableString(data, 'patientId', 128) &&
+        isValidOptionalNullableString(data, 'appointmentId', 128) &&
+        isValidOptionalNullableString(data, 'recipientUserId', 128) &&
+        isValidOptionalNullableString(data, 'orderId', 128) &&
+        isValidOptionalNullableString(data, 'displayPhone', 64) &&
+        isValidOptionalNullableString(data, 'provider', 64) &&
+        isValidOptionalNullableString(data, 'providerResponse', 4000) &&
+        isValidOptionalNullableString(data, 'error', 1000) &&
+        isValidOptionalNullableTimestampOrString(data, 'sentAt', 64) &&
+        (!('timestamp' in data) || data.timestamp == null || data.timestamp is timestamp);
+    }
+
     // =========================================================================
     // USERS COLLECTION: Server-Authoritative Role Provisioning
     // - Self-registration (Email or Google) can ONLY create a PATIENT role.
     // - Users CANNOT modify or escalate their own role.
+    // - Authenticated DENTIST users can update clinical/archive/profile fields
+    //   on PATIENT records only (role and privileged auth fields are immutable).
     // - Only ADMIN or SUPERADMIN can update roles or provision staff.
     // =========================================================================
     match /users/{userId} {
       allow read: if isAuthenticated();
-      
+
       // On creation: User can only create their own profile as PATIENT, or Admin/SuperAdmin can provision staff
-      allow create: if (isOwner(userId) && request.resource.data.role == 'PATIENT') || isAdmin();
-      
-      // On update: Self-update allowed only if role is NOT modified; Admins can modify any field including role
-      allow update: if (
-        isOwner(userId) && request.resource.data.role == resource.data.role
-      ) || isAdmin();
-      
+      allow create: if isValidPatientSelfCreate(userId) || isAdmin();
+
+      // On update:
+      // 1. Self-update allowed only if role & privileged/clinical-lock fields are NOT modified
+      // 2. Dentists may update clinical/archive/visit/finalization fields on PATIENT docs only
+      // 3. Admins can modify any field including role
+      allow update: if (isOwner(userId) && isValidOwnerUserUpdate()) ||
+        (isDentist() && isValidDentistPatientUpdate()) ||
+        isAdmin();
+
       allow delete: if isSuperAdmin();
+
+      // Per-user FCM Web Push device tokens (Computer & Phone Push Notifications)
+      match /pushTokens/{tokenId} {
+        allow read, delete: if isOwner(userId) || isAdmin();
+        allow create, update: if isOwner(userId) && isValidPushToken(request.resource.data);
+      }
     }
 
     // =========================================================================
@@ -223,6 +510,16 @@ service cloud.firestore {
       );
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
+
+    // =========================================================================
+    // SMS LOGS COLLECTION (Duplicate Throttling & SMS Delivery Audit Trail)
+    // =========================================================================
+    match /smsLogs/{logId} {
+      allow read: if isDentist() || isLabTech() || isAdmin() ||
+        (isAuthenticated() && resource.data.patientId == request.auth.uid);
+      allow create: if isAuthenticated() && isValidSmsLog(request.resource.data);
+      allow update: if isSuperAdmin() && isValidSmsLog(request.resource.data);
+      allow delete: if isSuperAdmin();
+    }
   }
 }
-

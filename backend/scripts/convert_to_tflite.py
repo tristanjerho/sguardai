@@ -1,4 +1,5 @@
 import tensorflow as tf
+import keras
 from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -12,19 +13,19 @@ pathology_tflite = MODELS_DIR / "smileguard_model.tflite"
 
 def convert_models():
     print("[*] Converting Stage 1 Validator model to TFLite...")
-    v_model = tf.keras.models.load_model(validator_keras, compile=False)
+    v_model = keras.models.load_model(str(validator_keras), compile=False)
     v_converter = tf.lite.TFLiteConverter.from_keras_model(v_model)
     v_converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    v_tflite = v_converter.convert()
+    v_tflite = bytes(v_converter.convert())
     with open(validator_tflite, "wb") as f:
         f.write(v_tflite)
     print(f"[OK] Saved {validator_tflite} ({len(v_tflite) / (1024*1024):.2f} MB)")
 
     print("[*] Converting Stage 2 Pathology model to TFLite...")
-    p_model = tf.keras.models.load_model(pathology_keras, compile=False)
+    p_model = keras.models.load_model(str(pathology_keras), compile=False)
     p_converter = tf.lite.TFLiteConverter.from_keras_model(p_model)
     p_converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    p_tflite = p_converter.convert()
+    p_tflite = bytes(p_converter.convert())
     with open(pathology_tflite, "wb") as f:
         f.write(p_tflite)
     print(f"[OK] Saved {pathology_tflite} ({len(p_tflite) / (1024*1024):.2f} MB)")

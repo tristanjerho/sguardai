@@ -6,28 +6,38 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { appointmentService } from '../../services/appointmentService';
 import { notificationService } from '../../services/notificationService';
-import { triggerDeviceNotification, requestNotificationPermission } from '../../lib/deviceNotifications';
+import { pushService } from '../../services/pushService';
+import { triggerDeviceNotification } from '../../lib/deviceNotifications';
 
 export function ClinicShell() {
   const { user } = useAuth();
   const toast = useToast();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 
+  // Sync background FCM push token if permission is already granted
   useEffect(() => {
-    requestNotificationPermission();
-  }, []);
+    const userId = user?.id || user?.uid;
+    if (!userId) return;
+    pushService.syncPushToken(userId);
+  }, [user?.id, user?.uid]);
 
-  // Real-time listener for incoming booking requests & status updates for dentists/staff
+  // Real-time listeners for incoming patient bookings & laboratory messages/updates
   useEffect(() => {
     const userId = user?.id || user?.uid;
     if (!userId) return;
 
     let previousApptIds = null;
     let previousNotifIds = null;
+    const recentlyAlertedApptIds = new Set();
 
-    // 1. Real-time appointments listener for instant booking pop-ups on dentist screen
+    const markApptAlerted = (apptId) => {
+      if (!apptId) return;
+      recentlyAlertedApptIds.add(apptId);
+      setTimeout(() => recentlyAlertedApptIds.delete(apptId), 8000);
+    };
+
+    // 1. Real-time appointments listener for instant booking pop-ups on dentist computer/phone
     const unsubAppts = appointmentService.subscribeToAppointments((appts) => {
       if (previousApptIds !== null) {
         const newlyCreated = appts.filter(
@@ -36,12 +46,21 @@ export function ClinicShell() {
 
         newlyCreated.forEach((apt) => {
           const isAssigned = !apt.dentistId || apt.dentistId === userId;
-          if (isAssigned || user.role === ROLES.ADMIN || user.role === ROLES.SUPERADMIN) {
+          const isClinicWatcher =
+            isAssigned ||
+            user.role === ROLES.RECEPTIONIST ||
+            user.role === ROLES.ADMIN ||
+            user.role === ROLES.SUPERADMIN;
+
+          if (isClinicWatcher && !recentlyAlertedApptIds.has(apt.id)) {
+            markApptAlerted(apt.id);
             const procedure = apt.procedureName || apt.serviceName || 'Consultation';
             const alertMsg = `New booking request from ${apt.patientName} for ${procedure} on ${apt.date} at ${apt.timeSlot}.`;
             toast.info(`📅 New Booking Request!\n${alertMsg}`);
             triggerDeviceNotification('📅 New Patient Booking Request', alertMsg, {
-              vibrate: [200, 100, 200],
+              tag: `clinic-booking-${apt.id}`,
+              url: '/clinic/queue',
+              urgent: true,
             });
           }
         });
@@ -50,7 +69,7 @@ export function ClinicShell() {
       previousApptIds = new Set(appts.map((a) => a.id));
     });
 
-    // 2. Real-time direct notifications listener for dentist
+    // 2. Real-time direct notifications listener for dentist (Lab messages, status updates, bookings)
     const unsubNotifs = notificationService.subscribeForUser(userId, (notifs) => {
       const unread = notifs.filter((n) => !n.read).length;
       setUnreadCount(unread);
@@ -60,8 +79,30 @@ export function ClinicShell() {
           (n) => !n.read && !previousNotifIds.has(n.id)
         );
         newlyArrived.forEach((notif) => {
+          // Avoid double-alerting the same new booking if unsubAppts already alerted it
+          if (notif.type === 'APPOINTMENT' && notif.appointmentId) {
+            if (recentlyAlertedApptIds.has(notif.appointmentId)) return;
+            markApptAlerted(notif.appointmentId);
+          }
+
+          const targetUrl =
+            notif.link ||
+            (notif.type === 'APPOINTMENT'
+              ? '/clinic/queue'
+              : notif.orderId
+                ? `/clinic/lab-orders/${notif.orderId}`
+                : '/clinic/lab-orders');
+          const isUrgent =
+            notif.priority === 'HIGH' ||
+            notif.type === 'LAB_MESSAGE' ||
+            notif.type === 'APPOINTMENT';
+
           toast.info(`${notif.title} — ${notif.message}`);
-          triggerDeviceNotification(notif.title, notif.message);
+          triggerDeviceNotification(notif.title, notif.message, {
+            tag: `clinic-notif-${notif.id}`,
+            url: targetUrl,
+            urgent: isUrgent,
+          });
         });
       }
 
@@ -80,6 +121,7 @@ export function ClinicShell() {
     if (path.includes('/queue')) return 'Appointments Queue';
     if (path.includes('/patients/')) return 'Patient Case File';
     if (path.includes('/patients')) return 'Patient Directory';
+    if (path.includes('/archive')) return 'Patient Archive';
     if (path.includes('/treatments')) return 'Treatment Plans';
     if (path.includes('/lab-orders/')) return 'Laboratory Request Details';
     if (path.includes('/lab-orders')) return 'Dental Laboratory Prescriptions';

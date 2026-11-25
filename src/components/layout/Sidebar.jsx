@@ -72,6 +72,7 @@ export function getNavItemsByRole(role) {
       { to: '/clinic', label: 'Dashboard', shortLabel: 'Dashboard', icon: LayoutDashboard, end: true },
       { to: '/clinic/queue', label: 'Appointments Queue', shortLabel: 'Queue', icon: Clock },
       { to: '/clinic/patients', label: 'Patient Directory', shortLabel: 'Patients', icon: Users },
+      { to: '/clinic/archive', label: 'Patient Archive', shortLabel: 'Archive', icon: FolderArchive },
       { to: '/clinic/treatments', label: 'Treatment Plans', shortLabel: 'Treatments', icon: ClipboardList },
       { to: '/clinic/lab-orders', label: 'Lab Prescriptions', shortLabel: 'Lab', icon: FlaskConical },
       { to: '/clinic/ai-workstation', label: 'AI Workstation', shortLabel: 'AI', icon: BrainCircuit, badge: 'AI' },

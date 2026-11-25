@@ -8,14 +8,23 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function devChatApiPlugin() {
   return {
-    name: 'dev-chat-api-plugin',
+    name: 'dev-api-routes-plugin',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url || '';
+        let handlerPath = null;
         if (url === '/api/chat' || url.startsWith('/api/chat?') || url === '/api/chat/status') {
+          handlerPath = './api/chat.js';
+        } else if (url === '/api/sms' || url.startsWith('/api/sms?')) {
+          handlerPath = './api/sms.js';
+        } else if (url === '/api/push' || url.startsWith('/api/push?')) {
+          handlerPath = './api/push.js';
+        }
+
+        if (handlerPath) {
           try {
-            const chatModule = await import('./api/chat.js');
-            const chatHandler = chatModule.default;
+            const apiModule = await import(handlerPath);
+            const apiHandler = apiModule.default;
             let body = '';
             req.on('data', (chunk) => { body += chunk; });
             req.on('end', async () => {
@@ -46,11 +55,11 @@ function devChatApiPlugin() {
                   res.end(data || '');
                 }
               };
-              await chatHandler(req, mockRes);
+              await apiHandler(req, mockRes);
             });
             return;
           } catch (e) {
-            console.error('Error in dev chat API middleware:', e);
+            console.error(`Error in dev API middleware (${handlerPath}):`, e);
           }
         }
         next();

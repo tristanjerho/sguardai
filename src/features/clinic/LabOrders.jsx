@@ -11,6 +11,8 @@ import {
   ShieldAlert,
   Sparkles,
   FlaskConical,
+  Search,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
@@ -62,6 +64,10 @@ export function LabOrdersManager() {
   const [patientImages, setPatientImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [priorityFilter, setPriorityFilter] = useState('ALL');
+  const [sortBy, setSortBy] = useState('NEWEST');
   const [busyId, setBusyId] = useState(null);
 
   // Create / Clarification Resubmit Modal State
@@ -428,24 +434,126 @@ export function LabOrdersManager() {
     [orders]
   );
 
-  const filteredOrders = useMemo(() => {
-    return orders.filter((o) => {
-      if (statusFilter === 'ALL') return true;
-      if (statusFilter === 'IN_FABRICATION') {
-        return [
-          LAB_ORDER_STATUS.ACCEPTED,
-          LAB_ORDER_STATUS.IN_PRODUCTION,
-          LAB_ORDER_STATUS.QUALITY_CHECK,
-        ].includes(o.status);
+  const hasActiveFilters =
+    searchQuery.trim() !== '' ||
+    categoryFilter !== 'ALL' ||
+    priorityFilter !== 'ALL' ||
+    sortBy !== 'NEWEST';
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setCategoryFilter('ALL');
+    setPriorityFilter('ALL');
+    setSortBy('NEWEST');
+  };
+
+  const categoryFilterOptions = useMemo(() => {
+    const baseOptions = Object.entries(APPLIANCE_CATEGORY_LABELS).map(([value, label]) => ({
+      value,
+      label,
+    }));
+    const seen = new Set(baseOptions.map((o) => o.value));
+    orders.forEach((o) => {
+      if (o.category && !seen.has(o.category)) {
+        seen.add(o.category);
+        baseOptions.push({
+          value: o.category,
+          label: o.workflowShortName || o.category,
+        });
       }
-      if (statusFilter === 'AWAITING_RECEIPT') {
-        return [LAB_ORDER_STATUS.READY_FOR_DISPATCH, LAB_ORDER_STATUS.DISPATCHED].includes(
-          o.status
-        );
-      }
-      return o.status === statusFilter;
     });
-  }, [orders, statusFilter]);
+    return [{ value: 'ALL', label: 'All Workflows' }, ...baseOptions];
+  }, [orders]);
+
+  const filteredOrders = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    const matches = orders.filter((o) => {
+      // 1. Status tab filter
+      if (statusFilter === 'IN_FABRICATION') {
+        if (
+          ![
+            LAB_ORDER_STATUS.ACCEPTED,
+            LAB_ORDER_STATUS.IN_PRODUCTION,
+            LAB_ORDER_STATUS.QUALITY_CHECK,
+          ].includes(o.status)
+        ) {
+          return false;
+        }
+      } else if (statusFilter === 'AWAITING_RECEIPT') {
+        if (
+          ![LAB_ORDER_STATUS.READY_FOR_DISPATCH, LAB_ORDER_STATUS.DISPATCHED].includes(o.status)
+        ) {
+          return false;
+        }
+      } else if (statusFilter !== 'ALL' && o.status !== statusFilter) {
+        return false;
+      }
+
+      // 2. Workflow / Category filter
+      if (categoryFilter !== 'ALL' && o.category !== categoryFilter) {
+        return false;
+      }
+
+      // 3. Priority / Urgency filter
+      if (priorityFilter === 'RUSH' && o.priority !== 'RUSH') return false;
+      if (priorityFilter === 'OVERDUE' && !o.isOverdue) return false;
+      if (priorityFilter === 'STANDARD' && o.priority === 'RUSH') return false;
+
+      // 4. Text search across ID, patient name, case ref, appliance, material, technician, workflow
+      if (query) {
+        const searchable = [
+          o.requestCode,
+          o.id,
+          o.patientName,
+          o.caseReference,
+          o.applianceType,
+          o.workflowShortName,
+          o.material,
+          o.assignedTech,
+          o.shade,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        if (!searchable.includes(query)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    // 5. Sort
+    const getTime = (val) => {
+      if (!val) return 0;
+      if (typeof val?.toMillis === 'function') return val.toMillis();
+      if (typeof val?.seconds === 'number') return val.seconds * 1000;
+      const ms = new Date(val).getTime();
+      return Number.isNaN(ms) ? 0 : ms;
+    };
+
+    const sorted = [...matches];
+    if (sortBy === 'DUE_SOONEST') {
+      sorted.sort((a, b) => {
+        const aDue = getTime(a.estimatedCompletionDate || a.targetDeliveryDate) || Infinity;
+        const bDue = getTime(b.estimatedCompletionDate || b.targetDeliveryDate) || Infinity;
+        return aDue - bDue;
+      });
+    } else if (sortBy === 'PATIENT_AZ') {
+      sorted.sort((a, b) =>
+        (a.patientName || '').localeCompare(b.patientName || '', undefined, { sensitivity: 'base' })
+      );
+    } else if (sortBy === 'REQUEST_ID') {
+      sorted.sort((a, b) =>
+        (a.requestCode || a.id || '').localeCompare(b.requestCode || b.id || '', undefined, {
+          sensitivity: 'base',
+        })
+      );
+    }
+    return sorted;
+  }, [orders, statusFilter, searchQuery, categoryFilter, priorityFilter, sortBy]);
 
   const tabs = [
     { id: 'ALL', label: 'All Requests', badge: orders.length },
@@ -615,16 +723,105 @@ export function LabOrdersManager() {
       {/* Filter Tabs */}
       <Tabs tabs={tabs} activeTab={statusFilter} onChange={setStatusFilter} />
 
+      {/* Search & Attribute Filter Bar */}
+      <Card className="p-3.5 sm:p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
+          <div className="sm:col-span-2 lg:col-span-5 relative">
+            <Input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search patient name, LAB ID, case ref, appliance, technician..."
+              leftIcon={Search}
+              aria-label="Search laboratory prescriptions"
+              className={searchQuery ? 'pr-9' : ''}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-md text-ink-muted hover:text-ink-primary hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="lg:col-span-3">
+            <Select
+              aria-label="Filter by workflow"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              options={categoryFilterOptions}
+            />
+          </div>
+
+          <div className="lg:col-span-2">
+            <Select
+              aria-label="Filter by priority"
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              options={[
+                { value: 'ALL', label: 'All Priorities' },
+                { value: 'RUSH', label: 'Rush Only' },
+                { value: 'OVERDUE', label: 'Overdue Only' },
+                { value: 'STANDARD', label: 'Standard' },
+              ]}
+            />
+          </div>
+
+          <div className="lg:col-span-2">
+            <Select
+              aria-label="Sort prescriptions"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              options={[
+                { value: 'NEWEST', label: 'Newest First' },
+                { value: 'DUE_SOONEST', label: 'Due Soonest' },
+                { value: 'PATIENT_AZ', label: 'Patient (A–Z)' },
+                { value: 'REQUEST_ID', label: 'Request ID' },
+              ]}
+            />
+          </div>
+        </div>
+
+        {hasActiveFilters && (
+          <div className="mt-3 pt-3 border-t border-surface-border flex flex-wrap items-center justify-between gap-2 text-xs text-ink-secondary">
+            <span>
+              Showing <strong className="text-ink-primary">{filteredOrders.length}</strong> of{' '}
+              <strong className="text-ink-primary">{orders.length}</strong> prescriptions
+            </span>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex items-center gap-1 font-semibold text-teal-600 dark:text-teal-400 hover:underline"
+            >
+              <X className="w-3.5 h-3.5" />
+              Reset Filters
+            </button>
+          </div>
+        )}
+      </Card>
+
       {/* Orders List */}
       {loading ? (
         <TableSkeleton rows={5} />
       ) : filteredOrders.length === 0 ? (
         <EmptyState
           icon={FlaskConical}
-          title="No laboratory prescriptions in this view"
-          description="Submit a new laboratory request above to send prescriptions directly to the Laboratory Portal."
-          actionLabel="New Lab Request"
-          onAction={openCreateModal}
+          title={
+            hasActiveFilters
+              ? 'No matching laboratory prescriptions'
+              : 'No laboratory prescriptions in this view'
+          }
+          description={
+            hasActiveFilters
+              ? 'Try adjusting your search query, workflow, or priority filters.'
+              : 'Submit a new laboratory request above to send prescriptions directly to the Laboratory Portal.'
+          }
+          actionLabel={hasActiveFilters ? 'Clear Filters' : 'New Lab Request'}
+          onAction={hasActiveFilters ? clearFilters : openCreateModal}
         />
       ) : (
         <div className="grid grid-cols-1 gap-4">

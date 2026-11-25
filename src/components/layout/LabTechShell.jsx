@@ -7,31 +7,74 @@ import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { laboratoryService } from '../../services/laboratoryService';
 import { notificationService } from '../../services/notificationService';
-import {
-  triggerDeviceNotification,
-  requestNotificationPermission,
-} from '../../lib/deviceNotifications';
+import { pushService } from '../../services/pushService';
+import { triggerDeviceNotification } from '../../lib/deviceNotifications';
 
 export function LabTechShell() {
   const { user } = useAuth();
   const toast = useToast();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 
+  // Sync background FCM push token if permission is already granted
   useEffect(() => {
-    requestNotificationPermission();
-  }, []);
+    const userId = user?.id || user?.uid;
+    if (!userId) return;
+    pushService.syncPushToken(userId);
+  }, [user?.id, user?.uid]);
 
-  // Real-time listener so Laboratory Admin immediately receives pop-up & sound/device alerts
-  // the moment a Dentist submits or resubmits a lab prescription
+  // Real-time listeners so Laboratory Staff receive instant computer & phone alerts
+  // for BOTH new dentist lab prescriptions AND incoming dentist messages / clarifications / issues
   useEffect(() => {
     const userId = user?.id || user?.uid;
     if (!userId) return;
 
     let previousOrderIds = null;
     let previousNotifIds = null;
+    const recentlyAlertedOrderIds = new Set();
 
+    const markOrderAlerted = (orderId) => {
+      if (!orderId) return;
+      recentlyAlertedOrderIds.add(orderId);
+      setTimeout(() => recentlyAlertedOrderIds.delete(orderId), 8000);
+    };
+
+    // 1. Direct notifications listener: fires for ALL lab messages, clarifications, issues, and new orders
+    const unsubNotifs = notificationService.subscribeForUser(userId, (notifs) => {
+      const unread = notifs.filter((n) => !n.read).length;
+      setUnreadCount(unread);
+
+      if (previousNotifIds !== null) {
+        const newlyArrived = notifs.filter(
+          (n) => !n.read && !previousNotifIds.has(n.id)
+        );
+        newlyArrived.forEach((notif) => {
+          if (notif.type === 'LAB_ORDER' && notif.orderId) {
+            if (recentlyAlertedOrderIds.has(notif.orderId)) return;
+            markOrderAlerted(notif.orderId);
+          }
+
+          const targetUrl =
+            notif.link || (notif.orderId ? `/lab/requests/${notif.orderId}` : '/lab');
+          const isUrgent =
+            notif.priority === 'HIGH' ||
+            notif.type === 'LAB_MESSAGE' ||
+            String(notif.title || '').includes('RUSH') ||
+            String(notif.title || '').includes('Issue');
+
+          toast.info(`${notif.title} — ${notif.message}`);
+          triggerDeviceNotification(notif.title, notif.message, {
+            tag: `lab-notif-${notif.id}`,
+            url: targetUrl,
+            urgent: isUrgent,
+          });
+        });
+      }
+
+      previousNotifIds = new Set(notifs.map((n) => n.id));
+    });
+
+    // 2. Live labOrders fallback listener (catches newly submitted orders even if direct notification lags)
     const unsubOrders = laboratoryService.subscribeToOrders((orders) => {
       if (previousOrderIds !== null) {
         const newlySubmitted = orders.filter(
@@ -39,34 +82,23 @@ export function LabTechShell() {
         );
 
         newlySubmitted.forEach((ord) => {
-          const rushPrefix = ord.priority === 'RUSH' ? '🚨 RUSH ' : '🧪 New ';
+          if (recentlyAlertedOrderIds.has(ord.id)) return;
+          markOrderAlerted(ord.id);
+
+          const isRush = ord.priority === 'RUSH';
+          const rushPrefix = isRush ? '🚨 RUSH ' : '🧪 New ';
           const msg = `Dr. ${ord.dentistName || 'Dentist'} submitted ${ord.applianceType} (${ord.caseReference || 'New Case'}).`;
           toast.info(`${rushPrefix}Lab Request!\n${msg}`);
           triggerDeviceNotification(`${rushPrefix}Dentist Lab Request`, msg, {
-            vibrate: [200, 100, 200],
+            tag: `lab-order-${ord.id}`,
+            url: `/lab/requests/${ord.id}`,
+            urgent: isRush,
           });
         });
       }
 
       previousOrderIds = new Set(orders.map((o) => o.id));
     }, user);
-
-    const unsubNotifs = notificationService.subscribeForUser(userId, (notifs) => {
-      const unread = notifs.filter((n) => !n.read).length;
-      setUnreadCount(unread);
-
-      if (previousNotifIds !== null) {
-        const newlyArrived = notifs.filter(
-          (n) => !n.read && !previousNotifIds.has(n.id) && n.type !== 'LAB_ORDER'
-        );
-        newlyArrived.forEach((notif) => {
-          toast.info(`${notif.title} — ${notif.message}`);
-          triggerDeviceNotification(notif.title, notif.message);
-        });
-      }
-
-      previousNotifIds = new Set(notifs.map((n) => n.id));
-    });
 
     return () => {
       unsubOrders();

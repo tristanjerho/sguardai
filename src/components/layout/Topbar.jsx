@@ -4,6 +4,9 @@ import {
   Sun,
   Moon,
   Bell,
+  BellRing,
+  Volume2,
+  VolumeX,
   LogOut,
   User,
   Shield,
@@ -15,7 +18,15 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
 import { useMascot } from '../../context/MascotContext';
+import { useToast } from '../../hooks/useToast';
 import { notificationService } from '../../services/notificationService';
+import { pushService } from '../../services/pushService';
+import {
+  getNotificationPermissionStatus,
+  isNotificationSoundEnabled,
+  setNotificationSoundEnabled,
+  triggerDeviceNotification,
+} from '../../lib/deviceNotifications';
 import { formatRelativeTime } from '../../lib/formatters';
 import { Avatar } from '../ui/Avatar';
 import { Logo } from '../common/Logo';
@@ -31,9 +42,13 @@ export function Topbar({
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { showSparky, toggleSparky } = useMascot();
+  const toast = useToast();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifPopover, setShowNotifPopover] = useState(false);
   const [staffNotifs, setStaffNotifs] = useState([]);
+  const [notifPermission, setNotifPermission] = useState(() => getNotificationPermissionStatus());
+  const [soundEnabled, setSoundEnabled] = useState(() => isNotificationSoundEnabled());
+  const [enablingPush, setEnablingPush] = useState(false);
   const navigate = useNavigate();
 
   const isPatient = user?.role === ROLES.PATIENT;
@@ -55,6 +70,51 @@ export function Topbar({
   const handleMarkAllRead = async () => {
     if (!userId) return;
     await notificationService.markAllAsRead(userId);
+  };
+
+  const handleEnableDeviceAlerts = async () => {
+    setEnablingPush(true);
+    try {
+      const { permission, fcmRegistered } = await pushService.enablePushNotifications(userId);
+      setNotifPermission(permission);
+      if (permission === 'granted') {
+        toast.success(
+          fcmRegistered
+            ? 'Computer & phone alerts enabled (including background push)!'
+            : 'Computer & phone alerts enabled for this device!'
+        );
+        await triggerDeviceNotification(
+          'SmileGuard AI Alerts Enabled',
+          'You will now receive instant alerts for messages, lab updates, and bookings.',
+          { tag: 'smileguard-alerts-enabled' }
+        );
+      } else if (permission === 'denied') {
+        toast.error('Notifications are blocked in your browser settings. Please allow notifications for this site.');
+      }
+    } finally {
+      setEnablingPush(false);
+    }
+  };
+
+  const handleToggleSound = () => {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    setNotificationSoundEnabled(next);
+  };
+
+  const handleTestAlert = async () => {
+    if (notifPermission !== 'granted') {
+      await handleEnableDeviceAlerts();
+      return;
+    }
+    await triggerDeviceNotification(
+      'SmileGuard AI Test Alert',
+      'Live device notifications and sound chime are working on this device.',
+      {
+        tag: `smileguard-test-${Date.now()}`,
+        url: user?.role === ROLES.LAB_TECH ? '/lab' : '/clinic/queue',
+      }
+    );
   };
 
   return (
@@ -172,10 +232,69 @@ export function Topbar({
                     )}
                   </div>
 
+                  {/* Computer & Phone Alert Controls */}
+                  <div className="px-4 py-2.5 border-b border-surface-border/70 dark:border-[#26415E]/70 bg-surface-50/70 dark:bg-[#0B1B32]/70 flex items-center justify-between gap-2 shrink-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <BellRing
+                        className={`w-3.5 h-3.5 shrink-0 ${
+                          notifPermission === 'granted'
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : notifPermission === 'denied'
+                              ? 'text-amber-500'
+                              : 'text-teal-600 dark:text-teal-400'
+                        }`}
+                      />
+                      <span className="text-[11px] font-semibold text-ink-secondary dark:text-[#83A6CE] truncate">
+                        {notifPermission === 'granted'
+                          ? 'Device alerts active'
+                          : notifPermission === 'denied'
+                            ? 'Blocked in browser'
+                            : notifPermission === 'unsupported'
+                              ? 'In-app alerts only'
+                              : 'Enable computer/phone alerts'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={handleToggleSound}
+                        title={soundEnabled ? 'Mute alert chime' : 'Unmute alert chime'}
+                        aria-label={soundEnabled ? 'Mute alert chime' : 'Unmute alert chime'}
+                        className="p-1.5 rounded-lg text-ink-muted hover:text-ink-primary hover:bg-surface-100 dark:hover:bg-[#26415E]/60 transition-colors"
+                      >
+                        {soundEnabled ? (
+                          <Volume2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                        ) : (
+                          <VolumeX className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+
+                      {notifPermission === 'granted' ? (
+                        <button
+                          type="button"
+                          onClick={handleTestAlert}
+                          className="text-[11px] font-semibold px-2 py-1 rounded-lg bg-surface-card dark:bg-[#122444] border border-surface-border dark:border-[#26415E] text-ink-primary dark:text-[#F8FAFC] hover:border-teal-500 transition-colors"
+                        >
+                          Test
+                        </button>
+                      ) : notifPermission === 'default' ? (
+                        <button
+                          type="button"
+                          disabled={enablingPush}
+                          onClick={handleEnableDeviceAlerts}
+                          className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white transition-colors disabled:opacity-60"
+                        >
+                          {enablingPush ? 'Enabling...' : 'Enable'}
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+
                   <div className="flex-1 min-h-0 max-h-[60dvh] sm:max-h-80 overflow-y-auto divide-y divide-surface-border/60 dark:divide-[#26415E]/60">
                     {staffNotifs.length === 0 ? (
                       <div className="p-6 text-center text-xs text-ink-muted">
-                        No notifications yet. Lab order and clinic updates appear here live.
+                        No notifications yet. Lab messages, orders, and booking alerts appear here live.
                       </div>
                     ) : (
                       staffNotifs.map((n) => (
@@ -185,8 +304,14 @@ export function Topbar({
                           onClick={() => {
                             if (!n.read) notificationService.markAsRead(n.id);
                             setShowNotifPopover(false);
-                            if (n.type === 'LAB_ORDER') {
-                              navigate(user?.role === ROLES.DENTIST ? '/clinic/lab-orders' : '/lab');
+                            if (n.link) {
+                              navigate(n.link);
+                            } else if (n.type === 'APPOINTMENT') {
+                              navigate('/clinic/queue');
+                            } else if (n.type === 'LAB_ORDER' || n.type === 'LAB_MESSAGE') {
+                              const isClinicRole =
+                                user?.role === ROLES.DENTIST || user?.role === ROLES.RECEPTIONIST;
+                              navigate(isClinicRole ? '/clinic/lab-orders' : '/lab');
                             }
                           }}
                           className={`w-full text-left px-4 py-3 transition-colors hover:bg-surface-50 dark:hover:bg-[#26415E]/50 ${!n.read ? 'bg-teal-50/50 dark:bg-[#83A6CE]/10' : ''

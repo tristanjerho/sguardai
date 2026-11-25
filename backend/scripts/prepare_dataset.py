@@ -12,6 +12,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+from typing import Any
 from PIL import Image
 from sklearn.model_selection import train_test_split
 
@@ -51,8 +52,8 @@ def prepare_dataset():
         for cls in classes:
             (PROCESSED_DATASET_DIR / split / cls).mkdir(parents=True, exist_ok=True)
 
-    corrupted_files = []
-    class_samples = {cls: [] for cls in classes}
+    corrupted_files: list[str] = []
+    class_samples: dict[str, list[dict[str, Any]]] = {cls: [] for cls in classes}
 
     # Step 1: Scan, validate and copy raw dataset per class
     for cls in classes:

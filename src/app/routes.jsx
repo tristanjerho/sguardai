@@ -34,6 +34,7 @@ import { PatientProfile } from '../features/patient/Profile';
 import { ClinicDashboard } from '../features/clinic/Dashboard';
 import { AppointmentsQueue } from '../features/clinic/AppointmentsQueue';
 import { PatientsDirectory } from '../features/clinic/Patients';
+import { PatientArchive } from '../features/clinic/PatientArchive';
 import { PatientDetail } from '../features/clinic/PatientDetail';
 import { TreatmentsManager } from '../features/clinic/Treatments';
 import { LabOrdersManager } from '../features/clinic/LabOrders';
@@ -188,6 +189,7 @@ export function AppRoutes() {
         <Route path="queue" element={<AppointmentsQueue />} />
         <Route path="patients" element={<PatientsDirectory />} />
         <Route path="patients/:id" element={<PatientDetail />} />
+        <Route path="archive" element={<PatientArchive />} />
         <Route path="treatments" element={<TreatmentsManager />} />
         <Route path="lab-orders" element={<LabOrdersManager />} />
         <Route path="lab-orders/:id" element={<LabRequestDetails />} />

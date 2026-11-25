@@ -11,15 +11,16 @@ import json
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers, regularizers
-from tensorflow.keras.applications import EfficientNetB0
+import keras
+from keras import layers, regularizers
+from keras.applications import EfficientNetB0
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, precision_recall_fscore_support, roc_curve, precision_recall_curve
 
 # Fix seeds
@@ -46,8 +47,8 @@ def build_datasets():
     val_dir = DATASET_DIR / "val"
     test_dir = DATASET_DIR / "test"
 
-    train_ds = tf.keras.utils.image_dataset_from_directory(
-        train_dir,
+    train_ds: Any = keras.utils.image_dataset_from_directory(
+        str(train_dir),
         image_size=IMAGE_SIZE,
         batch_size=BATCH_SIZE,
         label_mode='categorical',
@@ -55,23 +56,23 @@ def build_datasets():
         seed=42
     )
 
-    val_ds = tf.keras.utils.image_dataset_from_directory(
-        val_dir,
+    val_ds: Any = keras.utils.image_dataset_from_directory(
+        str(val_dir),
         image_size=IMAGE_SIZE,
         batch_size=BATCH_SIZE,
         label_mode='categorical',
         shuffle=False
     )
 
-    test_ds = tf.keras.utils.image_dataset_from_directory(
-        test_dir,
+    test_ds: Any = keras.utils.image_dataset_from_directory(
+        str(test_dir),
         image_size=IMAGE_SIZE,
         batch_size=BATCH_SIZE,
         label_mode='categorical',
         shuffle=False
     )
 
-    class_names = train_ds.class_names
+    class_names: list[str] = list(getattr(train_ds, "class_names", []))
     print(f"[*] Loaded binary validator dataset with classes: {class_names}")
 
     train_ds = train_ds.cache().prefetch(buffer_size=tf.data.AUTOTUNE)
@@ -167,7 +168,7 @@ def train_validator():
         verbose=1
     )
 
-    model.save(MODEL_FILE)
+    model.save(str(MODEL_FILE))
     print(f"[OK] Saved X-ray validator model to {MODEL_FILE}")
 
     # ==========================================================
@@ -176,15 +177,15 @@ def train_validator():
     print("\n[*] Determining optimal OPG validation threshold on validation set...")
     opg_idx = class_names.index("dental_opg")
 
-    val_y_true = []
-    val_opg_probs = []
+    val_y_true_list: list[Any] = []
+    val_opg_probs_list: list[Any] = []
     for images, labels in val_ds:
         preds = model.predict(images, verbose=0)
-        val_y_true.extend(labels.numpy()[:, opg_idx])
-        val_opg_probs.extend(preds[:, opg_idx])
+        val_y_true_list.extend(labels.numpy()[:, opg_idx])
+        val_opg_probs_list.extend(preds[:, opg_idx])
 
-    val_y_true = np.array(val_y_true)
-    val_opg_probs = np.array(val_opg_probs)
+    val_y_true = np.array(val_y_true_list)
+    val_opg_probs = np.array(val_opg_probs_list)
 
     # Determine threshold maximizing balanced accuracy / F1 on validation set
     thresholds = np.linspace(0.1, 0.9, 81)
@@ -193,9 +194,10 @@ def train_validator():
 
     for t in thresholds:
         bin_pred = (val_opg_probs >= t).astype(int)
-        p, r, f1, _ = precision_recall_fscore_support(val_y_true, bin_pred, average='binary', zero_division=0)
-        if f1 > best_val_f1:
-            best_val_f1 = f1
+        _, _, f1_raw, _ = precision_recall_fscore_support(val_y_true, bin_pred, average='binary', zero_division=0)
+        f1_val = float(f1_raw)
+        if f1_val > best_val_f1:
+            best_val_f1 = f1_val
             best_thresh = float(t)
 
     # Use a conservative threshold (at least 0.50, typically 0.60 - 0.70)
@@ -209,23 +211,26 @@ def train_validator():
     print("[*] EVALUATING VALIDATOR ON UNSEEN HELD-OUT TEST SET...")
     print("=" * 50)
 
-    test_y_true = []
-    test_y_pred = []
-    test_opg_probs = []
+    test_y_true_list: list[Any] = []
+    test_y_pred_list: list[int] = []
+    test_opg_probs_list: list[Any] = []
 
     for images, labels in test_ds:
         preds = model.predict(images, verbose=0)
-        test_y_true.extend(np.argmax(labels.numpy(), axis=1))
-        test_opg_probs.extend(preds[:, opg_idx])
+        test_y_true_list.extend(np.argmax(labels.numpy(), axis=1))
+        test_opg_probs_list.extend(preds[:, opg_idx])
         # Apply established threshold
         pred_labels = [opg_idx if p >= validation_threshold else (1 - opg_idx) for p in preds[:, opg_idx]]
-        test_y_pred.extend(pred_labels)
+        test_y_pred_list.extend(pred_labels)
 
-    test_y_true = np.array(test_y_true)
-    test_y_pred = np.array(test_y_pred)
+    test_y_true = np.array(test_y_true_list)
+    test_y_pred = np.array(test_y_pred_list)
 
     test_accuracy = float(accuracy_score(test_y_true, test_y_pred))
-    precision, recall, f1, _ = precision_recall_fscore_support(test_y_true, test_y_pred, average='weighted', zero_division=0)
+    precision_raw, recall_raw, f1_raw, _ = precision_recall_fscore_support(test_y_true, test_y_pred, average='weighted', zero_division=0)
+    precision = float(precision_raw)
+    recall = float(recall_raw)
+    f1 = float(f1_raw)
     conf_mat = confusion_matrix(test_y_true, test_y_pred).tolist()
     report_dict = classification_report(test_y_true, test_y_pred, target_names=class_names, output_dict=True, zero_division=0)
 
@@ -239,7 +244,7 @@ def train_validator():
     # Confusion matrix plot
     fig, ax = plt.subplots(figsize=(6, 5))
     cm_arr = np.array(conf_mat)
-    cax = ax.imshow(cm_arr, interpolation='nearest', cmap=plt.cm.Greens)
+    cax = ax.imshow(cm_arr, interpolation='nearest', cmap="Greens")
     plt.title("X-Ray Validator - Confusion Matrix (Test Set)")
     fig.colorbar(cax)
     tick_marks = np.arange(len(class_names))
@@ -248,13 +253,13 @@ def train_validator():
     thresh = cm_arr.max() / 2.
     for i in range(cm_arr.shape[0]):
         for j in range(cm_arr.shape[1]):
-            ax.text(j, i, format(cm_arr[i, j], 'd'),
+            ax.text(j, i, format(int(cm_arr[i, j]), 'd'),
                     ha="center", va="center",
                     color="white" if cm_arr[i, j] > thresh else "black")
     plt.xlabel("Predicted")
     plt.ylabel("Ground Truth")
     plt.tight_layout()
-    plt.savefig(CONFUSION_MATRIX_PNG, dpi=200)
+    plt.savefig(str(CONFUSION_MATRIX_PNG), dpi=200)
     plt.close()
 
     # Metadata

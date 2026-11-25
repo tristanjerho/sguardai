@@ -106,45 +106,39 @@ export function ClinicDashboard() {
     weekRelativeLabel,
   } = useMemo(() => {
     const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const todayYmd = toLocalYMD(todayStart);
 
     if (timeRangeMode === 'week') {
-      const currentDayOfWeek = today.getDay();
-      const diffToMonday = (currentDayOfWeek === 0 ? -6 : 1) - currentDayOfWeek;
-      const currentMonday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + diffToMonday);
+      const safeOffset = Math.min(0, weekOffset);
+      const endDay = new Date(todayStart);
+      endDay.setDate(todayStart.getDate() + safeOffset * 7);
 
-      const selectedMonday = new Date(currentMonday);
-      selectedMonday.setDate(currentMonday.getDate() + weekOffset * 7);
-      selectedMonday.setHours(0, 0, 0, 0);
-
-      const selectedSunday = new Date(selectedMonday);
-      selectedSunday.setDate(selectedMonday.getDate() + 6);
-      selectedSunday.setHours(23, 59, 59, 999);
+      const startDay = new Date(endDay);
+      startDay.setDate(endDay.getDate() - 6);
 
       const daysList = [];
       for (let i = 0; i < 7; i++) {
-        const d = new Date(selectedMonday);
-        d.setDate(selectedMonday.getDate() + i);
+        const d = new Date(startDay);
+        d.setDate(startDay.getDate() + i);
         daysList.push(d);
       }
 
-      const weekRangeLabel = `${selectedMonday.toLocaleDateString('en-US', {
+      const weekRangeLabel = `${startDay.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
-      })} – ${selectedSunday.toLocaleDateString('en-US', {
+      })} – ${endDay.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
       })}`;
 
-      const isCurrentWeek = weekOffset === 0;
-      const isPastWeek = weekOffset < 0;
-      const weekRelativeLabel = isCurrentWeek
-        ? 'Current Week'
-        : weekOffset === -1
-          ? 'Last Week (Past)'
-          : isPastWeek
-            ? `${Math.abs(weekOffset)}w Ago (Past)`
-            : `Upcoming (+${weekOffset}w)`;
+      const isLatestWeek = safeOffset === 0;
+      const weekRelativeLabel = isLatestWeek
+        ? 'Past 7 Days'
+        : safeOffset === -1
+          ? 'Previous 7 Days'
+          : `${Math.abs(safeOffset)}w Ago (Past)`;
 
       const weekData = daysList.map((dayDate) => {
         const ymd = toLocalYMD(dayDate);
@@ -193,10 +187,10 @@ export function ClinicDashboard() {
 
       return {
         chartData: weekData,
-        periodTitle: isCurrentWeek
+        periodTitle: isLatestWeek
           ? 'Weekly Patient Volume'
           : `Patient Volume (${weekRelativeLabel})`,
-        periodSubtitle: `${weekRangeLabel} • Mon – Sun`,
+        periodSubtitle: `${weekRangeLabel} • Up to ${isLatestWeek ? 'Today' : endDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
         totalPeriodVisits,
         confirmedPeriodVisits,
         pendingPeriodVisits,
@@ -279,7 +273,9 @@ export function ClinicDashboard() {
 
       const monthAppts = appointments.filter((appt) => {
         const ad = parseApptDate(appt);
-        return ad && ad.getFullYear() === y && ad.getMonth() === m;
+        if (!ad) return false;
+        const adYmd = toLocalYMD(ad);
+        return ad.getFullYear() === y && ad.getMonth() === m && adYmd <= todayYmd;
       });
 
       const confirmed = monthAppts.filter(
@@ -322,7 +318,7 @@ export function ClinicDashboard() {
   const selectedDayInfo = useMemo(() => {
     if (timeRangeMode !== 'week' || !chartData || chartData.length === 0) return null;
     const found = chartData.find((d) => d.ymd === selectedCalendarDateYmd);
-    return found || chartData[0];
+    return found || chartData[chartData.length - 1];
   }, [timeRangeMode, chartData, selectedCalendarDateYmd]);
 
   // Filtered appointments list for the Queue card
@@ -454,7 +450,7 @@ export function ClinicDashboard() {
                     : 'text-ink-muted hover:text-ink-primary'
                   }`}
               >
-                Week View
+                Past 7 Days
               </button>
               <button
                 type="button"
@@ -497,23 +493,27 @@ export function ClinicDashboard() {
                   <span>Prev Week</span>
                 </button>
 
-                {weekOffset !== 0 && (
+                {weekOffset < 0 && (
                   <button
                     type="button"
-                    onClick={() => setWeekOffset(0)}
+                    onClick={() => {
+                      setWeekOffset(0);
+                      setSelectedCalendarDateYmd(toLocalYMD(new Date()));
+                    }}
                     className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 hover:bg-teal-100 transition-colors"
-                    title="Return to Current Week"
+                    title="Return to Past 7 Days (Up to Today)"
                   >
                     <RotateCcw className="w-3 h-3" />
-                    <span>This Week</span>
+                    <span>Latest 7 Days</span>
                   </button>
                 )}
 
                 <button
                   type="button"
-                  onClick={() => setWeekOffset((prev) => prev + 1)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg border border-surface-border hover:bg-surface-100 dark:hover:bg-surface-200 text-ink-primary transition-colors"
-                  title="View Next Week"
+                  disabled={weekOffset >= 0}
+                  onClick={() => setWeekOffset((prev) => Math.min(0, prev + 1))}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg border border-surface-border hover:bg-surface-100 dark:hover:bg-surface-200 text-ink-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                  title={weekOffset >= 0 ? 'Cannot view future dates' : 'View Next 7 Days'}
                 >
                   <span>Next Week</span>
                   <ChevronRight className="w-3.5 h-3.5" />
