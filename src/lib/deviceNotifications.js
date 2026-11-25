@@ -5,6 +5,26 @@
 
 const SOUND_PREF_KEY = 'smileguard_notif_sound_enabled';
 
+export const NOTIF_PERMISSION_EVENT = 'smileguard-notif-permission-changed';
+
+/**
+ * Returns true if the user is on iPhone/iPad Safari outside of an installed Home-Screen PWA.
+ * iOS 16.4+ requires installing to the Home Screen before Web Push / Notifications are unlocked.
+ */
+export function isIosBrowserNeedingPwaInstall() {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const isIos =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!isIos) return false;
+
+  const isStandalone =
+    window.matchMedia?.('(display-mode: standalone)')?.matches ||
+    window.navigator.standalone === true;
+  return !isStandalone;
+}
+
 /**
  * Returns the browser Notification API permission state.
  * @returns {'granted' | 'denied' | 'default' | 'unsupported'}
@@ -175,19 +195,33 @@ export async function triggerDeviceNotification(title, message, options = {}) {
 }
 
 /**
- * Prompt user for notification permission (best called from a user click/tap gesture).
+ * Prompt user for notification permission (must be called directly from a user tap/click on mobile).
+ * Handles both modern Promise-based and legacy callback-based Notification.requestPermission APIs.
  * @returns {Promise<'granted' | 'denied' | 'default' | 'unsupported'>}
  */
 export async function requestNotificationPermission() {
   if (typeof window === 'undefined' || !('Notification' in window)) {
     return 'unsupported';
   }
-  if (Notification.permission !== 'default') {
-    return Notification.permission;
+
+  let result = Notification.permission;
+  if (result === 'default') {
+    try {
+      const maybePromise = Notification.requestPermission((cbPerm) => {
+        result = cbPerm;
+      });
+      if (maybePromise && typeof maybePromise.then === 'function') {
+        result = await maybePromise;
+      }
+    } catch {
+      result = Notification.permission || 'denied';
+    }
   }
+
   try {
-    return await Notification.requestPermission();
+    window.dispatchEvent(new CustomEvent(NOTIF_PERMISSION_EVENT, { detail: result }));
   } catch {
-    return Notification.permission || 'denied';
+    // Ignore event errors
   }
+  return result;
 }

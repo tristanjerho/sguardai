@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell,
+  BellRing,
+  Volume2,
+  VolumeX,
   CheckCheck,
   Calendar,
   Activity,
@@ -13,6 +16,14 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { notificationService } from '../../services/notificationService';
+import { pushService } from '../../services/pushService';
+import {
+  getNotificationPermissionStatus,
+  isNotificationSoundEnabled,
+  setNotificationSoundEnabled,
+  triggerDeviceNotification,
+  NOTIF_PERMISSION_EVENT,
+} from '../../lib/deviceNotifications';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Tabs } from '../../components/ui/Tabs';
@@ -29,6 +40,58 @@ export function Notifications() {
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('ALL');
   const [selectedNotif, setSelectedNotif] = useState(null);
+  const [notifPermission, setNotifPermission] = useState(() => getNotificationPermissionStatus());
+  const [soundEnabled, setSoundEnabled] = useState(() => isNotificationSoundEnabled());
+  const [enablingAlerts, setEnablingAlerts] = useState(false);
+
+  useEffect(() => {
+    const syncPerm = () => setNotifPermission(getNotificationPermissionStatus());
+    window.addEventListener(NOTIF_PERMISSION_EVENT, syncPerm);
+    window.addEventListener('focus', syncPerm);
+    return () => {
+      window.removeEventListener(NOTIF_PERMISSION_EVENT, syncPerm);
+      window.removeEventListener('focus', syncPerm);
+    };
+  }, []);
+
+  const handleEnablePhoneAlerts = async () => {
+    const userId = user?.id || user?.uid;
+    setEnablingAlerts(true);
+    try {
+      const { permission } = await pushService.enablePushNotifications(userId);
+      setNotifPermission(permission);
+      if (permission === 'granted') {
+        toast.success('Phone & device notifications allowed!');
+        await triggerDeviceNotification(
+          'SmileGuard AI Alerts Enabled',
+          'You will now receive instant appointment confirmations and reminders on this device.',
+          { tag: 'patient-alerts-enabled', url: '/patient/notifications' }
+        );
+      } else if (permission === 'denied') {
+        toast.error('Notifications are blocked. Open your phone browser site settings to allow Notifications.');
+      }
+    } finally {
+      setEnablingAlerts(false);
+    }
+  };
+
+  const handleToggleSound = () => {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    setNotificationSoundEnabled(next);
+  };
+
+  const handleTestPhoneAlert = async () => {
+    if (notifPermission !== 'granted') {
+      await handleEnablePhoneAlerts();
+      return;
+    }
+    await triggerDeviceNotification(
+      'SmileGuard AI Test Alert',
+      'Notifications and alert sound are working on your device.',
+      { tag: `patient-test-${Date.now()}`, url: '/patient/notifications' }
+    );
+  };
 
   useEffect(() => {
     const userId = user?.id || user?.uid;
@@ -124,6 +187,73 @@ export function Notifications() {
           </Button>
         )}
       </div>
+
+      {/* Phone & Device Notification Settings Card */}
+      <Card className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+            <BellRing className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm font-heading font-bold text-ink-primary">
+              Phone &amp; Device Alerts:{' '}
+              <span
+                className={
+                  notifPermission === 'granted'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : notifPermission === 'denied'
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-teal-600 dark:text-teal-400'
+                }
+              >
+                {notifPermission === 'granted'
+                  ? 'Allowed'
+                  : notifPermission === 'denied'
+                    ? 'Blocked in Browser'
+                    : notifPermission === 'unsupported'
+                      ? 'Install App on Home Screen'
+                      : 'Not Enabled Yet'}
+              </span>
+            </p>
+            <p className="text-xs text-ink-secondary">
+              {notifPermission === 'granted'
+                ? 'Appointment confirmations and reminders will pop up on this device.'
+                : notifPermission === 'denied'
+                  ? 'Open your browser site settings and set Notifications to Allow, then reload.'
+                  : 'Tap Allow Notifications so your phone can pop up appointment updates.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleToggleSound}
+            leftIcon={soundEnabled ? Volume2 : VolumeX}
+          >
+            {soundEnabled ? 'Sound On' : 'Muted'}
+          </Button>
+
+          {notifPermission === 'granted' ? (
+            <Button type="button" variant="secondary" size="sm" onClick={handleTestPhoneAlert}>
+              Test Alert
+            </Button>
+          ) : notifPermission === 'default' ? (
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              leftIcon={BellRing}
+              isLoading={enablingAlerts}
+              onClick={handleEnablePhoneAlerts}
+            >
+              Allow Notifications
+            </Button>
+          ) : null}
+        </div>
+      </Card>
 
       <Tabs tabs={tabs} activeTab={filterType} onChange={setFilterType} />
 

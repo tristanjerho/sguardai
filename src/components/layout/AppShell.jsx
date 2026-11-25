@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Topbar } from './Topbar';
 import { Sidebar } from './Sidebar';
 import { BottomTabBar } from './BottomTabBar';
+import { NotificationPermissionBanner } from '../common/NotificationPermissionBanner';
 
 /**
  * Shared Global Application Shell for all authenticated SmileGuard AI portals.
@@ -61,6 +62,7 @@ export function AppShell({
 
         <main className="flex-1 w-full min-w-0 px-3.5 xs:px-5 py-4 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:px-6 md:py-6 lg:px-7 lg:py-7 desktop:px-8 desktop:py-8">
           <div className={`w-full min-w-0 mx-auto ${maxWidthClass}`}>
+            <NotificationPermissionBanner />
             {children}
           </div>
         </main>

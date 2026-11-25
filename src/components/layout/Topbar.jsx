@@ -26,6 +26,7 @@ import {
   isNotificationSoundEnabled,
   setNotificationSoundEnabled,
   triggerDeviceNotification,
+  NOTIF_PERMISSION_EVENT,
 } from '../../lib/deviceNotifications';
 import { formatRelativeTime } from '../../lib/formatters';
 import { Avatar } from '../ui/Avatar';
@@ -53,6 +54,29 @@ export function Topbar({
 
   const isPatient = user?.role === ROLES.PATIENT;
   const userId = user?.id || user?.uid;
+
+  const portalHome =
+    user?.role === ROLES.PATIENT
+      ? '/patient'
+      : user?.role === ROLES.LAB_TECH
+        ? '/lab'
+        : user?.role === ROLES.SUPERADMIN
+          ? '/admin/super'
+          : user?.role === ROLES.ADMIN
+            ? '/admin/users'
+            : user?.role === ROLES.DENTIST || user?.role === ROLES.RECEPTIONIST
+              ? '/clinic'
+              : '/';
+
+  useEffect(() => {
+    const syncPerm = () => setNotifPermission(getNotificationPermissionStatus());
+    window.addEventListener(NOTIF_PERMISSION_EVENT, syncPerm);
+    window.addEventListener('focus', syncPerm);
+    return () => {
+      window.removeEventListener(NOTIF_PERMISSION_EVENT, syncPerm);
+      window.removeEventListener('focus', syncPerm);
+    };
+  }, []);
 
   useEffect(() => {
     if (!userId || isPatient) return;
@@ -133,7 +157,7 @@ export function Topbar({
         )}
 
         <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
-          <Logo size="md" iconClassName="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10" />
+          <Logo size="md" to={portalHome} iconClassName="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10" />
 
           {title && (
             <>

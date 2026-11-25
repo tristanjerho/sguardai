@@ -148,7 +148,7 @@ export function Onboarding() {
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex justify-center mb-1">
-            <Logo size="xl" showText={false} />
+            <Logo size="xl" showText={false} asLink={false} />
           </div>
           <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-ink-primary tracking-tight">
             Patient Medical Onboarding

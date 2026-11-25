@@ -3,20 +3,22 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { AppShell } from './AppShell';
 import { ROLES } from '../../lib/roles';
 import { notificationService } from '../../services/notificationService';
+import { pushService } from '../../services/pushService';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
-import { triggerDeviceNotification, requestNotificationPermission } from '../../lib/deviceNotifications';
+import { triggerDeviceNotification } from '../../lib/deviceNotifications';
 
 export function PatientShell() {
   const { user } = useAuth();
   const toast = useToast();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
 
   useEffect(() => {
-    requestNotificationPermission();
-  }, []);
+    const userId = user?.id || user?.uid;
+    if (!userId) return;
+    pushService.syncPushToken(userId);
+  }, [user?.id, user?.uid]);
 
   useEffect(() => {
     const userId = user?.id || user?.uid;
@@ -39,7 +41,10 @@ export function PatientShell() {
           } else {
             toast.info(`${notif.title} — ${notif.message}`);
           }
-          triggerDeviceNotification(notif.title, notif.message);
+          triggerDeviceNotification(notif.title, notif.message, {
+            tag: `patient-notif-${notif.id}`,
+            url: notif.link || '/patient/notifications',
+          });
         });
       }
 
