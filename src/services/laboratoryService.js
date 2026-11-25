@@ -27,6 +27,7 @@ import {
 import { activityLogService } from './activityLogService';
 import { notificationService } from './notificationService';
 import { smsService } from './smsService';
+import { formatDoctorName } from '../lib/formatters';
 
 function toIsoDate(val, fallbackIso = null) {
   if (!val) return fallbackIso;
@@ -481,7 +482,7 @@ export const laboratoryService = {
         step: 'SUBMITTED',
         status: LAB_ORDER_STATUS.PENDING_REVIEW,
         title: 'Prescription Submitted by Clinic',
-        detail: `${data.applianceType} (${template.shortName}) requested by Dr. ${data.dentistName || actor.name}.`,
+        detail: `${data.applianceType} (${template.shortName}) requested by ${formatDoctorName(data.dentistName || actor.name)}.`,
         actorName: data.dentistName || actor.name,
         actorRole: actor.role,
       }),
@@ -554,7 +555,7 @@ export const laboratoryService = {
 
     await notifyLabStaff(
       newOrder.priority === 'RUSH' ? '🚨 RUSH Laboratory Request' : '🧪 New Laboratory Request',
-      `Dr. ${newOrder.dentistName} submitted ${newOrder.applianceType} (Due: ${dueStr || 'TBD'}).`,
+      `${formatDoctorName(newOrder.dentistName)} submitted ${newOrder.applianceType} (Due: ${dueStr || 'TBD'}).`,
       newOrder.vendor,
       {
         type: 'LAB_ORDER',
@@ -564,7 +565,7 @@ export const laboratoryService = {
         smsEvent: newOrder.priority === 'RUSH' ? 'LAB_RUSH_ORDER' : undefined,
         smsData: {
           requestCode: newOrder.requestCode || docRef.id.slice(0, 6),
-          dentistName: newOrder.dentistName,
+          dentistName: formatDoctorName(newOrder.dentistName),
           applianceType: newOrder.applianceType,
         },
       }
@@ -846,7 +847,7 @@ export const laboratoryService = {
 
     await notifyLabStaff(
       '🔄 Clinic Responded to Clarification',
-      `Dr. ${actor.name} updated ${currentOrder.requestCode} (${currentOrder.applianceType}) with requested details.`,
+      `${formatDoctorName(actor.name)} updated ${currentOrder.requestCode} (${currentOrder.applianceType}) with requested details.`,
       currentOrder.vendor,
       {
         type: 'LAB_MESSAGE',
@@ -856,7 +857,7 @@ export const laboratoryService = {
         smsEvent: 'LAB_NEW_MESSAGE',
         smsData: {
           requestCode: currentOrder.requestCode,
-          dentistName: `Dr. ${actor.name}`,
+          dentistName: formatDoctorName(actor.name),
           preview: 'Clarification details updated & resubmitted',
         },
       }
@@ -1241,8 +1242,8 @@ export const laboratoryService = {
       makeCommunicationEntry({
         type: 'TRY_IN',
         message: approved
-          ? `Try-In Approved by Dr. ${actor.name}: ${dentistNotes || 'Proceed to final processing and finishing.'}`
-          : `Try-In Adjustment Requested by Dr. ${actor.name}: ${dentistNotes}`,
+          ? `Try-In Approved by ${formatDoctorName(actor.name)}: ${dentistNotes || 'Proceed to final processing and finishing.'}`
+          : `Try-In Adjustment Requested by ${formatDoctorName(actor.name)}: ${dentistNotes}`,
         actorName: actor.name,
         actorRole: actor.role,
       }),
@@ -1267,10 +1268,16 @@ export const laboratoryService = {
 
     await notifyLabStaff(
       approved ? '✅ Clinic Try-In Approved — Resume Fabrication' : '🔄 Try-In Adjustment Requested',
-      `Dr. ${actor.name} reviewed ${currentOrder.requestCode} (${currentOrder.applianceType}): ${
+      `${formatDoctorName(actor.name)} reviewed ${currentOrder.requestCode} (${currentOrder.applianceType}): ${
         dentistNotes || (approved ? 'Approved for final processing.' : 'Adjustment needed.')
       }`,
-      currentOrder.vendor
+      currentOrder.vendor,
+      {
+        type: 'LAB_MESSAGE',
+        orderId,
+        link: `/lab/requests/${orderId}`,
+        priority: 'HIGH',
+      }
     );
 
     return this.getById(orderId, actor);
@@ -1698,7 +1705,7 @@ export const laboratoryService = {
 
     await notifyLabStaff(
       '🚨 Clinic Reported Delivery / Specification Issue',
-      `Dr. ${actor.name} reported "${issueType}" on ${currentOrder.requestCode} (${currentOrder.applianceType}).`,
+      `${formatDoctorName(actor.name)} reported "${issueType}" on ${currentOrder.requestCode} (${currentOrder.applianceType}).`,
       currentOrder.vendor,
       {
         type: 'LAB_MESSAGE',
@@ -1708,7 +1715,7 @@ export const laboratoryService = {
         smsEvent: 'LAB_ISSUE_REPORTED',
         smsData: {
           requestCode: currentOrder.requestCode,
-          dentistName: `Dr. ${actor.name}`,
+          dentistName: formatDoctorName(actor.name),
           issueType,
         },
       }
@@ -1860,7 +1867,7 @@ export const laboratoryService = {
     if (actor.role === ROLES.DENTIST) {
       await notifyLabStaff(
         `💬 Clinic Message on ${currentOrder.requestCode}`,
-        `Dr. ${actor.name}: "${message.trim()}"`,
+        `${formatDoctorName(actor.name)}: "${message.trim()}"`,
         currentOrder.vendor,
         {
           type: 'LAB_MESSAGE',
@@ -1870,7 +1877,7 @@ export const laboratoryService = {
           smsEvent: 'LAB_NEW_MESSAGE',
           smsData: {
             requestCode: currentOrder.requestCode,
-            dentistName: `Dr. ${actor.name}`,
+            dentistName: formatDoctorName(actor.name),
             preview: message.trim(),
           },
         }

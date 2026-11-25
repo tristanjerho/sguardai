@@ -41,7 +41,7 @@ import {
   INPUT_SUBMISSION_TYPES,
   formatArchAndTeeth,
 } from '../../lib/labWorkflows';
-import { formatDate, formatDateTime } from '../../lib/formatters';
+import { formatDate, formatDateTime, formatDoctorName } from '../../lib/formatters';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -789,7 +789,7 @@ export function LabRequestDetails() {
               {order.applianceType}
             </h2>
             <p className="text-xs text-ink-secondary">
-              {order.clinicName} • Dr. {order.dentistName} • Case Ref:{' '}
+              {order.clinicName} • {formatDoctorName(order.dentistName)} • Case Ref:{' '}
               <strong className="font-mono text-ink-primary">{order.caseReference}</strong>
             </p>
           </div>
@@ -1036,7 +1036,7 @@ export function LabRequestDetails() {
               </div>
               <div>
                 <p className="text-ink-muted">Assigned Dentist</p>
-                <p className="font-bold text-ink-primary">Dr. {order.dentistName}</p>
+                <p className="font-bold text-ink-primary">{formatDoctorName(order.dentistName)}</p>
               </div>
               <div>
                 <p className="text-ink-muted">Patient Case Reference</p>

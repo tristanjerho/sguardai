@@ -32,7 +32,7 @@ import {
   APPLIANCE_CATEGORY_LABELS,
   formatArchAndTeeth,
 } from '../../lib/labWorkflows';
-import { formatDate } from '../../lib/formatters';
+import { formatDate, formatDoctorName } from '../../lib/formatters';
 import { StatCard } from '../../components/charts/StatCard';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
@@ -689,7 +689,7 @@ export function LabIntakePage() {
                         </td>
 
                         <td className="p-4">
-                          <p className="font-bold text-ink-primary">Dr. {order.dentistName}</p>
+                          <p className="font-bold text-ink-primary">{formatDoctorName(order.dentistName)}</p>
                           <p className="text-[11px] text-ink-muted">{order.clinicName}</p>
                         </td>
 
@@ -920,7 +920,7 @@ export function LabIntakePage() {
             : 'Request Prescription Clarification'
         }
         description={
-          reasonModal ? `${reasonModal.order.requestCode} • Dr. ${reasonModal.order.dentistName}` : ''
+          reasonModal ? `${reasonModal.order.requestCode} • ${formatDoctorName(reasonModal.order.dentistName)}` : ''
         }
       >
         <form onSubmit={handleConfirmReason} className="space-y-4">

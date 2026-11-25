@@ -28,7 +28,7 @@ import {
   triggerDeviceNotification,
   NOTIF_PERMISSION_EVENT,
 } from '../../lib/deviceNotifications';
-import { formatRelativeTime } from '../../lib/formatters';
+import { formatRelativeTime, dedupeDoctorPrefix } from '../../lib/formatters';
 import { Avatar } from '../ui/Avatar';
 import { Logo } from '../common/Logo';
 import { ROLES, ROLE_LABELS } from '../../lib/roles';
@@ -350,7 +350,7 @@ export function Topbar({
                             </span>
                           </div>
                           <p className="text-[11px] text-ink-secondary dark:text-[#83A6CE] mt-0.5 line-clamp-2 break-words">
-                            {n.message}
+                            {dedupeDoctorPrefix(n.message)}
                           </p>
                         </button>
                       ))

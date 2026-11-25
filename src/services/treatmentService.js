@@ -13,6 +13,7 @@ import {
 import { db } from '../config/firebase';
 import { notificationService } from './notificationService';
 import { activityLogService } from './activityLogService';
+import { formatDoctorName } from '../lib/formatters';
 
 /**
  * Procedural default milestone templates by dental procedure category
@@ -260,7 +261,7 @@ export const treatmentService = {
         await notificationService.create({
           userId: newRecord.patientId,
           title: 'Treatment Plan Initialized',
-          message: `Dr. ${newRecord.dentistName} has initialized your ${newRecord.treatmentType} roadmap with ${totalStages} clinical milestones.`,
+          message: `${formatDoctorName(newRecord.dentistName)} has initialized your ${newRecord.treatmentType} roadmap with ${totalStages} clinical milestones.`,
           type: 'TREATMENT',
         });
       } catch (notifErr) {

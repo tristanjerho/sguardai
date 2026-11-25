@@ -35,7 +35,7 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { formatDate } from '../../lib/formatters';
+import { formatDate, formatDoctorName } from '../../lib/formatters';
 
 const OVERVIEW_COLUMNS = [
   {
@@ -686,7 +686,7 @@ export function LabOrdersQueue() {
                             {order.shade ? ` • Shade ${order.shade}` : ''}
                           </div>
                           <div className="text-xs text-ink-muted leading-snug break-words">
-                            Dr. {order.dentistName} • {order.clinicName}
+                            {formatDoctorName(order.dentistName)} • {order.clinicName}
                           </div>
                           <div className="space-y-1 text-[11px] text-ink-muted">
                             <span className="inline-flex items-center gap-1">

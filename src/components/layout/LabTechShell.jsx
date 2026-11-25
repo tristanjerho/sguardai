@@ -9,6 +9,7 @@ import { laboratoryService } from '../../services/laboratoryService';
 import { notificationService } from '../../services/notificationService';
 import { pushService } from '../../services/pushService';
 import { triggerDeviceNotification } from '../../lib/deviceNotifications';
+import { formatDoctorName } from '../../lib/formatters';
 
 export function LabTechShell() {
   const { user } = useAuth();
@@ -87,7 +88,7 @@ export function LabTechShell() {
 
           const isRush = ord.priority === 'RUSH';
           const rushPrefix = isRush ? '🚨 RUSH ' : '🧪 New ';
-          const msg = `Dr. ${ord.dentistName || 'Dentist'} submitted ${ord.applianceType} (${ord.caseReference || 'New Case'}).`;
+          const msg = `${formatDoctorName(ord.dentistName)} submitted ${ord.applianceType} (${ord.caseReference || 'New Case'}).`;
           toast.info(`${rushPrefix}Lab Request!\n${msg}`);
           triggerDeviceNotification(`${rushPrefix}Dentist Lab Request`, msg, {
             tag: `lab-order-${ord.id}`,

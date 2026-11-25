@@ -213,4 +213,28 @@ export function formatPatientId(patientOrId) {
   return `PT-${code}`;
 }
 
+/**
+ * Formats a dentist/doctor display name with exactly one "Dr. " prefix
+ * so names already stored as "Dr. Tristan Jerho" never become "Dr. Dr. Tristan Jerho".
+ * @param {string} name
+ * @param {string} [fallback='Dentist']
+ * @returns {string}
+ */
+export function formatDoctorName(name, fallback = 'Dentist') {
+  const raw = String(name || '').trim();
+  if (!raw) return `Dr. ${fallback}`;
+  const cleaned = raw.replace(/^(dr\.?\s+)+/i, '').trim();
+  return cleaned ? `Dr. ${cleaned}` : `Dr. ${fallback}`;
+}
+
+/**
+ * Collapses any repeated "Dr. Dr." prefixes inside already-stored notification text.
+ * @param {string} text
+ * @returns {string}
+ */
+export function dedupeDoctorPrefix(text) {
+  if (!text) return '';
+  return String(text).replace(/\b(?:Dr\.?\s+){2,}/gi, 'Dr. ');
+}
+
 
